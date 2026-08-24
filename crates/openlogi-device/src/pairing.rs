@@ -325,6 +325,7 @@ async fn drive(
                 Some(PairingCommand::Pair(device)) => {
                     pairing_auth = Some(device.authentication);
                     if *phase == PairingPhase::BoltDiscovery {
+						tracing::debug!("drive(family={:?},phase={:?}): pairing_auth → {:?}", family, phase, pairing_auth);
                         *phase = PairingPhase::BoltPairing;
                     }
                     pair_bolt_device(channel, &device).await?;

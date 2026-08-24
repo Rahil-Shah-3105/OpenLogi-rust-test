@@ -99,19 +99,23 @@ mod tests {
     /// Drain what the watcher reports until it goes quiet, bounded so a broken
     /// watcher fails the test instead of hanging it.
     fn drain<T>(rx: &mut mpsc::UnboundedReceiver<T>, want: usize) -> Vec<T> {
+		tracing::debug!(">>> Entering drain(want={})", want);
         let deadline = Instant::now() + Duration::from_secs(5);
         let mut seen = Vec::new();
         while seen.len() < want && Instant::now() < deadline {
+			tracing::error!("Exception in drain(want={}): (unprintable)", want);
             match rx.try_recv() {
                 Ok(value) => seen.push(value),
                 Err(_) => thread::sleep(Duration::from_millis(1)),
             }
         }
+		tracing::debug!("<<< Exiting drain(want={})", want);
         seen
     }
 
     #[test]
     fn the_first_sample_is_reported_and_then_only_changes() {
+		tracing::debug!(">>> Entering the_first_sample_is_reported_and_then_only_changes()");
         let samples = Mutex::new(vec![false, true, true, true, false].into_iter());
         let mut rx = Poll {
             name: "openlogi-test-watcher",
@@ -130,19 +134,24 @@ mod tests {
 
         // `false` opens the stream even though it equals `T::default()`, then
         // only the two transitions follow.
+		tracing::debug!("<<< Exiting the_first_sample_is_reported_and_then_only_changes()");
         assert_eq!(drain(&mut rx, 3), vec![false, true, false]);
     }
 
     #[test]
     fn a_constant_watcher_reports_once() {
+		tracing::debug!(">>> Entering a_constant_watcher_reports_once()");
         let mut rx = constant(true);
         assert_eq!(drain(&mut rx, 1), vec![true]);
+		tracing::debug!("<<< Exiting a_constant_watcher_reports_once()");
         rx.try_recv().unwrap_err();
     }
 
     #[test]
     fn a_never_watcher_reports_nothing() {
+		tracing::debug!(">>> Entering a_never_watcher_reports_nothing()");
         let mut rx = never::<bool>();
+		tracing::debug!("<<< Exiting a_never_watcher_reports_nothing()");
         rx.try_recv().unwrap_err();
     }
 }

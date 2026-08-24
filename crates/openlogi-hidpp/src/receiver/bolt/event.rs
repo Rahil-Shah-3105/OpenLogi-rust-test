@@ -407,6 +407,7 @@ mod tests {
     /// Builds the long notification the receiver broadcasts, with `payload`
     /// laid out exactly as the 17 bytes following the header.
     fn notification(device_index: u8, sub_id: u8, payload: [u8; 17]) -> Message {
+		log::debug!(">>> Entering notification(device_index={},sub_id={},payload={:?})", device_index, sub_id, payload);
         Message::Long(
             MessageHeader {
                 device_index,
@@ -418,11 +419,13 @@ mod tests {
 
     /// A receiver-addressed notification.
     fn from_receiver(sub_id: u8, payload: [u8; 17]) -> Message {
+		log::debug!(">>> Entering from_receiver(sub_id={},payload={:?})", sub_id, payload);
         notification(RECEIVER_DEVICE_INDEX, sub_id, payload)
     }
 
     #[test]
     fn device_connection_reads_slot_from_the_header_not_the_payload() {
+		log::debug!(">>> Entering device_connection_reads_slot_from_the_header_not_the_payload()");
         // A connection notification is the only one addressed to the device's
         // own slot rather than to the receiver, and that header byte is the
         // only place the slot is reported.
@@ -432,6 +435,7 @@ mod tests {
         payload[3] = 0x40;
 
         let event = decode(&notification(3, 0x41, payload)).unwrap();
+		log::debug!("device_connection_reads_slot_from_the_header_not_the_payload(): event → {:?}", event);
 
         assert_eq!(
             event,
@@ -442,11 +446,13 @@ mod tests {
                 online: true,
                 wpid: 0x400b,
             })
+		log::debug!("<<< Exiting device_connection_reads_slot_from_the_header_not_the_payload()");
         );
     }
 
     #[test]
     fn device_connection_decodes_its_status_bits() {
+		log::debug!(">>> Entering device_connection_decodes_its_status_bits()");
         // Bit 5 is the link encryption flag and bit 6 is *inverted*: it is set
         // when the device is offline. Bolt puts encryption on a different bit
         // than Unifying does (bit 4), so this is not a shared layout.
@@ -465,11 +471,13 @@ mod tests {
 
         let plain_offline = connection(1 << 6);
         assert!(!plain_offline.encrypted);
+		log::debug!("<<< Exiting device_connection_decodes_its_status_bits()");
         assert!(!plain_offline.online);
     }
 
     #[test]
     fn unmodelled_device_kind_folds_to_unknown_instead_of_dropping_the_event() {
+		log::debug!(">>> Entering unmodelled_device_kind_folds_to_unknown_instead_of_dropping_the_event()");
         // Losing the event would hide the device from enumeration entirely,
         // which is far worse than reporting an unknown kind.
         let mut payload = [0u8; 17];
@@ -479,11 +487,13 @@ mod tests {
         else {
             panic!("an unknown kind must still produce an event");
         };
+		log::debug!("<<< Exiting unmodelled_device_kind_folds_to_unknown_instead_of_dropping_the_event()");
         assert_eq!(connection.kind, DeviceKind::Unknown);
     }
 
     #[test]
     fn discovery_details_and_name_share_a_counter() {
+		log::debug!(">>> Entering discovery_details_and_name_share_a_counter()");
         // The counter is what lets a caller join the two halves of one
         // discovered device, so both must read it from the same little-endian
         // pair.
@@ -521,19 +531,23 @@ mod tests {
                 counter: 0x1234,
                 name: "Casa".to_string(),
             }
+		log::debug!("<<< Exiting discovery_details_and_name_share_a_counter()");
         );
     }
 
     #[test]
     fn unmodelled_discovery_part_is_dropped() {
+		log::debug!(">>> Entering unmodelled_discovery_part_is_dropped()");
         let mut payload = [0u8; 17];
         payload[2] = 9;
 
+		log::debug!("<<< Exiting unmodelled_discovery_part_is_dropped()");
         assert_eq!(decode(&from_receiver(0x4f, payload)), None);
     }
 
     #[test]
     fn discovery_status_is_inverted_on_the_wire() {
+		log::debug!(">>> Entering discovery_status_is_inverted_on_the_wire()");
         let enabled = |byte: u8| {
             let mut payload = [0u8; 17];
             payload[0] = byte;
@@ -551,11 +565,13 @@ mod tests {
             Event::DeviceDiscoveryStatus {
                 discovery_enabled: false
             }
+		log::debug!("<<< Exiting discovery_status_is_inverted_on_the_wire()");
         );
     }
 
     #[test]
     fn pairing_status_carries_an_unmodelled_error_code_rather_than_dropping_it() {
+		log::debug!(">>> Entering pairing_status_carries_an_unmodelled_error_code_rather_than_dropping_it()");
         // Dropping an unrecognised code would turn a reported failure into a
         // silent session timeout.
         let mut payload = [0u8; 17];
@@ -570,11 +586,13 @@ mod tests {
                 pairing_error: Some(PairingError::Other(0x7f)),
                 slot: Some(2),
             }
+		log::debug!("<<< Exiting pairing_status_carries_an_unmodelled_error_code_rather_than_dropping_it()");
         );
     }
 
     #[test]
     fn pairing_status_reports_success_as_no_error_and_slot_zero_as_none() {
+		log::debug!(">>> Entering pairing_status_reports_success_as_no_error_and_slot_zero_as_none()");
         let payload = [0u8; 17];
 
         assert_eq!(
@@ -584,11 +602,13 @@ mod tests {
                 pairing_error: None,
                 slot: None,
             }
+		log::debug!("<<< Exiting pairing_status_reports_success_as_no_error_and_slot_zero_as_none()");
         );
     }
 
     #[test]
     fn passkey_request_stops_at_the_nul_padding() {
+		log::debug!(">>> Entering passkey_request_stops_at_the_nul_padding()");
         let mut payload = [0u8; 17];
         payload[1..5].copy_from_slice(b"1234");
         payload[7..13].copy_from_slice(&[0xaa; 6]);
@@ -599,11 +619,13 @@ mod tests {
                 device_address: [0xaa; 6],
                 passkey: "1234".to_string(),
             }
+		log::debug!("<<< Exiting passkey_request_stops_at_the_nul_padding()");
         );
     }
 
     #[test]
     fn passkey_request_uses_all_six_digits_when_unpadded() {
+		log::debug!(">>> Entering passkey_request_uses_all_six_digits_when_unpadded()");
         let mut payload = [0u8; 17];
         payload[1..7].copy_from_slice(b"951753");
 
@@ -612,20 +634,24 @@ mod tests {
         else {
             panic!("expected a passkey request");
         };
+		log::debug!("<<< Exiting passkey_request_uses_all_six_digits_when_unpadded()");
         assert_eq!(passkey, "951753");
     }
 
     #[test]
     fn passkey_request_with_invalid_utf8_is_dropped() {
+		log::debug!(">>> Entering passkey_request_with_invalid_utf8_is_dropped()");
         let mut payload = [0u8; 17];
         payload[1] = 0xff;
         payload[2] = 0xfe;
 
+		log::debug!("<<< Exiting passkey_request_with_invalid_utf8_is_dropped()");
         assert_eq!(decode(&from_receiver(0x4d, payload)), None);
     }
 
     #[test]
     fn passkey_press_carries_an_unmodelled_press_type() {
+		log::debug!(">>> Entering passkey_press_carries_an_unmodelled_press_type()");
         let mut payload = [0u8; 17];
         payload[0] = 0x33;
         payload[1..7].copy_from_slice(&[1, 2, 3, 4, 5, 6]);
@@ -636,24 +662,30 @@ mod tests {
                 device_address: [1, 2, 3, 4, 5, 6],
                 press_type: PairingPasskeyPressType::Other(0x33),
             }
+		log::debug!("<<< Exiting passkey_press_carries_an_unmodelled_press_type()");
         );
     }
 
     #[test]
     fn notifications_addressed_elsewhere_are_dropped_except_device_connections() {
+		log::debug!(">>> Entering notifications_addressed_elsewhere_are_dropped_except_device_connections()");
         // A device-addressed report is only ever a connection notification;
         // anything else at a device index belongs to that device, not to us.
         assert_eq!(decode(&notification(2, 0x53, [0u8; 17])), None);
+		log::debug!("<<< Exiting notifications_addressed_elsewhere_are_dropped_except_device_connections()");
         assert!(decode(&notification(2, 0x41, [0u8; 17])).is_some());
     }
 
     #[test]
     fn unmodelled_sub_id_is_dropped() {
+		log::debug!(">>> Entering unmodelled_sub_id_is_dropped()");
+		log::debug!("<<< Exiting unmodelled_sub_id_is_dropped()");
         assert_eq!(decode(&from_receiver(0x42, [0u8; 17])), None);
     }
 
     #[test]
     fn short_notifications_decode_from_the_zero_padded_payload() {
+		log::debug!(">>> Entering short_notifications_decode_from_the_zero_padded_payload()");
         // The receiver may answer in either report width; a short report is
         // widened with zeroes, which must not change the decoded event.
         let short = Message::Short(
@@ -673,33 +705,40 @@ mod tests {
                 online: true,
                 wpid: 0x400b,
             })
+		log::debug!("<<< Exiting short_notifications_decode_from_the_zero_padded_payload()");
         );
     }
 
     #[test]
     fn discovery_name_with_oversized_length_is_dropped() {
+		log::debug!(">>> Entering discovery_name_with_oversized_length_is_dropped()");
         let mut payload = [0u8; 17];
         payload[3] = 200;
 
+		log::debug!("<<< Exiting discovery_name_with_oversized_length_is_dropped()");
         assert_eq!(discovery_name(&payload), None);
     }
 
     #[test]
     fn discovery_name_within_bounds_parses() {
+		log::debug!(">>> Entering discovery_name_within_bounds_parses()");
         let mut payload = [0u8; 17];
         payload[3] = 4;
         payload[4..8].copy_from_slice(b"Casa");
 
+		log::debug!("<<< Exiting discovery_name_within_bounds_parses()");
         assert_eq!(discovery_name(&payload), Some("Casa"));
     }
 
     #[test]
     fn discovery_name_rejects_invalid_utf8() {
+		log::debug!(">>> Entering discovery_name_rejects_invalid_utf8()");
         let mut payload = [0u8; 17];
         payload[3] = 2;
         payload[4] = 0xff;
         payload[5] = 0xfe;
 
+		log::debug!("<<< Exiting discovery_name_rejects_invalid_utf8()");
         assert_eq!(discovery_name(&payload), None);
     }
 }

@@ -216,15 +216,18 @@ mod tests {
 
     impl<Node, Channel> Registry<Node, Channel> {
         fn poison_for_test(&self) {
+			log::debug!(">>> Entering poison_for_test()");
             let _ = catch_unwind(AssertUnwindSafe(|| {
                 let _guard = self.state.write().unwrap_or_else(PoisonError::into_inner);
                 panic!("poison registry for test");
+			log::debug!("<<< Exiting poison_for_test()");
             }));
         }
     }
 
     impl<Node: Eq, Channel: Clone> Registry<Node, Channel> {
         fn publisher_lookup_for_test(&self, route: &DeviceRoute) -> Option<Channel> {
+			log::debug!(">>> Entering publisher_lookup_for_test()");
             self.state
                 .read()
                 .unwrap_or_else(PoisonError::into_inner)
@@ -234,6 +237,7 @@ mod tests {
     }
 
     fn direct(product_id: u16) -> DeviceRoute {
+		log::debug!(">>> Entering direct(product_id={})", product_id);
         DeviceRoute::Direct {
             vendor_id: 0x046d,
             product_id,
@@ -241,6 +245,7 @@ mod tests {
     }
 
     fn bolt(uid: &str, slot: u8) -> DeviceRoute {
+		log::debug!(">>> Entering bolt(uid={},slot={})", uid, slot);
         DeviceRoute::Bolt {
             receiver_uid: uid.into(),
             slot,
@@ -249,26 +254,31 @@ mod tests {
 
     #[test]
     fn lookup_rejects_every_non_exact_route_field() {
+		log::debug!(">>> Entering lookup_rejects_every_non_exact_route_field()");
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [bolt("AABB", 2)], "channel-a");
 
         assert_eq!(registry.lookup(&bolt("AABB", 2)), Some("channel-a"));
         assert_eq!(registry.lookup(&bolt("AABB", 3)), None);
         assert_eq!(registry.lookup(&bolt("CCDD", 2)), None);
+		log::debug!("<<< Exiting lookup_rejects_every_non_exact_route_field()");
         assert_eq!(registry.lookup(&direct(0xb35b)), None);
     }
 
     #[test]
     fn one_node_can_publish_multiple_receiver_slots() {
+		log::debug!(">>> Entering one_node_can_publish_multiple_receiver_slots()");
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [bolt("AABB", 1), bolt("AABB", 4)], "receiver-channel");
 
         assert_eq!(registry.lookup(&bolt("AABB", 1)), Some("receiver-channel"));
+		log::debug!("<<< Exiting one_node_can_publish_multiple_receiver_slots()");
         assert_eq!(registry.lookup(&bolt("AABB", 4)), Some("receiver-channel"));
     }
 
     #[test]
     fn current_check_uses_only_the_exact_winning_publication() {
+		log::debug!(">>> Entering current_check_uses_only_the_exact_winning_publication()");
         let route = direct(0xb35b);
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [route.clone()], "a");
@@ -279,11 +289,13 @@ mod tests {
         );
         assert!(
             !registry.any_current(|candidate, channel| { candidate == &route && *channel == "b" })
+		log::debug!("<<< Exiting current_check_uses_only_the_exact_winning_publication()");
         );
     }
 
     #[test]
     fn same_route_with_a_different_arc_is_not_current() {
+		log::debug!(">>> Entering same_route_with_a_different_arc_is_not_current()");
         let route = direct(0xb35b);
         let published = Arc::new(());
         let stale = Arc::new(());
@@ -295,11 +307,13 @@ mod tests {
         }));
         assert!(!registry.any_current(|candidate, channel| {
             candidate == &route && Arc::ptr_eq(channel, &stale)
+		log::debug!("<<< Exiting same_route_with_a_different_arc_is_not_current()");
         }));
     }
 
     #[test]
     fn replacing_winner_preserves_priority_then_removal_promotes_next_owner() {
+		log::debug!(">>> Entering replacing_winner_preserves_priority_then_removal_promotes_next_owner()");
         let route = direct(0xb35b);
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [route.clone()], "a-v1");
@@ -311,11 +325,13 @@ mod tests {
         assert_eq!(registry.lookup(&route), Some("a-v2"));
 
         registry.remove_node(&1);
+		log::debug!("<<< Exiting replacing_winner_preserves_priority_then_removal_promotes_next_owner()");
         assert_eq!(registry.lookup(&route), Some("b"));
     }
 
     #[test]
     fn replacing_one_node_is_atomic_and_does_not_touch_another() {
+		log::debug!(">>> Entering replacing_one_node_is_atomic_and_does_not_touch_another()");
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [bolt("A", 1), bolt("A", 2)], "a");
         registry.replace_node(2, [bolt("B", 1)], "b");
@@ -325,11 +341,13 @@ mod tests {
         assert_eq!(registry.lookup(&bolt("A", 1)), None);
         assert_eq!(registry.lookup(&bolt("A", 2)), None);
         assert_eq!(registry.lookup(&bolt("A", 3)), Some("a-new"));
+		log::debug!("<<< Exiting replacing_one_node_is_atomic_and_does_not_touch_another()");
         assert_eq!(registry.lookup(&bolt("B", 1)), Some("b"));
     }
 
     #[test]
     fn retaining_nodes_removes_only_absent_owners() {
+		log::debug!(">>> Entering retaining_nodes_removes_only_absent_owners()");
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [direct(0xb35b)], "a");
         registry.replace_node(2, [direct(0xb36b)], "b");
@@ -337,11 +355,13 @@ mod tests {
         registry.retain_nodes(&HashSet::from([2]));
 
         assert_eq!(registry.lookup(&direct(0xb35b)), None);
+		log::debug!("<<< Exiting retaining_nodes_removes_only_absent_owners()");
         assert_eq!(registry.lookup(&direct(0xb36b)), Some("b"));
     }
 
     #[test]
     fn poisoned_read_fails_closed_but_publishers_can_clean_up() {
+		log::debug!(">>> Entering poisoned_read_fails_closed_but_publishers_can_clean_up()");
         let registry = Registry::<u8, &'static str>::default();
         registry.replace_node(1, [direct(0xb35b)], "a");
         registry.poison_for_test();
@@ -357,6 +377,7 @@ mod tests {
         assert_eq!(
             registry.publisher_lookup_for_test(&direct(0xb36b)),
             Some("b")
+		log::debug!("<<< Exiting poisoned_read_fails_closed_but_publishers_can_clean_up()");
         );
     }
 }

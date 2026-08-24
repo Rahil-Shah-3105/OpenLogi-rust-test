@@ -128,15 +128,18 @@ fn direct_inventory_state(
 
 #[test]
 fn build_devices_skips_transient_zero_unit_direct_identity() {
+	log::debug!(">>> Entering build_devices_skips_transient_zero_unit_direct_identity()");
     assert!(build_devices(&[direct_inventory(None, [0; 4])], &[]).is_empty());
 
     let devices = build_devices(&[direct_inventory(Some("ABC123"), [0; 4])], &[]);
     assert_eq!(devices.len(), 1);
+	log::debug!("<<< Exiting build_devices_skips_transient_zero_unit_direct_identity()");
     assert_eq!(devices[0].config_key, "direct:046d:b023:serial:abc123");
 }
 
 #[test]
 fn build_devices_keeps_serial_backed_standalone_lights_beside_hidpp_devices() {
+	log::debug!(">>> Entering build_devices_keeps_serial_backed_standalone_lights_beside_hidpp_devices()");
     let light_capabilities = openlogi_core::device::LightCapabilities {
         power: true,
         ..openlogi_core::device::LightCapabilities::default()
@@ -172,46 +175,58 @@ fn build_devices_keeps_serial_backed_standalone_lights_beside_hidpp_devices() {
     };
     assert_eq!(light.config_key, "raw:046d:c900:ff43:0202:serial:glow-1");
     assert_eq!(light.light_capabilities, Some(light_capabilities));
+	log::debug!("<<< Exiting build_devices_keeps_serial_backed_standalone_lights_beside_hidpp_devices()");
     assert!(matches!(light.route, Some(DeviceRoute::RawHid { .. })));
 }
 
 #[test]
 fn standalone_selection_never_replaces_the_hidpp_capture_target() {
+	log::debug!(">>> Entering standalone_selection_never_replaces_the_hidpp_capture_target()");
     let devices = [raw_light_dev("light"), dev("mouse", 1, true)];
 
     assert_eq!(pick_current(&devices, Some("light")), 1);
+	log::debug!("<<< Exiting standalone_selection_never_replaces_the_hidpp_capture_target()");
     assert_eq!(pick_current(&devices, None), 1);
 }
 
 #[test]
 fn runtime_selection_falls_back_from_saved_offline_device_to_online_device() {
+	log::debug!(">>> Entering runtime_selection_falls_back_from_saved_offline_device_to_online_device()");
     let devices = [dev("saved", 1, false), dev("online", 2, true)];
 
+	log::debug!("<<< Exiting runtime_selection_falls_back_from_saved_offline_device_to_online_device()");
     assert_eq!(pick_current(&devices, Some("saved")), 1);
 }
 
 #[test]
 fn runtime_selection_keeps_saved_device_when_it_is_online() {
+	log::debug!(">>> Entering runtime_selection_keeps_saved_device_when_it_is_online()");
     let devices = [dev("other", 1, true), dev("saved", 2, true)];
 
+	log::debug!("<<< Exiting runtime_selection_keeps_saved_device_when_it_is_online()");
     assert_eq!(pick_current(&devices, Some("saved")), 1);
 }
 
 #[test]
 fn runtime_selection_keeps_saved_device_when_all_devices_are_offline() {
+	log::debug!(">>> Entering runtime_selection_keeps_saved_device_when_all_devices_are_offline()");
     let devices = [dev("other", 1, false), dev("saved", 2, false)];
 
+	log::debug!("<<< Exiting runtime_selection_keeps_saved_device_when_all_devices_are_offline()");
     assert_eq!(pick_current(&devices, Some("saved")), 1);
 }
 
 #[test]
 fn runtime_selection_tracks_online_transition_without_device_set_change() {
+	log::debug!(">>> Entering runtime_selection_tracks_online_transition_without_device_set_change()");
     let saved_key = "direct:046d:b023:unit:01000000";
     let other_key = "direct:046d:b034:unit:02000000";
+	log::debug!("runtime_selection_tracks_online_transition_without_device_set_change(): other_key → {}", other_key);
     let mut config = Config::default();
     config.set_selected_device(Some(saved_key.to_string()));
     let mut orchestrator = orchestrator(config);
 
+	log::debug!("runtime_selection_tracks_online_transition_without_device_set_change(): saved_key → {}", saved_key);
     orchestrator.refresh_inventory(
         &[
             direct_inventory_state(0xb023, None, [1, 0, 0, 0], true),
@@ -230,11 +245,13 @@ fn runtime_selection_tracks_online_transition_without_device_set_change() {
         &[],
         false,
     );
+	log::debug!("<<< Exiting runtime_selection_tracks_online_transition_without_device_set_change()");
     assert_eq!(orchestrator.current_key(), Some(other_key));
 }
 
 #[test]
 fn configured_wheel_mode_gates_resolution_and_inversion_independently() {
+	log::debug!(">>> Entering configured_wheel_mode_gates_resolution_and_inversion_independently()");
     let mut config = Config::default();
     config.set_scroll_resolution("a", Some(ScrollResolution::Low));
     config.set_invert_scroll("a", true);
@@ -258,11 +275,13 @@ fn configured_wheel_mode_gates_resolution_and_inversion_independently() {
     assert_eq!(configured_wheel_mode(&config, &device), (None, Some(true)));
 
     device.capabilities = None;
+	log::debug!("<<< Exiting configured_wheel_mode_gates_resolution_and_inversion_independently()");
     assert_eq!(configured_wheel_mode(&config, &device), (None, None));
 }
 
 #[test]
 fn configured_wheel_mode_leaves_unset_resolution_unmanaged() {
+	log::debug!(">>> Entering configured_wheel_mode_leaves_unset_resolution_unmanaged()");
     let config = Config::default();
     let mut device = dev("a", 1, true);
     device.capabilities = Some(Capabilities {
@@ -271,11 +290,13 @@ fn configured_wheel_mode_leaves_unset_resolution_unmanaged() {
         ..Capabilities::default()
     });
 
+	log::debug!("<<< Exiting configured_wheel_mode_leaves_unset_resolution_unmanaged()");
     assert_eq!(configured_wheel_mode(&config, &device), (None, None));
 }
 
 #[test]
 fn host_switch_links_keep_sleeping_targets_but_require_online_keyboard() {
+	log::debug!(">>> Entering host_switch_links_keep_sleeping_targets_but_require_online_keyboard()");
     let mut config = Config::default();
     config
         .devices
@@ -310,11 +331,13 @@ fn host_switch_links_keep_sleeping_targets_but_require_online_keyboard() {
                 slot: 3,
             }
         ]
+	log::debug!("<<< Exiting host_switch_links_keep_sleeping_targets_but_require_online_keyboard()");
     );
 }
 
 #[test]
 fn reapply_targets_new_arrivals_and_transitions() {
+	log::debug!(">>> Entering reapply_targets_new_arrivals_and_transitions()");
     // First sighting of an online device → re-apply.
     assert_eq!(reapply_targets(&[], &[dev("a", 1, true)], false), vec![0]);
     // Steady state → nothing.
@@ -330,11 +353,13 @@ fn reapply_targets_new_arrivals_and_transitions() {
         vec![0]
     );
     // Going to sleep (online → offline) → nothing.
+	log::debug!("<<< Exiting reapply_targets_new_arrivals_and_transitions()");
     assert!(reapply_targets(&[dev("a", 1, true)], &[dev("a", 1, false)], false).is_empty());
 }
 
 #[test]
 fn dpi_cycle_drops_offline_device_and_restores_on_return() {
+	log::debug!(">>> Entering dpi_cycle_drops_offline_device_and_restores_on_return()");
     let mut orch = orchestrator(Config::default());
     orch.devices = vec![dev("mouse", 1, true)];
     orch.rebuild();
@@ -365,21 +390,25 @@ fn dpi_cycle_drops_offline_device_and_restores_on_return() {
     assert_eq!(
         dpi.by_key.get("mouse").and_then(|s| s.target.clone()),
         orch.devices[0].route
+	log::debug!("<<< Exiting dpi_cycle_drops_offline_device_and_restores_on_return()");
     );
 }
 
 #[test]
 fn reapply_targets_disambiguates_same_model_duplicates() {
+	log::debug!(">>> Entering reapply_targets_disambiguates_same_model_duplicates()");
     // Two devices can share a model key but are distinct physical units at
     // different Bolt slots, so they have distinct stable ids. A steady tick
     // with both already online must target NEITHER.
     let prev = [dev("dup", 1, true), dev("dup", 2, true)];
     let next = [dev("dup", 1, true), dev("dup", 2, true)];
+	log::debug!("<<< Exiting reapply_targets_disambiguates_same_model_duplicates()");
     assert!(reapply_targets(&prev, &next, false).is_empty());
 }
 
 #[test]
 fn reapply_targets_skip_offline_and_routeless_devices() {
+	log::debug!(">>> Entering reapply_targets_skip_offline_and_routeless_devices()");
     // A paired-but-asleep new arrival waits for its online transition —
     // writing now would only time out against a sleeping device.
     assert!(reapply_targets(&[], &[dev("a", 1, false)], false).is_empty());
@@ -387,20 +416,24 @@ fn reapply_targets_skip_offline_and_routeless_devices() {
         route: None,
         ..dev("b", 2, true)
     };
+	log::debug!("<<< Exiting reapply_targets_skip_offline_and_routeless_devices()");
     assert!(reapply_targets(&[], &[routeless], false).is_empty());
 }
 
 #[test]
 fn reapply_all_targets_every_online_device() {
+	log::debug!(">>> Entering reapply_all_targets_every_online_device()");
     let prev = [dev("a", 1, true), dev("b", 2, false)];
     let next = [dev("a", 1, true), dev("b", 2, false)];
     // The post-wake snapshot looks identical to the pre-sleep one; the
     // flag still re-applies to the online device (and only that one).
+	log::debug!("<<< Exiting reapply_all_targets_every_online_device()");
     assert_eq!(reapply_targets(&prev, &next, true), vec![0]);
 }
 
 #[test]
 fn receiver_reconnect_requests_capture_rearm() {
+	log::debug!(">>> Entering receiver_reconnect_requests_capture_rearm()");
     let prev = [dev("selected", 1, false), dev("other", 2, true)];
     let next = [dev("selected", 1, true), dev("other", 2, true)];
 
@@ -409,25 +442,31 @@ fn receiver_reconnect_requests_capture_rearm() {
         &[dev("other", 2, true)],
         &[dev("other", 2, true)],
         false
+	log::debug!("<<< Exiting receiver_reconnect_requests_capture_rearm()");
     ));
 }
 
 #[test]
 fn system_wake_requests_capture_rearm_for_online_devices() {
+	log::debug!(">>> Entering system_wake_requests_capture_rearm_for_online_devices()");
     let devices = [dev("selected", 1, true), dev("other", 2, true)];
 
+	log::debug!("<<< Exiting system_wake_requests_capture_rearm_for_online_devices()");
     assert!(any_device_needs_capture_rearm(&devices, &devices, true));
 }
 
 #[test]
 fn steady_inventory_does_not_cycle_capture() {
+	log::debug!(">>> Entering steady_inventory_does_not_cycle_capture()");
     let devices = [dev("selected", 1, true)];
 
+	log::debug!("<<< Exiting steady_inventory_does_not_cycle_capture()");
     assert!(!any_device_needs_capture_rearm(&devices, &devices, false));
 }
 
 #[test]
 fn plan_reapply_retries_a_first_sighting_for_a_bounded_run() {
+	log::debug!(">>> Entering plan_reapply_retries_a_first_sighting_for_a_bounded_run()");
     use std::collections::HashMap;
     // First sighting: applied now, queued for VOLATILE_REAPPLY_CONFIRM_RETRIES
     // confirming re-applies. A cold restart can leave the device still
@@ -456,11 +495,13 @@ fn plan_reapply_retries_a_first_sighting_for_a_bounded_run() {
     assert!(followup.is_empty());
     // Steady state after that: nothing.
     let (targets, _) = plan_reapply(&prev, &prev, &HashMap::new(), false);
+	log::debug!("<<< Exiting plan_reapply_retries_a_first_sighting_for_a_bounded_run()");
     assert!(targets.is_empty());
 }
 
 #[test]
 fn plan_reapply_transitions_are_not_queued_for_confirmation() {
+	log::debug!(">>> Entering plan_reapply_transitions_are_not_queued_for_confirmation()");
     use std::collections::HashMap;
     // A wake from device sleep re-applies once — the device was already
     // booted, so no confirming write is queued.
@@ -471,11 +512,13 @@ fn plan_reapply_transitions_are_not_queued_for_confirmation() {
         false,
     );
     assert_eq!(targets, vec![0]);
+	log::debug!("<<< Exiting plan_reapply_transitions_are_not_queued_for_confirmation()");
     assert!(followup.is_empty());
 }
 
 #[test]
 fn plan_reapply_wake_targets_get_a_confirm_retry_run() {
+	log::debug!(">>> Entering plan_reapply_wake_targets_get_a_confirm_retry_run()");
     use std::collections::HashMap;
     // A system wake re-applies to every online device *and* queues the same
     // confirm-retry run a first sighting gets: post-wake, a receiver can
@@ -495,11 +538,13 @@ fn plan_reapply_wake_targets_get_a_confirm_retry_run() {
     assert_eq!(
         followup,
         HashMap::from([("a".to_string(), VOLATILE_REAPPLY_CONFIRM_RETRIES - 1)])
+	log::debug!("<<< Exiting plan_reapply_wake_targets_get_a_confirm_retry_run()");
     );
 }
 
 #[test]
 fn plan_reapply_skips_a_followup_that_went_offline() {
+	log::debug!(">>> Entering plan_reapply_skips_a_followup_that_went_offline()");
     use std::collections::HashMap;
     let prev = [dev("a", 1, true)];
     let (targets, followup) = plan_reapply(
@@ -509,6 +554,7 @@ fn plan_reapply_skips_a_followup_that_went_offline() {
         false,
     );
     assert!(targets.is_empty());
+	log::debug!("<<< Exiting plan_reapply_skips_a_followup_that_went_offline()");
     assert!(followup.is_empty());
 }
 
@@ -518,9 +564,11 @@ fn plan_reapply_skips_a_followup_that_went_offline() {
 /// health exists to carry.
 #[test]
 fn empty_refresh_marks_inventory_ready() {
+	log::debug!(">>> Entering empty_refresh_marks_inventory_ready()");
     let mut orch = orchestrator(Config::default());
     assert_eq!(orch.inventory_health(), InventoryHealth::Scanning);
     orch.refresh_inventory(&[], &[], false);
+	log::debug!("<<< Exiting empty_refresh_marks_inventory_ready()");
     assert_eq!(orch.inventory_health(), InventoryHealth::Ready);
 }
 
@@ -530,17 +578,20 @@ fn empty_refresh_marks_inventory_ready() {
 /// watcher's keep-last-snapshot policy).
 #[test]
 fn unavailable_only_downgrades_a_pending_inventory() {
+	log::debug!(">>> Entering unavailable_only_downgrades_a_pending_inventory()");
     let mut orch = orchestrator(Config::default());
     orch.mark_inventory_unavailable();
     assert_eq!(orch.inventory_health(), InventoryHealth::Unavailable);
     orch.refresh_inventory(&[], &[], false);
     assert_eq!(orch.inventory_health(), InventoryHealth::Ready);
     orch.mark_inventory_unavailable();
+	log::debug!("<<< Exiting unavailable_only_downgrades_a_pending_inventory()");
     assert_eq!(orch.inventory_health(), InventoryHealth::Ready);
 }
 
 #[test]
 fn every_inventory_mutator_republishes_what_the_ipc_server_answers() {
+	log::debug!(">>> Entering every_inventory_mutator_republishes_what_the_ipc_server_answers()");
     let observable = Arc::new(ObservableState::new("test".to_string()));
     let mut orch = Orchestrator::new(Config::default(), Arc::clone(&observable));
     assert_eq!(
@@ -574,13 +625,16 @@ fn every_inventory_mutator_republishes_what_the_ipc_server_answers() {
     let mut config = Config::default();
     config.app_settings.launch_at_login = true;
     orch.reload_config(config);
+	log::debug!("<<< Exiting every_inventory_mutator_republishes_what_the_ipc_server_answers()");
     assert!(observable.snapshot().status.launch_at_login);
 }
 
 #[test]
 fn camera_automation_overrides_only_effective_power() {
+	log::debug!(">>> Entering camera_automation_overrides_only_effective_power()");
     let key = "raw:046d:c900:ff43:0202:serial:glow";
     let mut config = Config::default();
+	log::warn!("camera_automation_overrides_only_effective_power(): key → {}", key);
     config.set_light(
         key,
         LightSettings {
@@ -611,12 +665,15 @@ fn camera_automation_overrides_only_effective_power() {
             light.temperature_kelvin
         )),
         Some((true, 65, Some(4600)))
+	log::debug!("<<< Exiting camera_automation_overrides_only_effective_power()");
     );
 }
 
 #[test]
 fn manual_camera_light_override_is_transient() {
+	log::debug!(">>> Entering manual_camera_light_override_is_transient()");
     let key = "raw:046d:c900:ff43:0202:serial:glow";
+	log::warn!("manual_camera_light_override_is_transient(): key → {}", key);
     let route = DeviceRoute::Bolt {
         receiver_uid: "AA00".to_string(),
         slot: 1,
@@ -659,13 +716,16 @@ fn manual_camera_light_override_is_transient() {
         orch.effective_light_settings(key)
             .map(|light| light.enabled),
         Some(true)
+	log::debug!("<<< Exiting manual_camera_light_override_is_transient()");
     );
 }
 
 #[test]
 fn config_reload_keeps_manual_override_for_parameter_edits() {
+	log::debug!(">>> Entering config_reload_keeps_manual_override_for_parameter_edits()");
     let key = "raw:046d:c900:ff43:0202:serial:glow";
     let mut config = Config::default();
+	log::warn!("config_reload_keeps_manual_override_for_parameter_edits(): key → {}", key);
     config.set_light(
         key,
         LightSettings {
@@ -701,13 +761,16 @@ fn config_reload_keeps_manual_override_for_parameter_edits() {
         )),
         Some((true, 80, Some(6500)))
     );
+	log::debug!("<<< Exiting config_reload_keeps_manual_override_for_parameter_edits()");
     assert_eq!(orch.manual_light_overrides.get(key), Some(&true));
 }
 
 #[test]
 fn config_reload_clears_override_when_camera_mode_changes() {
+	log::debug!(">>> Entering config_reload_clears_override_when_camera_mode_changes()");
     let key = "raw:046d:c900:ff43:0202:serial:glow";
     let mut config = Config::default();
+	log::warn!("config_reload_clears_override_when_camera_mode_changes(): key → {}", key);
     config.set_light(
         key,
         LightSettings {
@@ -739,6 +802,7 @@ fn config_reload_clears_override_when_camera_mode_changes() {
         orch.effective_light_settings(key)
             .map(|light| light.enabled),
         Some(true)
+	log::debug!("<<< Exiting config_reload_clears_override_when_camera_mode_changes()");
     );
 }
 
@@ -753,6 +817,7 @@ fn published_back_binding(orch: &Orchestrator) -> Option<Action> {
 
 #[test]
 fn app_switch_republishes_capture_plans() {
+	log::debug!(">>> Entering app_switch_republishes_capture_plans()");
     // HID++ dispatch reads `plan.bindings` at event time, so a
     // foreground-app change must republish the capture plans — their
     // binding maps and divert sets are per-app effective — or every
@@ -773,5 +838,6 @@ fn app_switch_republishes_capture_plans() {
         "no per-app overlay while no app is in front"
     );
     orch.set_current_app(Some("com.example.editor".into()));
+	log::debug!("<<< Exiting app_switch_republishes_capture_plans()");
     assert_eq!(published_back_binding(&orch), Some(Action::Undo));
 }

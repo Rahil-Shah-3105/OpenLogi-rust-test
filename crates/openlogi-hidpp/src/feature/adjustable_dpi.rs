@@ -117,70 +117,85 @@ mod tests {
 
     #[test]
     fn parses_explicit_dpi_list() {
+		log::debug!(">>> Entering parses_explicit_dpi_list()");
         let payload = [0x01, 0x90, 0x03, 0x20, 0x06, 0x40, 0x00, 0x00];
 
+		log::debug!("<<< Exiting parses_explicit_dpi_list()");
         assert_eq!(parse_dpi_list_payload(&payload).unwrap(), [400, 800, 1600]);
     }
 
     #[test]
     fn expands_range_encoded_dpi_list() {
+		log::debug!(">>> Entering expands_range_encoded_dpi_list()");
         let payload = [0x01, 0x90, 0xe1, 0x90, 0x06, 0x40, 0x00, 0x00];
 
         assert_eq!(
             parse_dpi_list_payload(&payload).unwrap(),
             [400, 800, 1200, 1600]
+		log::debug!("<<< Exiting expands_range_encoded_dpi_list()");
         );
     }
 
     #[test]
     fn sorts_and_deduplicates_values() {
+		log::debug!(">>> Entering sorts_and_deduplicates_values()");
         let payload = [0x06, 0x40, 0x03, 0x20, 0x03, 0x20, 0x00, 0x00];
 
+		log::debug!("<<< Exiting sorts_and_deduplicates_values()");
         assert_eq!(parse_dpi_list_payload(&payload).unwrap(), [800, 1600]);
     }
 
     #[test]
     fn rejects_range_marker_without_previous_value() {
+		log::debug!(">>> Entering rejects_range_marker_without_previous_value()");
         let payload = [0xe0, 0x32, 0x1f, 0x40, 0x00, 0x00];
 
         assert_matches!(
             parse_dpi_list_payload(&payload),
             Err(Hidpp20Error::UnsupportedResponse)
+		log::debug!("<<< Exiting rejects_range_marker_without_previous_value()");
         );
     }
 
     #[test]
     fn rejects_range_marker_without_end_value() {
+		log::debug!(">>> Entering rejects_range_marker_without_end_value()");
         let payload = [0x01, 0x90, 0xe0, 0x32];
 
         assert_matches!(
             parse_dpi_list_payload(&payload),
             Err(Hidpp20Error::UnsupportedResponse)
+		log::debug!("<<< Exiting rejects_range_marker_without_end_value()");
         );
     }
 
     #[test]
     fn rejects_zero_step_range_marker() {
+		log::debug!(">>> Entering rejects_zero_step_range_marker()");
         let payload = [0x01, 0x90, 0xe0, 0x00, 0x06, 0x40, 0x00, 0x00];
 
         assert_matches!(
             parse_dpi_list_payload(&payload),
             Err(Hidpp20Error::UnsupportedResponse)
+		log::debug!("<<< Exiting rejects_zero_step_range_marker()");
         );
     }
 
     #[test]
     fn rejects_descending_range_marker() {
+		log::debug!(">>> Entering rejects_descending_range_marker()");
         let payload = [0x06, 0x40, 0xe0, 0x32, 0x01, 0x90, 0x00, 0x00];
 
         assert_matches!(
             parse_dpi_list_payload(&payload),
             Err(Hidpp20Error::UnsupportedResponse)
+		log::debug!("<<< Exiting rejects_descending_range_marker()");
         );
     }
 
     #[test]
     fn range_keeps_off_grid_high_endpoint() {
+		log::debug!(">>> Entering range_keeps_off_grid_high_endpoint()");
         // min 400, step 400, max 1500 — 1500 is not on the 400 grid but is a
         // supported value and must be kept.
         let payload = [0x01, 0x90, 0xe1, 0x90, 0x05, 0xdc, 0x00, 0x00];
@@ -188,23 +203,28 @@ mod tests {
         assert_eq!(
             parse_dpi_list_payload(&payload).unwrap(),
             [400, 800, 1200, 1500]
+		log::debug!("<<< Exiting range_keeps_off_grid_high_endpoint()");
         );
     }
 
     #[test]
     fn parses_full_list_without_terminator() {
+		log::debug!(">>> Entering parses_full_list_without_terminator()");
         // A list that fills the response leaves no room for a 0x0000
         // terminator; the values are still valid.
         let payload = [0x01, 0x90, 0x03, 0x20, 0x06, 0x40];
 
+		log::debug!("<<< Exiting parses_full_list_without_terminator()");
         assert_eq!(parse_dpi_list_payload(&payload).unwrap(), [400, 800, 1600]);
     }
 
     #[test]
     fn rejects_payload_with_no_values() {
+		log::debug!(">>> Entering rejects_payload_with_no_values()");
         assert_matches!(
             parse_dpi_list_payload(&[0x00, 0x00]),
             Err(Hidpp20Error::UnsupportedResponse)
+		log::debug!("<<< Exiting rejects_payload_with_no_values()");
         );
     }
 }

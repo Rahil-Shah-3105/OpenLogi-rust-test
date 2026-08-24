@@ -92,6 +92,7 @@ mod tests {
 
     #[test]
     fn decodes_resolution_and_flags() {
+		log::debug!(">>> Entering decodes_resolution_and_flags()");
         let mut payload = [0; 16];
         payload[0..2].copy_from_slice(&1600u16.to_be_bytes());
         // High acceleration (0b11) + suggest OS ballistics (bit 2).
@@ -101,11 +102,13 @@ mod tests {
         assert_eq!(info.sensor_resolution, 1600);
         assert_eq!(info.pointer_acceleration, PointerAcceleration::High);
         assert!(info.suggest_os_ballistics);
+		log::debug!("<<< Exiting decodes_resolution_and_flags()");
         assert!(!info.suggest_vertical_tuning);
     }
 
     #[test]
     fn decodes_trackball_vertical_tuning() {
+		log::debug!(">>> Entering decodes_trackball_vertical_tuning()");
         let mut payload = [0; 16];
         payload[0..2].copy_from_slice(&400u16.to_be_bytes());
         // Suggest vertical tuning (bit 3), acceleration none.
@@ -114,6 +117,7 @@ mod tests {
         let info = MousePointerInfo::from_payload(payload).unwrap();
         assert_eq!(info.pointer_acceleration, PointerAcceleration::None);
         assert!(!info.suggest_os_ballistics);
+		log::debug!("<<< Exiting decodes_trackball_vertical_tuning()");
         assert!(info.suggest_vertical_tuning);
     }
 }

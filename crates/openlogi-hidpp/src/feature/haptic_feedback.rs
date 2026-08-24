@@ -148,17 +148,21 @@ mod tests {
 
     #[test]
     fn intensity_rejects_values_above_one_hundred() {
+		log::debug!(">>> Entering intensity_rejects_values_above_one_hundred()");
         assert_eq!(
             HapticIntensity::new(100).map(HapticIntensity::get),
             Some(100)
         );
+		log::debug!("<<< Exiting intensity_rejects_values_above_one_hundred()");
         assert_eq!(HapticIntensity::new(101), None);
     }
 
     #[test]
     fn waveform_mask_retains_unknown_bits() {
+		log::debug!(">>> Entering waveform_mask_retains_unknown_bits()");
         let mask = SupportedWaveforms::from_bits_retain((1 << 4) | (1 << 31));
         assert!(mask.contains(SupportedWaveforms::SUBTLE_COLLISION));
+		log::debug!("<<< Exiting waveform_mask_retains_unknown_bits()");
         assert_eq!(mask.bits(), (1 << 4) | (1 << 31));
     }
 }

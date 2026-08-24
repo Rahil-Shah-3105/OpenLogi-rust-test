@@ -95,41 +95,51 @@ mod tests {
 
     #[test]
     fn empty_usage_list_sends_no_packets() {
+		log::debug!(">>> Entering empty_usage_list_sends_no_packets()");
+		log::debug!("<<< Exiting empty_usage_list_sends_no_packets()");
         assert!(usage_packets(&[]).is_empty());
     }
 
     #[test]
     fn short_list_is_zero_terminated() {
+		log::debug!(">>> Entering short_list_is_zero_terminated()");
         let packets = usage_packets(&[0x39, 0x3a, 0x3b]);
         assert_eq!(packets.len(), 1);
         assert_eq!(packets[0][..3], [0x39, 0x3a, 0x3b]);
         // The remaining bytes are the 0x00 terminator / padding.
+		log::debug!("<<< Exiting short_list_is_zero_terminated()");
         assert!(packets[0][3..].iter().all(|&b| b == 0));
     }
 
     #[test]
     fn rejects_zero_usage_before_packetizing() {
+		log::debug!(">>> Entering rejects_zero_usage_before_packetizing()");
         assert_matches!(
             validate_usages(&[0x39, 0, 0x3a]),
             Err(Hidpp20Error::Feature(ErrorType::InvalidArgument))
+		log::debug!("<<< Exiting rejects_zero_usage_before_packetizing()");
         );
     }
 
     #[test]
     fn full_packet_has_no_terminator() {
+		log::debug!(">>> Entering full_packet_has_no_terminator()");
         let usages: Vec<u8> = (1..=16).collect();
         let packets = usage_packets(&usages);
         assert_eq!(packets.len(), 1);
+		log::debug!("<<< Exiting full_packet_has_no_terminator()");
         assert_eq!(packets[0], usages.as_slice());
     }
 
     #[test]
     fn overflow_splits_into_cumulative_packets() {
+		log::debug!(">>> Entering overflow_splits_into_cumulative_packets()");
         let usages: Vec<u8> = (1..=18).collect();
         let packets = usage_packets(&usages);
         assert_eq!(packets.len(), 2);
         assert_eq!(packets[0], (1..=16).collect::<Vec<u8>>().as_slice());
         assert_eq!(packets[1][..2], [17, 18]);
+		log::debug!("<<< Exiting overflow_splits_into_cumulative_packets()");
         assert!(packets[1][2..].iter().all(|&b| b == 0));
     }
 }

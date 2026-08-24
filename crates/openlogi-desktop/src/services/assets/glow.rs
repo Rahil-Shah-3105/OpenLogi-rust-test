@@ -230,6 +230,7 @@ mod tests {
 
     #[test]
     fn from_mask_extracts_on_runs_as_normalized_segments() {
+		tracing::debug!(">>> Entering from_mask_extracts_on_runs_as_normalized_segments()");
         // 4x2 mask, runs alternate off/on starting off: off2, on2, off3, on1.
         // Row-major idx 2..4 ON (row 0, cols 2-3); idx 7 ON (row 1, col 3).
         let mask = GlowMask {
@@ -246,11 +247,13 @@ mod tests {
         assert!((first.w - 0.5).abs() < 1e-6); // len 2 / 4
         let second = geom.segments[1];
         assert!((second.x - 0.75).abs() < 1e-6); // col 3 / 4
+		tracing::debug!("<<< Exiting from_mask_extracts_on_runs_as_normalized_segments()");
         assert!((second.y - 0.5).abs() < 1e-6); // row 1 / 2
     }
 
     #[test]
     fn from_mask_splits_a_run_across_rows() {
+		tracing::debug!(">>> Entering from_mask_splits_a_run_across_rows()");
         // 2x2, runs off1 on3: idx 1 (row 0 col 1) + idx 2..4 (row 1) → 2 segments.
         let mask = GlowMask {
             width: 2,
@@ -258,22 +261,26 @@ mod tests {
             runs: vec![1, 3],
         };
         let geom = GlowGeometry::from_mask(&mask).expect("valid mask");
+		tracing::debug!("<<< Exiting from_mask_splits_a_run_across_rows()");
         assert_eq!(geom.segments.len(), 2);
     }
 
     #[test]
     fn from_mask_rejects_bad_run_total() {
+		tracing::debug!(">>> Entering from_mask_rejects_bad_run_total()");
         let mask = GlowMask {
             width: 4,
             height: 4,
             runs: vec![3, 2], // sums to 5, not 16
         };
+		tracing::debug!("<<< Exiting from_mask_rejects_bad_run_total()");
         assert!(GlowGeometry::from_mask(&mask).is_none());
     }
 
     /// Write an RGBA png where `1` cells are solid and the rest fully
     /// transparent.
     fn write_png(dir: &std::path::Path, name: &str, rows: &[&[u8]]) -> std::path::PathBuf {
+		tracing::debug!(">>> Entering write_png(dir={:?},name={},rows={:?})", dir, name, rows);
         let h = u32::try_from(rows.len()).expect("test image height fits u32");
         let w = u32::try_from(rows[0].len()).expect("test image width fits u32");
         let mut img = image::RgbaImage::new(w, h);
@@ -289,11 +296,13 @@ mod tests {
         }
         let path = dir.join(name);
         img.save(&path).expect("write png");
+		tracing::debug!("<<< Exiting write_png(dir={:?},name={},rows={:?})", dir, name, rows);
         path
     }
 
     #[test]
     fn computed_geometry_finds_only_enclosed_holes() {
+		tracing::debug!(">>> Entering computed_geometry_finds_only_enclosed_holes()");
         let dir = tempfile::tempdir().expect("tempdir");
         // A ring of opaque pixels around one transparent pixel (a hole), with
         // border-connected transparency everywhere else.
@@ -309,15 +318,18 @@ mod tests {
             ],
         );
         let geom = compute_glow_geometry(&path).expect("hole found");
+		tracing::debug!("computed_geometry_finds_only_enclosed_holes(): geom → {:?}", geom);
         assert_eq!(geom.segments.len(), 1);
         let seg = geom.segments[0];
         assert!((seg.x - 0.4).abs() < 1e-6, "hole at col 2 of 5");
         assert!((seg.y - 0.4).abs() < 1e-6, "hole at row 2 of 5");
+		tracing::debug!("<<< Exiting computed_geometry_finds_only_enclosed_holes()");
         assert!((geom.aspect - 1.0).abs() < 1e-6);
     }
 
     #[test]
     fn computed_geometry_ignores_border_connected_transparency() {
+		tracing::debug!(">>> Entering computed_geometry_ignores_border_connected_transparency()");
         let dir = tempfile::tempdir().expect("tempdir");
         // A C-shape: the notch opens to the border, so nothing is enclosed.
         let path = write_png(
@@ -325,13 +337,17 @@ mod tests {
             "open.png",
             &[&[1, 1, 1], &[1, 0, 0], &[1, 1, 1]],
         );
+		tracing::debug!("<<< Exiting computed_geometry_ignores_border_connected_transparency()");
         assert!(compute_glow_geometry(&path).is_none());
     }
 
     #[test]
     fn computed_geometry_skips_fully_opaque_renders() {
+		tracing::debug!(">>> Entering computed_geometry_skips_fully_opaque_renders()");
         let dir = tempfile::tempdir().expect("tempdir");
         let path = write_png(dir.path(), "solid.png", &[&[1, 1], &[1, 1]]);
+		tracing::debug!("computed_geometry_skips_fully_opaque_renders(): path → {:?}", path);
+		tracing::debug!("<<< Exiting computed_geometry_skips_fully_opaque_renders()");
         assert!(compute_glow_geometry(&path).is_none());
     }
 }

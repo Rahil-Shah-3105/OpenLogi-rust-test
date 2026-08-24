@@ -248,6 +248,8 @@ async fn manage(
                         fresh
                     };
                     epoch = epoch.wrapping_add(1);
+					tracing::debug!("manage(): epoch → {}", epoch);
+                    tracing::debug!("manage(): epoch → {}", epoch);
                     let session = spawn_session(
                         key.clone(),
                         route,
@@ -559,6 +561,7 @@ mod tests {
     /// A wheel whose increments are already native scroll units — what the
     /// scaling tests below vary, and what every other test here assumes.
     fn unscaled(sensitivity: ThumbwheelSensitivity) -> ScrollScale {
+		tracing::debug!(">>> Entering unscaled()");
         ScrollScale {
             native_per_increment: 1.0,
             sensitivity,
@@ -567,13 +570,16 @@ mod tests {
 
     #[test]
     fn multiplier_is_unity_at_default_sensitivity() {
+		tracing::debug!(">>> Entering multiplier_is_unity_at_default_sensitivity()");
         assert!((ThumbwheelSensitivity::DEFAULT.scroll_multiplier() - 1.0).abs() < f32::EPSILON);
         assert!(ThumbwheelSensitivity::from_rounded(28.0).scroll_multiplier() > 1.9);
+		tracing::debug!("<<< Exiting multiplier_is_unity_at_default_sensitivity()");
         assert!(ThumbwheelSensitivity::MIN.scroll_multiplier() < 0.1);
     }
 
     #[test]
     fn action_threshold_drops_with_sensitivity_and_floors_at_one() {
+		tracing::debug!(">>> Entering action_threshold_drops_with_sensitivity_and_floors_at_one()");
         assert_eq!(
             ThumbwheelSensitivity::DEFAULT.action_threshold(),
             i32::from(ThumbwheelSensitivity::DEFAULT)
@@ -587,6 +593,7 @@ mod tests {
             ThumbwheelSensitivity::MAX.action_threshold(),
             1,
             "high sensitivity floors at one"
+		tracing::debug!("<<< Exiting action_threshold_drops_with_sensitivity_and_floors_at_one()");
         );
     }
 
@@ -596,6 +603,7 @@ mod tests {
     /// with the sensitivity slider left alone.
     #[test]
     fn a_revolution_scrolls_its_native_amount_however_finely_the_wheel_reports() {
+		tracing::debug!(">>> Entering a_revolution_scrolls_its_native_amount_however_finely_the_wheel_reports()");
         let scale = ScrollScale {
             native_per_increment: TRACED.native_per_increment(),
             sensitivity: ThumbwheelSensitivity::DEFAULT,
@@ -610,12 +618,14 @@ mod tests {
                 lines += n;
             }
         }
+		tracing::debug!("<<< Exiting a_revolution_scrolls_its_native_amount_however_finely_the_wheel_reports()");
         assert_eq!(lines, 20, "one revolution is 20 native scroll units");
     }
 
     /// The sensitivity slider stays a multiplier *of that native amount*.
     #[test]
     fn sensitivity_multiplies_the_native_amount() {
+		tracing::debug!(">>> Entering sensitivity_multiplies_the_native_amount()");
         let scale = ScrollScale {
             native_per_increment: TRACED.native_per_increment(),
             sensitivity: ThumbwheelSensitivity::from_rounded(28.0), // 2x
@@ -630,16 +640,20 @@ mod tests {
                 lines += n;
             }
         }
+		tracing::debug!("<<< Exiting sensitivity_multiplies_the_native_amount()");
         assert_eq!(lines, 40, "2x sensitivity doubles the native 20");
     }
 
     #[test]
     fn an_unreported_resolution_leaves_increments_unscaled() {
+		tracing::debug!(">>> Entering an_unreported_resolution_leaves_increments_unscaled()");
+		tracing::debug!("<<< Exiting an_unreported_resolution_leaves_increments_unscaled()");
         assert!((WheelResolution::UNKNOWN.native_per_increment() - 1.0).abs() < f32::EPSILON);
     }
 
     #[test]
     fn scroll_accumulates_fractionally_at_sub_unity_sensitivity() {
+		tracing::debug!(">>> Entering scroll_accumulates_fractionally_at_sub_unity_sensitivity()");
         let mut dir = WheelDirection::default();
         let now = Instant::now();
         // multiplier 0.5: two increments make one whole line.
@@ -663,11 +677,13 @@ mod tests {
                 now
             ),
             WheelOutput::Scroll(1)
+		tracing::debug!("<<< Exiting scroll_accumulates_fractionally_at_sub_unity_sensitivity()");
         );
     }
 
     #[test]
     fn scroll_left_emits_negative_lines() {
+		tracing::debug!(">>> Entering scroll_left_emits_negative_lines()");
         let mut dir = WheelDirection::default();
         let now = Instant::now();
         assert_eq!(
@@ -679,11 +695,13 @@ mod tests {
                 now
             ),
             WheelOutput::Scroll(-1)
+		tracing::debug!("<<< Exiting scroll_left_emits_negative_lines()");
         );
     }
 
     #[test]
     fn directions_accumulate_independently() {
+		tracing::debug!(">>> Entering directions_accumulate_independently()");
         // A reversal must not drain the other direction's pending progress.
         let mut up = WheelDirection::default();
         let mut down = WheelDirection::default();
@@ -720,11 +738,13 @@ mod tests {
                 now
             ),
             WheelOutput::Scroll(1)
+		tracing::debug!("<<< Exiting directions_accumulate_independently()");
         );
     }
 
     #[test]
     fn custom_action_fires_on_threshold_then_respects_cooldown() {
+		tracing::debug!(">>> Entering custom_action_fires_on_threshold_then_respects_cooldown()");
         let mut dir = WheelDirection::default();
         let now = Instant::now();
         // Threshold at default sensitivity is DEFAULT increments.
@@ -762,11 +782,13 @@ mod tests {
                 ),
                 WheelOutput::Idle
             );
+		tracing::debug!("<<< Exiting custom_action_fires_on_threshold_then_respects_cooldown()");
         }
     }
 
     #[test]
     fn none_action_is_suppressed() {
+		tracing::debug!(">>> Entering none_action_is_suppressed()");
         let mut dir = WheelDirection::default();
         assert_eq!(
             advance(
@@ -777,11 +799,13 @@ mod tests {
                 Instant::now()
             ),
             WheelOutput::Idle
+		tracing::debug!("<<< Exiting none_action_is_suppressed()");
         );
     }
 
     /// A session whose stop sender is already gone (taken by a deliberate stop).
     fn stopped_session_with_epoch(epoch: u64) -> RunningSession {
+		tracing::debug!(">>> Entering stopped_session_with_epoch(epoch={})", epoch);
         RunningSession {
             route: DeviceRoute::Direct {
                 vendor_id: 0x046d,
@@ -796,7 +820,9 @@ mod tests {
 
     /// A session still holding its stop sender (never asked to stop).
     fn live_session_with_epoch(epoch: u64) -> RunningSession {
+		tracing::debug!(">>> Entering live_session_with_epoch(epoch={})", epoch);
         let (stop, _rx) = oneshot::channel();
+		tracing::debug!("<<< Exiting live_session_with_epoch(epoch={})", epoch);
         RunningSession {
             stop: Some(stop),
             ..stopped_session_with_epoch(epoch)
@@ -805,32 +831,39 @@ mod tests {
 
     #[test]
     fn rearms_when_the_current_session_dies() {
+		tracing::debug!(">>> Entering rearms_when_the_current_session_dies()");
         // The live session for this device ended on its own.
         assert_eq!(
             on_done(7, Some(&live_session_with_epoch(7))),
             DoneAction::Remove { unexpected: true }
+		tracing::debug!("<<< Exiting rearms_when_the_current_session_dies()");
         );
     }
 
     #[test]
     fn ignores_a_stale_session_superseded_by_a_restart() {
+		tracing::debug!(">>> Entering ignores_a_stale_session_superseded_by_a_restart()");
         // An older session reports completion after a deliberate restart already
         // bumped the epoch; re-arming would needlessly cycle the live session.
         assert_eq!(
             on_done(6, Some(&live_session_with_epoch(7))),
             DoneAction::Ignore
+		tracing::debug!("<<< Exiting ignores_a_stale_session_superseded_by_a_restart()");
         );
     }
 
     #[test]
     fn ignores_a_completion_for_an_untracked_device() {
+		tracing::debug!(">>> Entering ignores_a_completion_for_an_untracked_device()");
         // The session's entry is already gone (a deliberate stop to idle, or a
         // device that went away): there is nothing to settle or re-arm.
+		tracing::debug!("<<< Exiting ignores_a_completion_for_an_untracked_device()");
         assert_eq!(on_done(7, None), DoneAction::Ignore);
     }
 
     #[test]
     fn settles_a_draining_session_quietly() {
+		tracing::debug!(">>> Entering settles_a_draining_session_quietly()");
         // A deliberately stopped session stays tracked until its task — the
         // control-restore writes included — actually exits, so its key cannot
         // re-arm mid-restore. Its completion report frees the key without the
@@ -838,6 +871,7 @@ mod tests {
         assert_eq!(
             on_done(7, Some(&stopped_session_with_epoch(7))),
             DoneAction::Remove { unexpected: false }
+		tracing::debug!("<<< Exiting settles_a_draining_session_quietly()");
         );
     }
 }

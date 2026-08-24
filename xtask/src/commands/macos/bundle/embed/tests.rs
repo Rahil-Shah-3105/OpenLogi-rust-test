@@ -10,12 +10,14 @@ use crate::support::info_plist::read_plist_string;
 /// real build.
 #[test]
 fn every_nested_component_is_embedded_by_a_helper() {
+	log::debug!(">>> Entering every_nested_component_is_embedded_by_a_helper()");
     for &component in Component::VARIANTS {
         assert!(
             component == Component::App
                 || HELPERS.iter().any(|helper| helper.component == component),
             "{component} has no Helper entry to embed it"
         );
+	log::debug!("<<< Exiting every_nested_component_is_embedded_by_a_helper()");
     }
 }
 
@@ -30,11 +32,13 @@ fn touch_all(binaries: &[std::path::PathBuf]) {
 /// by this code — `macos bundle --channel dev` and `macos dev-bundle`.
 #[test]
 fn verify_bundle_binaries_accepts_a_complete_bundle() {
+	log::debug!(">>> Entering verify_bundle_binaries_accepts_a_complete_bundle()");
     for channel in [Channel::Production, Channel::Dev] {
         let app = tempfile::tempdir().unwrap();
         touch_all(&required_bundle_binaries(app.path(), channel));
 
         verify_bundle_binaries(app.path(), channel).unwrap();
+	log::debug!("<<< Exiting verify_bundle_binaries_accepts_a_complete_bundle()");
     }
 }
 
@@ -43,6 +47,7 @@ fn verify_bundle_binaries_accepts_a_complete_bundle() {
 /// the bundle and another in every verification.
 #[test]
 fn shipped_helper_plists_declare_their_production_identity() {
+	log::debug!(">>> Entering shipped_helper_plists_declare_their_production_identity()");
     let root = repo_root().unwrap();
 
     for helper in &HELPERS {
@@ -57,6 +62,7 @@ fn shipped_helper_plists_declare_their_production_identity() {
                 helper.info_plist
             );
         }
+	log::debug!("<<< Exiting shipped_helper_plists_declare_their_production_identity()");
     }
 }
 
@@ -64,6 +70,7 @@ fn shipped_helper_plists_declare_their_production_identity() {
 /// System Settings panes where users grant it permissions.
 #[test]
 fn shipped_helper_plists_declare_the_shared_icon() {
+	log::debug!(">>> Entering shipped_helper_plists_declare_the_shared_icon()");
     let root = repo_root().unwrap();
 
     for helper in &HELPERS {
@@ -75,13 +82,16 @@ fn shipped_helper_plists_declare_the_shared_icon() {
             "{} must declare the shared app icon",
             helper.info_plist
         );
+	log::debug!("<<< Exiting shipped_helper_plists_declare_the_shared_icon()");
     }
 }
 
 #[test]
 fn verify_bundle_binaries_names_each_missing_binary() {
+	log::debug!(">>> Entering verify_bundle_binaries_names_each_missing_binary()");
     let channel = Channel::Production;
     let count = required_bundle_binaries(Path::new("/probe"), channel).len();
+	log::debug!("verify_bundle_binaries_names_each_missing_binary(): count → {}", count);
 
     for skipped in 0..count {
         let app = tempfile::tempdir().unwrap();
@@ -100,5 +110,6 @@ fn verify_bundle_binaries_names_each_missing_binary() {
             "error should name {}, got: {error}",
             missing.display()
         );
+	log::debug!("<<< Exiting verify_bundle_binaries_names_each_missing_binary()");
     }
 }

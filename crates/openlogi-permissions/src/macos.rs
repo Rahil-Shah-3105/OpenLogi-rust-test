@@ -32,6 +32,7 @@ pub fn input_monitoring() -> PermissionStatus {
 /// Current CoreBluetooth authorization status.
 #[must_use]
 pub fn bluetooth() -> PermissionStatus {
+	tracing::debug!(">>> Entering bluetooth()");
     // `CBManagerAuthorization`: notDetermined 0, restricted 1, denied 2,
     // allowedAlways 3. `AnyClass::get` rather than the `class!` macro so a
     // missing class degrades to `Unknown` instead of panicking.

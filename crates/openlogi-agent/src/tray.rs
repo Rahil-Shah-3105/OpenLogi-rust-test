@@ -93,6 +93,8 @@ define_class!(
     impl ResumeTarget {
         #[unsafe(method(workspaceDidResume:))]
         fn workspace_did_resume(&self, _notification: &NSNotification) {
+			tracing::debug!(">>> Entering workspace_did_resume()");
+			tracing::debug!("<<< Exiting workspace_did_resume()");
             self.ivars().pending.store(true, Ordering::Relaxed);
         }
     }
@@ -117,26 +119,36 @@ define_class!(
     impl MenuTarget {
         #[unsafe(method(openOpenLogi:))]
         fn open_openlogi(&self, _sender: Option<&AnyObject>) {
+			tracing::debug!(">>> Entering open_openlogi()");
+			tracing::debug!("<<< Exiting open_openlogi()");
             open_command(DeeplinkCommand::Show);
         }
 
         #[unsafe(method(openSettings:))]
         fn open_settings(&self, _sender: Option<&AnyObject>) {
+			tracing::debug!(">>> Entering open_settings()");
+			tracing::debug!("<<< Exiting open_settings()");
             open_command(DeeplinkCommand::OpenSettings);
         }
 
         #[unsafe(method(openAbout:))]
         fn open_about(&self, _sender: Option<&AnyObject>) {
+			tracing::debug!(">>> Entering open_about()");
+			tracing::debug!("<<< Exiting open_about()");
             open_command(DeeplinkCommand::OpenAbout);
         }
 
         #[unsafe(method(checkForUpdates:))]
         fn check_for_updates(&self, _sender: Option<&AnyObject>) {
+			tracing::debug!(">>> Entering check_for_updates()");
+			tracing::debug!("<<< Exiting check_for_updates()");
             open_command(DeeplinkCommand::CheckForUpdates);
         }
 
         #[unsafe(method(quitOpenLogi:))]
         fn quit_openlogi(&self, _sender: Option<&AnyObject>) {
+			tracing::debug!(">>> Entering quit_openlogi()");
+			tracing::debug!("<<< Exiting quit_openlogi()");
             quit_agent();
         }
     }
@@ -334,6 +346,7 @@ mod tests {
 
     #[test]
     fn resume_notifications_are_forwarded_and_coalesced() {
+		tracing::debug!(">>> Entering resume_notifications_are_forwarded_and_coalesced()");
         let pending = Arc::new(AtomicBool::new(false));
         let target = install_resume_observer(Arc::clone(&pending));
         let workspace = NSWorkspace::sharedWorkspace();
@@ -353,6 +366,7 @@ mod tests {
         assert!(!pending.swap(false, Ordering::Relaxed));
 
         // SAFETY: This is the same live target registered with `center` above.
+		tracing::debug!("<<< Exiting resume_notifications_are_forwarded_and_coalesced()");
         unsafe { center.removeObserver(&target) };
     }
 }

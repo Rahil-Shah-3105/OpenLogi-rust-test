@@ -193,10 +193,12 @@ impl HoldState {
     /// the lost-button-up recovery without sleeping.
     #[cfg(test)]
     fn backdate_for_test(&mut self) {
+		tracing::debug!(">>> Entering backdate_for_test()");
         if let Some((_, since)) = &mut self.button
             && let Some(aged) = Instant::now().checked_sub(STALE_HOLD)
         {
             *since = aged;
+		tracing::debug!("<<< Exiting backdate_for_test()");
         }
     }
 }
@@ -419,6 +421,7 @@ pub fn start(
                     {
                         info!(button = %button, action = %action.label(), "native thumb wheel → executing bound action");
                         if try_queue_action(&action_tx, action) {
+							tracing::debug!(">>> Entering rebound_thumbwheel_action(delta_x={})", delta_x);
                             return EventDisposition::Suppress;
                         }
                     }
@@ -649,6 +652,7 @@ mod tests {
 
     #[test]
     fn accumulate_tags_a_committed_swipe_with_the_held_button() {
+		tracing::debug!(">>> Entering accumulate_tags_a_committed_swipe_with_the_held_button()");
         let mut hold = HoldState::default();
         hold.begin(ButtonId::Back);
         hold.swipe.backdate_hold_for_test();
@@ -664,11 +668,13 @@ mod tests {
             "commits at most once per hold"
         );
         // A release after a committed swipe is NOT a click.
+		tracing::debug!("<<< Exiting accumulate_tags_a_committed_swipe_with_the_held_button()");
         assert_eq!(hold.end(ButtonId::Back), Some(false));
     }
 
     #[test]
     fn a_same_button_re_press_restarts_the_stale_hold() {
+		tracing::debug!(">>> Entering a_same_button_re_press_restarts_the_stale_hold()");
         // A press for the very button we think is held can only mean its
         // release was lost (a button cannot be pressed while down): the hold
         // restarts instead of wedging on the stale state.
@@ -682,11 +688,13 @@ mod tests {
         assert_eq!(
             hold.accumulate(GESTURE_SWIPE_THRESHOLD + 10, 0),
             Some((ButtonId::Back, GestureDirection::Right))
+		tracing::debug!("<<< Exiting a_same_button_re_press_restarts_the_stale_hold()");
         );
     }
 
     #[test]
     fn an_aged_hold_yields_to_a_new_buttons_press() {
+		tracing::debug!(">>> Entering an_aged_hold_yields_to_a_new_buttons_press()");
         // No release ever clears a hold whose button-up was lost (and no OS
         // interrupt fired), so a different gesture button's press takes over
         // once the hold is old enough to be presumed stale — otherwise every
@@ -702,11 +710,13 @@ mod tests {
         assert_eq!(
             hold.accumulate(GESTURE_SWIPE_THRESHOLD + 10, 0),
             Some((ButtonId::Forward, GestureDirection::Right))
+		tracing::debug!("<<< Exiting an_aged_hold_yields_to_a_new_buttons_press()");
         );
     }
 
     #[test]
     fn begin_is_first_wins_while_a_hold_is_active() {
+		tracing::debug!(">>> Entering begin_is_first_wins_while_a_hold_is_active()");
         // Two gesture buttons pressed together: the first hold keeps the
         // accumulator; the second press is refused (its caller falls through to
         // the single-action path) and its release is a stray, not a click.
@@ -726,21 +736,25 @@ mod tests {
         // ...the refused button's release is a stray...
         assert_eq!(hold.end(ButtonId::Forward), None);
         // ...and the first hold ends normally (swipe fired, so not a click).
+		tracing::debug!("<<< Exiting begin_is_first_wins_while_a_hold_is_active()");
         assert_eq!(hold.end(ButtonId::Back), Some(false));
     }
 
     #[test]
     fn end_matches_the_held_button() {
+		tracing::debug!(">>> Entering end_matches_the_held_button()");
         let mut hold = HoldState::default();
         hold.begin(ButtonId::Back);
         // A stray release of a button we weren't holding is ignored...
         assert_eq!(hold.end(ButtonId::Forward), None);
         // ...and ending the held button with no swipe is a plain click.
+		tracing::debug!("<<< Exiting end_matches_the_held_button()");
         assert_eq!(hold.end(ButtonId::Back), Some(true));
     }
 
     #[test]
     fn resolve_gesture_click_prefers_explicit_then_falls_back_to_default() {
+		tracing::debug!(">>> Entering resolve_gesture_click_prefers_explicit_then_falls_back_to_default()");
         // Explicit Click action wins.
         let gestures = BTreeMap::from([(
             ButtonId::Back,
@@ -757,11 +771,13 @@ mod tests {
             ButtonId::Back,
             BTreeMap::from([(GestureDirection::Click, Action::None)]),
         )]);
+		tracing::debug!("<<< Exiting resolve_gesture_click_prefers_explicit_then_falls_back_to_default()");
         assert_eq!(resolve_gesture_click(&off, ButtonId::Back), Action::None);
     }
 
     #[test]
     fn fail_open_press_pairs_release() {
+		tracing::debug!(">>> Entering fail_open_press_pairs_release()");
         let mut fail_open = HashSet::new();
         // Queue accepted → suppress press and release.
         assert_eq!(
@@ -785,11 +801,13 @@ mod tests {
         assert_eq!(
             remapped_release_disposition(ButtonId::Forward, &mut fail_open),
             EventDisposition::Suppress
+		tracing::debug!("<<< Exiting fail_open_press_pairs_release()");
         );
     }
 
     #[test]
     fn rebound_horizontal_wheel_maps_to_thumbwheel_directions() {
+		tracing::debug!(">>> Entering rebound_horizontal_wheel_maps_to_thumbwheel_directions()");
         let maps = HookMaps {
             bindings: BTreeMap::from([
                 (ButtonId::ThumbwheelScrollUp, Action::NextTab),
@@ -805,11 +823,13 @@ mod tests {
             rebound_thumbwheel_action(&maps, -1.0),
             Some((ButtonId::ThumbwheelScrollUp, Action::NextTab))
         );
+		tracing::debug!("<<< Exiting rebound_horizontal_wheel_maps_to_thumbwheel_directions()");
         assert_eq!(rebound_thumbwheel_action(&maps, 0.0), None);
     }
 
     #[test]
     fn native_thumbwheel_scroll_stays_os_native() {
+		tracing::debug!(">>> Entering native_thumbwheel_scroll_stays_os_native()");
         let maps = HookMaps {
             bindings: BTreeMap::from([
                 (
@@ -824,11 +844,13 @@ mod tests {
             gestures: BTreeMap::new(),
         };
         assert_eq!(rebound_thumbwheel_action(&maps, 1.0), None);
+		tracing::debug!("<<< Exiting native_thumbwheel_scroll_stays_os_native()");
         assert_eq!(rebound_thumbwheel_action(&maps, -1.0), None);
     }
 
     #[test]
     fn resolve_gesture_click_falls_back_when_click_is_absent() {
+		tracing::debug!(">>> Entering resolve_gesture_click_falls_back_when_click_is_absent()");
         // A gesture map with no Click key (sparse/hand-edited) falls back to the
         // button's default, so the suppressed press is never swallowed.
         let no_click = BTreeMap::from([(
@@ -846,6 +868,7 @@ mod tests {
         assert_eq!(
             resolve_gesture_click(&empty, ButtonId::Forward),
             default_binding(ButtonId::Forward)
+		tracing::debug!("<<< Exiting resolve_gesture_click_falls_back_when_click_is_absent()");
         );
     }
 }

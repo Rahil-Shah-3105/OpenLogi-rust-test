@@ -318,6 +318,7 @@ mod tests {
 
     #[test]
     fn unifying_route_maps_to_bolt_stable_id() {
+		log::debug!(">>> Entering unifying_route_maps_to_bolt_stable_id()");
         let route = DeviceRoute::Unifying {
             receiver_uid: "DA2699E1".into(),
             slot: 2,
@@ -329,11 +330,13 @@ mod tests {
             matches!(id, DeviceStableId::Bolt { ref receiver_uid, slot: 2 }
                 if receiver_uid == "da2699e1"),
             "Unifying route should map to DeviceStableId::Bolt with case-folded uid"
+		log::debug!("<<< Exiting unifying_route_maps_to_bolt_stable_id()");
         );
     }
 
     #[test]
     fn bolt_and_unifying_same_uid_slot_produce_identical_stable_id() {
+		log::debug!(">>> Entering bolt_and_unifying_same_uid_slot_produce_identical_stable_id()");
         let bolt = DeviceRoute::Bolt {
             receiver_uid: "AABB".into(),
             slot: 1,
@@ -345,11 +348,13 @@ mod tests {
         assert_eq!(
             DeviceStableId::from_parts(Some(&bolt), 1, None, [0; 4]),
             DeviceStableId::from_parts(Some(&unifying), 1, None, [0; 4]),
+		log::debug!("<<< Exiting bolt_and_unifying_same_uid_slot_produce_identical_stable_id()");
         );
     }
 
     #[test]
     fn config_key_is_physical_not_model_scoped() {
+		log::debug!(">>> Entering config_key_is_physical_not_model_scoped()");
         let route = DeviceRoute::Bolt {
             receiver_uid: "AABB".into(),
             slot: 2,
@@ -360,11 +365,13 @@ mod tests {
                 .physical_key()
                 .map(PhysicalDeviceKey::into_string),
             Some("receiver:aabb:slot:2".to_string())
+		log::debug!("<<< Exiting config_key_is_physical_not_model_scoped()");
         );
     }
 
     #[test]
     fn zero_unit_direct_identity_is_transient() {
+		log::debug!(">>> Entering zero_unit_direct_identity_is_transient()");
         let route = DeviceRoute::Direct {
             vendor_id: 0x046d,
             product_id: 0xb023,
@@ -374,11 +381,13 @@ mod tests {
         assert!(id.physical_key().is_none());
         assert_eq!(id.runtime_key(), "direct:046d:b023:unit:00000000");
         assert!(PhysicalDeviceKey::is_transient(&id.runtime_key()));
+		log::debug!("<<< Exiting zero_unit_direct_identity_is_transient()");
         assert!(PhysicalDeviceKey::parse(&id.runtime_key()).is_none());
     }
 
     #[test]
     fn serial_identity_is_physical_when_unit_is_zero() {
+		log::debug!(">>> Entering serial_identity_is_physical_when_unit_is_zero()");
         let route = DeviceRoute::Direct {
             vendor_id: 0x046d,
             product_id: 0xb023,
@@ -387,11 +396,13 @@ mod tests {
             .physical_key()
             .map(PhysicalDeviceKey::into_string);
 
+		log::debug!("<<< Exiting serial_identity_is_physical_when_unit_is_zero()");
         assert_eq!(key, Some("direct:046d:b023:serial:abcdef".to_string()));
     }
 
     #[test]
     fn nonzero_unit_identity_is_physical_without_serial() {
+		log::debug!(">>> Entering nonzero_unit_identity_is_physical_without_serial()");
         let route = DeviceRoute::Direct {
             vendor_id: 0x046d,
             product_id: 0xb023,
@@ -400,18 +411,22 @@ mod tests {
             .physical_key()
             .map(PhysicalDeviceKey::into_string);
 
+		log::debug!("<<< Exiting nonzero_unit_identity_is_physical_without_serial()");
         assert_eq!(key, Some("direct:046d:b023:unit:a393cae0".to_string()));
     }
 
     #[test]
     fn parser_distinguishes_physical_keys_from_legacy_model_keys() {
+		log::debug!(">>> Entering parser_distinguishes_physical_keys_from_legacy_model_keys()");
         assert!(PhysicalDeviceKey::parse("receiver:d0289db2:slot:1").is_some());
         assert!(PhysicalDeviceKey::parse("direct:046d:b023:unit:a393cae0").is_some());
+		log::debug!("<<< Exiting parser_distinguishes_physical_keys_from_legacy_model_keys()");
         assert!(PhysicalDeviceKey::parse("2b034").is_none());
     }
 
     #[test]
     fn raw_os_identity_is_transient_across_reconnects() {
+		log::debug!(">>> Entering raw_os_identity_is_transient_across_reconnects()");
         let old = DeviceRoute::RawHid {
             vendor_id: 0x046d,
             product_id: 0xc900,
@@ -430,11 +445,13 @@ mod tests {
         let new_id = DeviceStableId::from_parts(Some(&new), 0xff, None, [0; 4]);
         assert_ne!(old_id.runtime_key(), new_id.runtime_key());
         assert!(old_id.physical_key().is_none());
+		log::debug!("<<< Exiting raw_os_identity_is_transient_across_reconnects()");
         assert!(new_id.physical_key().is_none());
     }
 
     #[test]
     fn raw_serial_identity_survives_a_changed_os_node() {
+		log::debug!(">>> Entering raw_serial_identity_survives_a_changed_os_node()");
         let route = DeviceRoute::RawHid {
             vendor_id: 0x046d,
             product_id: 0xc900,
@@ -445,6 +462,7 @@ mod tests {
         let key = DeviceStableId::from_parts(Some(&route), 0xff, Some("glow-1"), [0; 4])
             .physical_key()
             .map(PhysicalDeviceKey::into_string);
+		log::debug!("<<< Exiting raw_serial_identity_survives_a_changed_os_node()");
         assert_eq!(key, Some("raw:046d:c900:ff43:0202:serial:glow-1".into()));
     }
 }

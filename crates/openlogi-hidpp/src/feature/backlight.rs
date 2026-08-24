@@ -356,6 +356,7 @@ mod tests {
 
     #[test]
     fn decodes_options_and_mode_split() {
+		log::debug!(">>> Entering decodes_options_and_mode_split()");
         // WOW enabled + permanent-manual mode (0b11 << 3) + auto-mode supported.
         let raw = BacklightOptions::WOW.bits()
             | (u16::from(u8::from(BacklightMode::PermanentManual)) << 3)
@@ -368,11 +369,13 @@ mod tests {
         assert!(options.contains(BacklightOptions::AUTO_MODE_SUPPORTED));
         // The mode bits must not leak into the options flags.
         assert!(!options.contains(BacklightOptions::PWR_SAVE));
+		log::debug!("<<< Exiting decodes_options_and_mode_split()");
         assert!(!options.contains(BacklightOptions::CROWN));
     }
 
     #[test]
     fn decodes_backlight_info_event() {
+		log::debug!(">>> Entering decodes_backlight_info_event()");
         let mut payload = [0; 16];
         payload[0] = 8;
         payload[1] = 5;
@@ -383,12 +386,15 @@ mod tests {
         assert_eq!(update.nb_levels, 8);
         assert_eq!(update.current_level, 5);
         assert_eq!(update.status, BacklightStatus::PermanentManual);
+		log::debug!("<<< Exiting decodes_backlight_info_event()");
         assert_eq!(update.effect, BacklightEffect::Breathing);
     }
 
     #[test]
     fn maps_do_not_change_effect_sentinel() {
+		log::debug!(">>> Entering maps_do_not_change_effect_sentinel()");
         assert_eq!(None::<BacklightEffect>.map_or(0xff, u8::from), 0xff);
+		log::debug!("<<< Exiting maps_do_not_change_effect_sentinel()");
         assert_eq!(Some(BacklightEffect::Waves).map_or(0xff, u8::from), 6);
     }
 }

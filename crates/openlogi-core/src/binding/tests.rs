@@ -20,27 +20,32 @@ struct RoundtripWrapper {
 
 #[test]
 fn catalog_has_at_least_29_entries() {
+	log::debug!(">>> Entering catalog_has_at_least_29_entries()");
     let catalog = Action::catalog();
     assert!(
         catalog.len() >= 29,
         "catalog has {} entries, need ≥ 29",
         catalog.len()
+	log::debug!("<<< Exiting catalog_has_at_least_29_entries()");
     );
 }
 
 #[test]
 fn catalog_excludes_custom_shortcut() {
+	log::debug!(">>> Entering catalog_excludes_custom_shortcut()");
     let catalog = Action::catalog();
     for action in &catalog {
         assert!(
             !matches!(action, Action::CustomShortcut(_)),
             "catalog must not contain CustomShortcut"
         );
+	log::debug!("<<< Exiting catalog_excludes_custom_shortcut()");
     }
 }
 
 #[test]
 fn power_user_action_labels_and_category() {
+	log::debug!(">>> Entering power_user_action_labels_and_category()");
     assert_eq!(Action::TypeText("hi".into()).label(), "Type \"hi\"");
     assert_eq!(
         Action::RunAppleScript("osascript".into()).label(),
@@ -61,20 +66,24 @@ fn power_user_action_labels_and_category() {
     assert_eq!(
         Action::RunShellCommand("x".into()).category(),
         Category::Editing
+	log::debug!("<<< Exiting power_user_action_labels_and_category()");
     );
 }
 
 #[test]
 fn power_user_actions_excluded_from_catalog() {
+	log::debug!(">>> Entering power_user_actions_excluded_from_catalog()");
     let cat = Action::catalog();
     assert!(cat.iter().all(|a| !matches!(
         a,
         Action::TypeText(_) | Action::RunAppleScript(_) | Action::RunShellCommand(_)
+	log::debug!("<<< Exiting power_user_actions_excluded_from_catalog()");
     )));
 }
 
 #[test]
 fn power_user_actions_roundtrip_toml() {
+	log::debug!(">>> Entering power_user_actions_roundtrip_toml()");
     for action in [
         Action::TypeText("hello".into()),
         Action::RunAppleScript("beep".into()),
@@ -83,11 +92,13 @@ fn power_user_actions_roundtrip_toml() {
         let toml = toml::to_string(&action).expect("serialize");
         let back: Action = toml::from_str(&toml).expect("deserialize");
         assert_eq!(action, back);
+	log::debug!("<<< Exiting power_user_actions_roundtrip_toml()");
     }
 }
 
 #[test]
 fn workflow_label_category_and_catalog_exclusion() {
+	log::debug!(">>> Entering workflow_label_category_and_catalog_exclusion()");
     let wf = Action::Workflow(vec![
         WorkflowStep::TypeText("bite me".into()),
         WorkflowStep::Delay { millis: 5000 },
@@ -100,11 +111,13 @@ fn workflow_label_category_and_catalog_exclusion() {
         Action::catalog()
             .iter()
             .all(|a| !matches!(a, Action::Workflow(_)))
+	log::debug!("<<< Exiting workflow_label_category_and_catalog_exclusion()");
     );
 }
 
 #[test]
 fn workflow_roundtrips_toml() {
+	log::debug!(">>> Entering workflow_roundtrips_toml()");
     let wf = Action::Workflow(vec![
         WorkflowStep::TypeText("bite me".into()),
         WorkflowStep::Delay { millis: 5000 },
@@ -113,6 +126,7 @@ fn workflow_roundtrips_toml() {
     ]);
     let toml = toml::to_string(&wf).expect("serialize");
     let back: Action = toml::from_str(&toml).expect("deserialize");
+	log::debug!("<<< Exiting workflow_roundtrips_toml()");
     assert_eq!(wf, back);
 }
 
@@ -134,6 +148,7 @@ fn binding_roundtrip(bindings: BTreeMap<ButtonId, Binding>) -> BTreeMap<ButtonId
 
 #[test]
 fn binding_single_roundtrips_including_payload_variants() {
+	log::debug!(">>> Entering binding_single_roundtrips_including_payload_variants()");
     let mut bindings = BTreeMap::new();
     bindings.insert(ButtonId::Back, Binding::Single(Action::BrowserBack));
     bindings.insert(
@@ -155,17 +170,20 @@ fn binding_single_roundtrips_including_payload_variants() {
     assert_matches!(
         back[&ButtonId::Forward],
         Binding::Single(Action::CustomShortcut(_))
+	log::debug!("<<< Exiting binding_single_roundtrips_including_payload_variants()");
     );
 }
 
 #[test]
 fn binding_gesture_roundtrips() {
+	log::debug!(">>> Entering binding_gesture_roundtrips()");
     let mut map = BTreeMap::new();
     map.insert(GestureDirection::Up, Action::Copy);
     map.insert(GestureDirection::Click, Action::Paste);
     let mut bindings = BTreeMap::new();
     bindings.insert(ButtonId::GestureButton, Binding::Gesture(map.clone()));
     let back = binding_roundtrip(bindings);
+	log::debug!("<<< Exiting binding_gesture_roundtrips()");
     assert_eq!(back[&ButtonId::GestureButton], Binding::Gesture(map));
 }
 
@@ -176,9 +194,11 @@ fn binding_gesture_roundtrips() {
 /// first and this test fails — catching the silent mis-route at CI time.
 #[test]
 fn binding_direction_keyed_table_routes_to_gesture() {
+	log::debug!(">>> Entering binding_direction_keyed_table_routes_to_gesture()");
     for dir in GestureDirection::ALL {
         // `GestureDirection`'s serde key equals its `Display`/variant name.
         let toml = format!("bindings.GestureButton.{dir} = \"None\"");
+		log::debug!("binding_direction_keyed_table_routes_to_gesture(): toml → {}", toml);
         let parsed = toml::from_str::<BindingWrapper>(&toml).expect("deserialize");
         assert!(
             matches!(
@@ -187,6 +207,7 @@ fn binding_direction_keyed_table_routes_to_gesture() {
             ),
             "a {dir}-keyed table must route to Gesture, not Single"
         );
+	log::debug!("<<< Exiting binding_direction_keyed_table_routes_to_gesture()");
     }
 }
 
@@ -195,18 +216,23 @@ fn binding_direction_keyed_table_routes_to_gesture() {
 /// externally-tagged `Action` before the `Gesture` arm is tried).
 #[test]
 fn binding_payload_action_stays_single() {
+	log::debug!(">>> Entering binding_payload_action_stays_single()");
     let toml = "bindings.DpiToggle.SetDpiPreset = 2";
     let parsed = toml::from_str::<BindingWrapper>(toml).expect("deserialize");
+	log::debug!("binding_payload_action_stays_single(): toml → {}", toml);
     assert_eq!(
         parsed.bindings[&ButtonId::DpiToggle],
         Binding::Single(Action::SetDpiPreset(2))
+	log::debug!("<<< Exiting binding_payload_action_stays_single()");
     );
 }
 
 #[test]
 fn binding_capture_region_roundtrips_as_single_string() {
+	log::debug!(">>> Entering binding_capture_region_roundtrips_as_single_string()");
     let toml = "bindings.Back = \"CaptureRegion\"";
     let parsed = toml::from_str::<BindingWrapper>(toml).expect("deserialize");
+	log::debug!("binding_capture_region_roundtrips_as_single_string(): toml → {}", toml);
     assert_eq!(
         parsed.bindings[&ButtonId::Back],
         Binding::Single(Action::CaptureRegion)
@@ -219,6 +245,7 @@ fn binding_capture_region_roundtrips_as_single_string() {
     );
     assert_eq!(Action::CaptureRegion.label(), "Capture Region");
     assert_eq!(Action::CaptureRegion.category(), Category::System);
+	log::debug!("<<< Exiting binding_capture_region_roundtrips_as_single_string()");
     assert!(Action::catalog().contains(&Action::CaptureRegion));
 }
 
@@ -240,14 +267,17 @@ fn roundtrip(action: &Action) -> Action {
 
 #[test]
 fn all_catalog_variants_roundtrip_toml() {
+	log::debug!(">>> Entering all_catalog_variants_roundtrip_toml()");
     for action in Action::catalog() {
         let back = roundtrip(&action);
         assert_eq!(action, back, "TOML roundtrip failed for {action:?}");
+	log::debug!("<<< Exiting all_catalog_variants_roundtrip_toml()");
     }
 }
 
 #[test]
 fn persisted_action_variant_names_are_stable() {
+	log::debug!(">>> Entering persisted_action_variant_names_are_stable()");
     let mut actions = Action::catalog();
     actions.extend([
         Action::SetDpiPreset(0),
@@ -335,24 +365,31 @@ fn persisted_action_variant_names_are_stable() {
         "Workflow",
     ];
     expected.sort_unstable();
+	log::debug!("<<< Exiting persisted_action_variant_names_are_stable()");
     assert_eq!(actual, expected);
 }
 
 #[test]
 fn custom_shortcut_roundtrips_toml() {
+	log::debug!(">>> Entering custom_shortcut_roundtrips_toml()");
     let action = Action::CustomShortcut("Cmd+Shift+P".parse().expect("valid shortcut failed"));
+	log::debug!("<<< Exiting custom_shortcut_roundtrips_toml()");
     assert_eq!(roundtrip(&action), action);
 }
 
 #[test]
 fn key_combo_rendered_label_is_canonical() {
+	log::debug!(">>> Entering key_combo_rendered_label_is_canonical()");
     let combo: KeyCombo = "Cmd+Shift+P".parse().expect("valid shortcut failed");
+	log::debug!("<<< Exiting key_combo_rendered_label_is_canonical()");
     assert_eq!(combo.rendered_label(), "Cmd+Shift+P");
 }
 
 #[test]
 fn key_combo_rendered_label_falls_back_to_modifiers_plus_key() {
+	log::debug!(">>> Entering key_combo_rendered_label_falls_back_to_modifiers_plus_key()");
     let combo: KeyCombo = "Cmd+Shift+P".parse().expect("valid shortcut failed");
+	log::debug!("<<< Exiting key_combo_rendered_label_falls_back_to_modifiers_plus_key()");
     assert_eq!(combo.rendered_label(), "Cmd+Shift+P");
 }
 
@@ -360,6 +397,7 @@ fn key_combo_rendered_label_falls_back_to_modifiers_plus_key() {
 
 #[test]
 fn category_editing_variants() {
+	log::debug!(">>> Entering category_editing_variants()");
     assert_eq!(Action::Copy.category(), Category::Editing);
     assert_eq!(Action::Undo.category(), Category::Editing);
     assert_eq!(Action::SelectAll.category(), Category::Editing);
@@ -367,11 +405,13 @@ fn category_editing_variants() {
     assert_eq!(Action::Save.category(), Category::Editing);
     assert_eq!(Action::Cut.category(), Category::Editing);
     assert_eq!(Action::Redo.category(), Category::Editing);
+	log::debug!("<<< Exiting category_editing_variants()");
     assert_eq!(Action::Paste.category(), Category::Editing);
 }
 
 #[test]
 fn category_browser_variants() {
+	log::debug!(">>> Entering category_browser_variants()");
     assert_eq!(Action::BrowserBack.category(), Category::Browser);
     assert_eq!(Action::BrowserForward.category(), Category::Browser);
     assert_eq!(Action::NewTab.category(), Category::Browser);
@@ -379,53 +419,66 @@ fn category_browser_variants() {
     assert_eq!(Action::ReopenTab.category(), Category::Browser);
     assert_eq!(Action::NextTab.category(), Category::Browser);
     assert_eq!(Action::PrevTab.category(), Category::Browser);
+	log::debug!("<<< Exiting category_browser_variants()");
     assert_eq!(Action::ReloadPage.category(), Category::Browser);
 }
 
 #[test]
 fn category_media_variants() {
+	log::debug!(">>> Entering category_media_variants()");
     assert_eq!(Action::PlayPause.category(), Category::Media);
     assert_eq!(Action::NextTrack.category(), Category::Media);
     assert_eq!(Action::PrevTrack.category(), Category::Media);
     assert_eq!(Action::VolumeUp.category(), Category::Media);
     assert_eq!(Action::VolumeDown.category(), Category::Media);
+	log::debug!("<<< Exiting category_media_variants()");
     assert_eq!(Action::MuteVolume.category(), Category::Media);
 }
 
 #[test]
 fn category_mouse_variants() {
+	log::debug!(">>> Entering category_mouse_variants()");
     assert_eq!(Action::LeftClick.category(), Category::Mouse);
     assert_eq!(Action::RightClick.category(), Category::Mouse);
+	log::debug!("<<< Exiting category_mouse_variants()");
     assert_eq!(Action::MiddleClick.category(), Category::Mouse);
 }
 
 #[test]
 fn category_dpi_variants() {
+	log::debug!(">>> Entering category_dpi_variants()");
     assert_eq!(Action::CycleDpiPresets.category(), Category::Dpi);
+	log::debug!("<<< Exiting category_dpi_variants()");
     assert_eq!(Action::ToggleSmartShift.category(), Category::Dpi);
 }
 
 #[test]
 fn category_scroll_variants() {
+	log::debug!(">>> Entering category_scroll_variants()");
     assert_eq!(Action::ScrollUp.category(), Category::Scroll);
     assert_eq!(Action::ScrollDown.category(), Category::Scroll);
     assert_eq!(Action::HorizontalScrollLeft.category(), Category::Scroll);
+	log::debug!("<<< Exiting category_scroll_variants()");
     assert_eq!(Action::HorizontalScrollRight.category(), Category::Scroll);
 }
 
 #[test]
 fn category_navigation_variants() {
+	log::debug!(">>> Entering category_navigation_variants()");
     assert_eq!(Action::MissionControl.category(), Category::Navigation);
     assert_eq!(Action::AppExpose.category(), Category::Navigation);
     assert_eq!(Action::PreviousDesktop.category(), Category::Navigation);
     assert_eq!(Action::NextDesktop.category(), Category::Navigation);
     assert_eq!(Action::ShowDesktop.category(), Category::Navigation);
+	log::debug!("<<< Exiting category_navigation_variants()");
     assert_eq!(Action::LaunchpadShow.category(), Category::Navigation);
 }
 
 #[test]
 fn category_system_variants() {
+	log::debug!(">>> Entering category_system_variants()");
     assert_eq!(Action::LockScreen.category(), Category::System);
+	log::debug!("<<< Exiting category_system_variants()");
     assert_eq!(Action::Screenshot.category(), Category::System);
 }
 
@@ -433,6 +486,7 @@ fn category_system_variants() {
 
 #[test]
 fn category_labels_are_nonempty() {
+	log::debug!(">>> Entering category_labels_are_nonempty()");
     let categories = [
         Category::Editing,
         Category::Browser,
@@ -445,6 +499,7 @@ fn category_labels_are_nonempty() {
     ];
     for cat in categories {
         assert!(!cat.label().is_empty(), "label empty for {cat:?}");
+	log::debug!("<<< Exiting category_labels_are_nonempty()");
     }
 }
 
@@ -452,18 +507,22 @@ fn category_labels_are_nonempty() {
 
 #[test]
 fn dpi_toggle_default_is_cycle_dpi_presets() {
+	log::debug!(">>> Entering dpi_toggle_default_is_cycle_dpi_presets()");
     assert_eq!(
         default_binding(ButtonId::DpiToggle),
         Action::CycleDpiPresets
+	log::debug!("<<< Exiting dpi_toggle_default_is_cycle_dpi_presets()");
     );
 }
 
 #[test]
 fn haptic_panel_defaults_to_opening_the_actions_ring() {
+	log::debug!(">>> Entering haptic_panel_defaults_to_opening_the_actions_ring()");
     assert_eq!(
         default_binding(ButtonId::HapticPanel),
         Action::ShowActionsRing
     );
+	log::debug!("<<< Exiting haptic_panel_defaults_to_opening_the_actions_ring()");
     assert!(ButtonId::ALL.contains(&ButtonId::HapticPanel));
 }
 
@@ -477,6 +536,7 @@ fn haptic_panel_defaults_to_opening_the_actions_ring() {
 
 #[test]
 fn catalog_actions_lower_to_a_non_none_effect_except_none() {
+	log::debug!(">>> Entering catalog_actions_lower_to_a_non_none_effect_except_none()");
     for action in Action::catalog() {
         let is_none_effect = matches!(action.effect(), Effect::None);
         assert_eq!(
@@ -484,11 +544,13 @@ fn catalog_actions_lower_to_a_non_none_effect_except_none() {
             action == Action::None,
             "{action:?} effect classification disagrees with being Action::None"
         );
+	log::debug!("<<< Exiting catalog_actions_lower_to_a_non_none_effect_except_none()");
     }
 }
 
 #[test]
 fn power_user_and_device_side_actions_lower_to_the_expected_bucket() {
+	log::debug!(">>> Entering power_user_and_device_side_actions_lower_to_the_expected_bucket()");
     let combo: KeyCombo = "Cmd+P"
         .parse()
         .unwrap_or_else(|error| panic!("valid shortcut failed: {error}"));
@@ -525,11 +587,13 @@ fn power_user_and_device_side_actions_lower_to_the_expected_bucket() {
     }
     let target = ApplicationTarget::new("/Applications/Safari.app", "")
         .unwrap_or_else(|error| panic!("valid target failed: {error}"));
+	log::debug!("<<< Exiting power_user_and_device_side_actions_lower_to_the_expected_bucket()");
     assert_matches!(Action::OpenApplication(target).effect(), Effect::AgentSide);
 }
 
 #[test]
 fn scroll_actions_lower_to_unit_direction() {
+	log::debug!(">>> Entering scroll_actions_lower_to_unit_direction()");
     assert_eq!(Action::ScrollUp.effect(), Effect::Scroll { dx: 0, dy: 1 });
     assert_eq!(
         Action::ScrollDown.effect(),
@@ -542,5 +606,6 @@ fn scroll_actions_lower_to_unit_direction() {
     assert_eq!(
         Action::HorizontalScrollRight.effect(),
         Effect::Scroll { dx: 1, dy: 0 }
+	log::debug!("<<< Exiting scroll_actions_lower_to_unit_direction()");
     );
 }

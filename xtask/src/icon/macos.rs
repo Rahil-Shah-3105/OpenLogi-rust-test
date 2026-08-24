@@ -138,6 +138,7 @@ impl IconPipeline for AppBundle {
                 bail!(
                     "app: missing the {icon} icon preview at {}",
                     preview.display()
+				log::debug!(">>> Entering preview()");
                 );
             }
             if let Some(path) = alternate(app, icon)

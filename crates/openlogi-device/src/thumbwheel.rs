@@ -275,6 +275,7 @@ mod tests {
     use super::*;
 
     fn event(function_id: u8, software_id: u8, payload: [u8; 16]) -> v20::Message {
+		log::debug!(">>> Entering event(function_id={},software_id={},payload={:?})", function_id, software_id, payload);
         v20::Message::Long(
             v20::MessageHeader {
                 device_index: 2,
@@ -288,6 +289,7 @@ mod tests {
 
     #[test]
     fn decodes_rotation_and_tap() {
+		log::debug!(">>> Entering decodes_rotation_and_tap()");
         let mut p = [0u8; 16];
         p[0..2].copy_from_slice(&(-7i16).to_be_bytes());
         p[4] = 2;
@@ -301,11 +303,13 @@ mod tests {
                 touch: true,
                 proxy: false,
             })
+		log::debug!("<<< Exiting decodes_rotation_and_tap()");
         );
     }
 
     #[test]
     fn decodes_every_rotation_status() {
+		log::debug!(">>> Entering decodes_every_rotation_status()");
         let status = |byte| {
             let mut p = [0u8; 16];
             p[4] = byte;
@@ -321,6 +325,7 @@ mod tests {
             status(0xff),
             RotationStatus::Inactive,
             "an unrecognised value must not make the tap permanently undeliverable"
+		log::debug!("<<< Exiting decodes_every_rotation_status()");
         );
     }
 
@@ -328,18 +333,22 @@ mod tests {
     /// rotation alone cannot tell a settled wheel from one that just stopped.
     #[test]
     fn a_stop_report_is_still_part_of_the_roll() {
+		log::debug!(">>> Entering a_stop_report_is_still_part_of_the_roll()");
         assert!(RotationStatus::Stop.is_rolling());
         assert!(RotationStatus::Start.is_rolling());
         assert!(RotationStatus::Active.is_rolling());
+		log::debug!("<<< Exiting a_stop_report_is_still_part_of_the_roll()");
         assert!(!RotationStatus::Inactive.is_rolling());
     }
 
     #[test]
     fn ignores_responses_and_foreign_messages() {
+		log::debug!(">>> Entering ignores_responses_and_foreign_messages()");
         let p = [0u8; 16];
         // software_id != 0 marks a request response, not an event.
         assert_eq!(decode_event(&event(0, 5, p), 2, 6), None);
         // Wrong feature index.
+		log::debug!("<<< Exiting ignores_responses_and_foreign_messages()");
         assert_eq!(decode_event(&event(0, 0, p), 2, 9), None);
     }
 }

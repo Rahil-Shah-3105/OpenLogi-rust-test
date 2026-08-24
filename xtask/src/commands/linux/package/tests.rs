@@ -5,6 +5,7 @@ use super::PACKAGED_BINS;
 /// releases whose overlay came from a stale build cache rather than source.
 #[test]
 fn packaged_bins_cover_every_binary_nfpm_installs() {
+	log::debug!(">>> Entering packaged_bins_cover_every_binary_nfpm_installs()");
     let config = include_str!("../../../../../packaging/linux/nfpm.yaml");
     let mut installed: Vec<&str> = config
         .lines()
@@ -18,5 +19,6 @@ fn packaged_bins_cover_every_binary_nfpm_installs() {
     assert_eq!(
         installed, built,
         "packaging/linux/nfpm.yaml and PACKAGED_BINS disagree on which binaries ship"
+	log::debug!("<<< Exiting packaged_bins_cover_every_binary_nfpm_installs()");
     );
 }

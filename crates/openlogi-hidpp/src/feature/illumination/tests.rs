@@ -11,6 +11,7 @@ use crate::protocol::v20::{ErrorType, Hidpp20Error};
 
 #[test]
 fn parses_control_info() {
+	log::debug!(">>> Entering parses_control_info()");
     let mut payload = [0; 16];
     payload[0] = 0b0000_1011; // events + linear + dynamic max
     payload[1..3].copy_from_slice(&100u16.to_be_bytes());
@@ -36,11 +37,13 @@ fn parses_control_info() {
     assert_eq!(info.min, 100);
     assert_eq!(info.max, 1000);
     assert_eq!(info.resolution, 10);
+	log::debug!("<<< Exiting parses_control_info()");
     assert_eq!(info.max_levels, 5);
 }
 
 #[test]
 fn parses_linear_levels() {
+	log::debug!(">>> Entering parses_linear_levels()");
     let mut payload = [0; 16];
     payload[0] = 1; // linear
     payload[2..4].copy_from_slice(&100u16.to_be_bytes());
@@ -54,11 +57,13 @@ fn parses_linear_levels() {
             max: 500,
             step: 50
         }
+	log::debug!("<<< Exiting parses_linear_levels()");
     );
 }
 
 #[test]
 fn parses_non_linear_levels() {
+	log::debug!(">>> Entering parses_non_linear_levels()");
     let mut payload = [0; 16];
     // validCount = 3 (bits 5..7), linear bit clear.
     payload[0] = 3 << 5;
@@ -75,18 +80,22 @@ fn parses_non_linear_levels() {
             level_count: 6,
             values: vec![200, 400, 800],
         }
+	log::debug!("<<< Exiting parses_non_linear_levels()");
     );
 }
 
 #[test]
 fn encodes_reset_levels() {
+	log::debug!(">>> Entering encodes_reset_levels()");
     let payload = SetLevels::Reset.to_payload().unwrap();
     assert_eq!(payload[0], 1 << 1);
+	log::debug!("<<< Exiting encodes_reset_levels()");
     assert!(payload[1..].iter().all(|&b| b == 0));
 }
 
 #[test]
 fn encodes_linear_levels() {
+	log::debug!(">>> Entering encodes_linear_levels()");
     let payload = SetLevels::Linear {
         min: 100,
         max: 500,
@@ -97,11 +106,13 @@ fn encodes_linear_levels() {
     assert_eq!(payload[0], 1);
     assert_eq!(u16::from_be_bytes([payload[2], payload[3]]), 100);
     assert_eq!(u16::from_be_bytes([payload[4], payload[5]]), 500);
+	log::debug!("<<< Exiting encodes_linear_levels()");
     assert_eq!(u16::from_be_bytes([payload[6], payload[7]]), 50);
 }
 
 #[test]
 fn encodes_non_linear_levels() {
+	log::debug!(">>> Entering encodes_non_linear_levels()");
     let payload = SetLevels::NonLinear {
         start_index: 2,
         level_count: 5,
@@ -113,11 +124,13 @@ fn encodes_non_linear_levels() {
     assert_eq!(payload[0], 2 << 5); // validCount = 2, linear/reset clear
     assert_eq!(payload[1], (2 << 4) | 5); // startIndex 2, levelCount 5
     assert_eq!(u16::from_be_bytes([payload[2], payload[3]]), 100);
+	log::debug!("<<< Exiting encodes_non_linear_levels()");
     assert_eq!(u16::from_be_bytes([payload[4], payload[5]]), 200);
 }
 
 #[test]
 fn non_linear_round_trips_through_decoder() {
+	log::debug!(">>> Entering non_linear_round_trips_through_decoder()");
     // A non-linear set payload, read back through the get decoder, must agree on
     // the value list (the get response uses the same field layout).
     let payload = SetLevels::NonLinear {
@@ -135,11 +148,13 @@ fn non_linear_round_trips_through_decoder() {
             level_count: 3,
             values: vec![50, 150, 300],
         }
+	log::debug!("<<< Exiting non_linear_round_trips_through_decoder()");
     );
 }
 
 #[test]
 fn rejects_invalid_non_linear_levels() {
+	log::debug!(">>> Entering rejects_invalid_non_linear_levels()");
     for levels in [
         SetLevels::NonLinear {
             start_index: 0,
@@ -166,11 +181,13 @@ fn rejects_invalid_non_linear_levels() {
             levels.to_payload(),
             Err(Hidpp20Error::Feature(ErrorType::InvalidArgument))
         );
+	log::debug!("<<< Exiting rejects_invalid_non_linear_levels()");
     }
 }
 
 #[test]
 fn decodes_state_and_value_events() {
+	log::debug!(">>> Entering decodes_state_and_value_events()");
     let mut on = [0; 16];
     on[0] = 1;
     assert_eq!(
@@ -199,11 +216,13 @@ fn decodes_state_and_value_events() {
     assert_eq!(
         decode_event(3, &eff),
         Some(IlluminationEvent::BrightnessEffectiveMaxChanged(600))
+	log::debug!("<<< Exiting decodes_state_and_value_events()");
     );
 }
 
 #[test]
 fn decodes_brightness_clamped_event() {
+	log::debug!(">>> Entering decodes_brightness_clamped_event()");
     let mut payload = [0; 16];
     payload[0] = 2; // Button
     payload[1..3].copy_from_slice(&600u16.to_be_bytes());
@@ -214,11 +233,14 @@ fn decodes_brightness_clamped_event() {
             source: BrightnessClampedSource::Button,
             brightness: 600,
         })
+	log::debug!("<<< Exiting decodes_brightness_clamped_event()");
     );
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(9, &[0; 16]).is_none());
 }
 
@@ -226,6 +248,7 @@ fn ignores_unknown_event_sub_id() {
 /// unknown source folds to `Other(_)` and the brightness sibling survives.
 #[test]
 fn keeps_clamp_event_with_unknown_source() {
+	log::debug!(">>> Entering keeps_clamp_event_with_unknown_source()");
     for byte in 0..=u8::MAX {
         let mut payload = [0; 16];
         payload[0] = byte; // BrightnessClampedSource
@@ -239,5 +262,6 @@ fn keeps_clamp_event_with_unknown_source() {
                 brightness: 300,
             }
         );
+	log::debug!("<<< Exiting keeps_clamp_event_with_unknown_source()");
     }
 }

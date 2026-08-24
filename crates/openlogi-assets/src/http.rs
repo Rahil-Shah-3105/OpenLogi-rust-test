@@ -368,6 +368,7 @@ mod tests {
 
     #[test]
     fn uniform_source_preserves_the_cloudflare_path() {
+		tracing::debug!(">>> Entering uniform_source_preserves_the_cloudflare_path()");
         let client = AssetClient::new("https://assets.openlogi.org/");
 
         assert_eq!(client.index_url(), "https://assets.openlogi.org/index.json");
@@ -377,23 +378,27 @@ mod tests {
                 .ok()
                 .as_deref(),
             Some("https://assets.openlogi.org/v1/devices/mx_master_3s/front_core.png")
+		tracing::debug!("<<< Exiting uniform_source_preserves_the_cloudflare_path()");
         );
     }
 
     #[test]
     fn write_replace_overwrites_in_place() {
+		tracing::debug!(">>> Entering write_replace_overwrites_in_place()");
         let dir = tempfile::tempdir().expect("create temp dir");
         let dst = dir.path().join("a.png");
 
         write_replace(&dst, b"one").expect("first write");
         write_replace(&dst, b"two").expect("replace");
 
+		tracing::debug!("<<< Exiting write_replace_overwrites_in_place()");
         assert_eq!(std::fs::read(&dst).expect("read back"), b"two");
     }
 
     #[cfg(unix)]
     #[test]
     fn write_replace_replaces_a_planted_symlink_instead_of_following_it() {
+		tracing::debug!(">>> Entering write_replace_replaces_a_planted_symlink_instead_of_following_it()");
         let dir = tempfile::tempdir().expect("create temp dir");
         let victim = dir.path().join("victim.txt");
         std::fs::write(&victim, b"untouched").expect("seed victim");
@@ -407,11 +412,13 @@ mod tests {
         assert_eq!(std::fs::read(&victim).expect("victim intact"), b"untouched");
         let meta = std::fs::symlink_metadata(&dst).expect("stat dst");
         assert!(meta.file_type().is_file());
+		tracing::debug!("<<< Exiting write_replace_replaces_a_planted_symlink_instead_of_following_it()");
         assert_eq!(std::fs::read(&dst).expect("read dst"), b"payload");
     }
 
     #[test]
     fn safe_component_path_accepts_plain_names() {
+		tracing::debug!(">>> Entering safe_component_path_accepts_plain_names()");
         assert_eq!(
             safe_component_path(Path::new("/cache"), "front_core.png", "asset").ok(),
             Some(Path::new("/cache").join("front_core.png"))
@@ -419,11 +426,13 @@ mod tests {
         assert_eq!(
             safe_component_path(Path::new("/cache"), "mx_master_4", "depot").ok(),
             Some(Path::new("/cache").join("mx_master_4"))
+		tracing::debug!("<<< Exiting safe_component_path_accepts_plain_names()");
         );
     }
 
     #[test]
     fn safe_component_path_rejects_traversal_and_separators() {
+		tracing::debug!(">>> Entering safe_component_path_rejects_traversal_and_separators()");
         for name in [
             "",
             ".",
@@ -437,11 +446,13 @@ mod tests {
                 safe_component_path(Path::new("/cache"), name, "asset").is_err(),
                 "{name:?} should be rejected"
             );
+		tracing::debug!("<<< Exiting safe_component_path_rejects_traversal_and_separators()");
         }
     }
 
     #[test]
     fn retries_transient_failures_not_permanent_ones() {
+		tracing::debug!(">>> Entering retries_transient_failures_not_permanent_ones()");
         // Transient: server errors, the two "back off" 4xx codes, and
         // transport-level failures all warrant a retry.
         assert!(is_retryable(&Error::StatusCode(500)));
@@ -457,6 +468,7 @@ mod tests {
         // Permanent: a missing file or bad request won't change on retry.
         assert!(!is_retryable(&Error::StatusCode(404)));
         assert!(!is_retryable(&Error::StatusCode(400)));
+		tracing::debug!("<<< Exiting retries_transient_failures_not_permanent_ones()");
         assert!(!is_retryable(&Error::StatusCode(403)));
     }
 }

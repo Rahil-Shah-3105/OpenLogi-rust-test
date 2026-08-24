@@ -7,27 +7,33 @@ impl AppState {
     /// buffer can't grow without bound while the monitor is open.
     #[cfg(all(target_os = "macos", debug_assertions))]
     pub fn push_monitor_events(&mut self, events: Vec<openlogi_ipc::MonitorEvent>) {
+		log::debug!(">>> Entering push_monitor_events()");
         const MAX: usize = 200;
         self.monitor_events.extend(events);
         let overflow = self.monitor_events.len().saturating_sub(MAX);
+		log::debug!("<<< Exiting push_monitor_events()");
         self.monitor_events.drain(..overflow);
     }
     /// Recent live-monitor events, oldest first.
     #[cfg(all(target_os = "macos", debug_assertions))]
     #[must_use]
     pub fn monitor_events(&self) -> &std::collections::VecDeque<openlogi_ipc::MonitorEvent> {
+		log::debug!(">>> Entering monitor_events()");
         &self.monitor_events
     }
     /// Replace the cached event-tap snapshot the Diagnostics page renders.
     /// Refreshed on the live-monitor poll tick; see [`Self::event_taps`].
     #[cfg(all(target_os = "macos", debug_assertions))]
     pub fn set_event_taps(&mut self, taps: Vec<openlogi_hook::EventTapInfo>) {
+		log::debug!(">>> Entering set_event_taps()");
+		log::debug!("<<< Exiting set_event_taps()");
         self.event_taps = taps;
     }
     /// The cached event-tap snapshot for the Diagnostics page.
     #[cfg(all(target_os = "macos", debug_assertions))]
     #[must_use]
     pub fn event_taps(&self) -> &[openlogi_hook::EventTapInfo] {
+		log::debug!(">>> Entering event_taps()");
         &self.event_taps
     }
     /// Ask the agent to fire the macOS Accessibility prompt. The agent owns the

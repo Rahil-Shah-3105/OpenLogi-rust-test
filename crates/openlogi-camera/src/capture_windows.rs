@@ -504,6 +504,7 @@ mod tests {
 
     #[test]
     fn instance_matches_across_interface_class_guids() {
+		log::debug!(">>> Entering instance_matches_across_interface_class_guids()");
         assert_eq!(
             device_instance(DIRECTSHOW),
             device_instance(MEDIA_FOUNDATION),
@@ -512,17 +513,22 @@ mod tests {
         assert_eq!(
             device_instance(DIRECTSHOW),
             r"\\?\usb#vid_046d&pid_0893&mi_00#9&56d9c30&0&0000"
+		log::debug!("<<< Exiting instance_matches_across_interface_class_guids()");
         );
     }
 
     #[test]
     fn distinct_devices_stay_distinct() {
+		log::debug!(">>> Entering distinct_devices_stay_distinct()");
         let other = r"\\?\usb#vid_046d&pid_0825&mi_00#7&1a2b3c&0&0000#{e5323777-f976-4f5b-9b55-b94699c46e44}\global";
+		log::debug!("<<< Exiting distinct_devices_stay_distinct()");
         assert_ne!(device_instance(DIRECTSHOW), device_instance(other));
     }
 
     #[test]
     fn path_without_interface_guid_is_returned_whole() {
+		log::debug!(">>> Entering path_without_interface_guid_is_returned_whole()");
+		log::debug!("<<< Exiting path_without_interface_guid_is_returned_whole()");
         assert_eq!(device_instance("not-a-device-path"), "not-a-device-path");
     }
 }

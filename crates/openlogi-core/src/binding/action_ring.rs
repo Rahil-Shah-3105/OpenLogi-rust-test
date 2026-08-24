@@ -343,17 +343,20 @@ mod tests {
 
     #[test]
     fn default_layout_populates_every_position() {
+		log::debug!(">>> Entering default_layout_populates_every_position()");
         let layout = ActionRingLayout::default();
         assert_eq!(layout.slots.len(), ActionRingSlot::ALL.len());
         assert!(
             ActionRingSlot::ALL
                 .iter()
                 .all(|slot| layout.slots.contains_key(slot))
+		log::debug!("<<< Exiting default_layout_populates_every_position()");
         );
     }
 
     #[test]
     fn invalid_ring_actions_are_rejected() {
+		log::debug!(">>> Entering invalid_ring_actions_are_rejected()");
         assert_eq!(
             RingAction::new(Action::None),
             Err(RingActionError::EmptyAction)
@@ -361,11 +364,13 @@ mod tests {
         assert_eq!(
             RingAction::new(Action::ShowActionsRing),
             Err(RingActionError::RecursiveTrigger)
+		log::debug!("<<< Exiting invalid_ring_actions_are_rejected()");
         );
     }
 
     #[test]
     fn ring_action_serializes_like_the_wrapped_action() {
+		log::debug!(">>> Entering ring_action_serializes_like_the_wrapped_action()");
         #[derive(Serialize)]
         struct Wrapper {
             action: RingAction,
@@ -374,11 +379,13 @@ mod tests {
         let action = RingAction::new(Action::Copy).expect("copy must be a valid ring action");
         let encoded =
             toml::to_string(&Wrapper { action }).expect("could not serialize ring action");
+		log::debug!("<<< Exiting ring_action_serializes_like_the_wrapped_action()");
         assert_eq!(encoded, "action = \"Copy\"\n");
     }
 
     #[test]
     fn custom_labels_roundtrip_and_survive_action_replacement() {
+		log::debug!(">>> Entering custom_labels_roundtrip_and_survive_action_replacement()");
         let mut layout: ActionRingLayout = toml::from_str(
             r#"
             [slots]
@@ -404,26 +411,32 @@ mod tests {
         assert_eq!(
             layout.slots[&ActionRingSlot::Top].custom_label(),
             Some("Copy Invoice")
+		log::debug!("<<< Exiting custom_labels_roundtrip_and_survive_action_replacement()");
         );
     }
 
     #[test]
     fn unlabelled_entries_serialize_without_a_label_key() {
+		log::debug!(">>> Entering unlabelled_entries_serialize_without_a_label_key()");
         let layout = ActionRingLayout::default();
         let encoded = toml::to_string(&layout).expect("could not serialize ring layout");
+		log::debug!("<<< Exiting unlabelled_entries_serialize_without_a_label_key()");
         assert!(!encoded.contains("label"));
     }
 
     #[test]
     fn clearing_a_slot_cannot_leave_an_orphan_icon() {
+		log::debug!(">>> Entering clearing_a_slot_cannot_leave_an_orphan_icon()");
         let mut layout = ActionRingLayout::default();
         layout.set_icon(ActionRingSlot::Top, Some(ActionRingIcon::Keyboard));
         layout.set_action(ActionRingSlot::Top, None);
+		log::debug!("<<< Exiting clearing_a_slot_cannot_leave_an_orphan_icon()");
         assert!(!layout.slots.contains_key(&ActionRingSlot::Top));
     }
 
     #[test]
     fn custom_icons_roundtrip_without_changing_slot_actions() {
+		log::debug!(">>> Entering custom_icons_roundtrip_without_changing_slot_actions()");
         let mut layout = ActionRingLayout::default();
         layout.set_icon(ActionRingSlot::Top, Some(ActionRingIcon::Keyboard));
         let encoded = toml::to_string(&layout).expect("could not serialize ring layout");
@@ -434,11 +447,13 @@ mod tests {
         assert_eq!(
             decoded.slots[&ActionRingSlot::Top].custom_icon(),
             Some(ActionRingIcon::Keyboard)
+		log::debug!("<<< Exiting custom_icons_roundtrip_without_changing_slot_actions()");
         );
     }
 
     #[test]
     fn documented_inline_slots_deserialize() {
+		log::debug!(">>> Entering documented_inline_slots_deserialize()");
         let layout = toml::from_str::<ActionRingLayout>(
             r#"
 [slots]
@@ -460,9 +475,11 @@ Bottom = { action = { CustomShortcut = "Cmd+Shift+P" } }
 
     #[test]
     fn recursive_action_fails_deserialization() {
+		log::debug!(">>> Entering recursive_action_fails_deserialization()");
         // A bare `"ShowActionsRing"` is not a TOML document, so the slot has to
         // be deserialized the way config.toml stores it — otherwise the parse
         // fails on syntax and never reaches the recursion guard.
+		log::error!("Exception in recursive_action_fails_deserialization(): (unprintable)");
         let error = match toml::from_str::<ActionRingEntry>("action = \"ShowActionsRing\"") {
             Ok(entry) => panic!("a ring slot must not recursively open the ring, got {entry:?}"),
             Err(error) => error,
@@ -472,11 +489,13 @@ Bottom = { action = { CustomShortcut = "Cmd+Shift+P" } }
                 .to_string()
                 .contains(&RingActionError::RecursiveTrigger.to_string()),
             "expected the recursion guard to reject the slot, got: {error}"
+		log::debug!("<<< Exiting recursive_action_fails_deserialization()");
         );
     }
 
     #[test]
     fn app_layout_replaces_the_default_layout() {
+		log::debug!(">>> Entering app_layout_replaces_the_default_layout()");
         let mut config = ActionRingConfig::default();
         let safari = ActionRingLayout {
             slots: BTreeMap::from([(
@@ -491,6 +510,7 @@ Bottom = { action = { CustomShortcut = "Cmd+Shift+P" } }
             .insert("com.apple.Safari".to_string(), safari.clone());
 
         assert_eq!(config.effective_layout(Some("com.apple.Safari")), safari);
+		log::debug!("<<< Exiting app_layout_replaces_the_default_layout()");
         assert_eq!(config.effective_layout(Some("other")), config.default);
     }
 }

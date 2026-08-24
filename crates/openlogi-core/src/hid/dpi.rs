@@ -172,13 +172,16 @@ mod tests {
 
     #[test]
     fn floating_control_values_round_and_stay_in_the_dpi_domain() {
+		log::debug!(">>> Entering floating_control_values_round_and_stay_in_the_dpi_domain()");
         assert_eq!(Dpi::from_rounded(1599.6), Dpi::new(1600));
         assert_eq!(Dpi::from_rounded(-1.0), Dpi::new(0));
+		log::debug!("<<< Exiting floating_control_values_round_and_stay_in_the_dpi_domain()");
         assert_eq!(Dpi::from_rounded(70_000.0), Dpi::new(u16::MAX));
     }
 
     #[test]
     fn capabilities_sort_and_deduplicate_values() -> Result<(), WriteError> {
+		log::debug!(">>> Entering capabilities_sort_and_deduplicate_values()");
         let caps = DpiCapabilities::new(vec![1600, 400, 800, 800])?;
 
         assert_eq!(
@@ -187,37 +190,45 @@ mod tests {
         );
         assert_eq!(caps.min(), Dpi::new(400));
         assert_eq!(caps.max(), Dpi::new(1600));
+		log::debug!("<<< Exiting capabilities_sort_and_deduplicate_values()");
         Ok(())
     }
 
     #[test]
     fn capabilities_reject_empty_list() {
+		log::debug!(">>> Entering capabilities_reject_empty_list()");
         assert_matches!(
             DpiCapabilities::new(Vec::new()),
             Err(WriteError::EmptyDpiList)
+		log::debug!("<<< Exiting capabilities_reject_empty_list()");
         );
     }
 
     #[test]
     fn nearest_returns_closest_supported_value() -> Result<(), WriteError> {
+		log::debug!(">>> Entering nearest_returns_closest_supported_value()");
         let caps = DpiCapabilities::new(vec![400, 800, 1600])?;
 
         assert_eq!(caps.nearest(Dpi::new(390)), Dpi::new(400));
         assert_eq!(caps.nearest(Dpi::new(1000)), Dpi::new(800));
         assert_eq!(caps.nearest(Dpi::new(2000)), Dpi::new(1600));
+		log::debug!("<<< Exiting nearest_returns_closest_supported_value()");
         Ok(())
     }
 
     #[test]
     fn step_hint_returns_smallest_positive_gap() -> Result<(), WriteError> {
+		log::debug!(">>> Entering step_hint_returns_smallest_positive_gap()");
         let caps = DpiCapabilities::new(vec![400, 800, 1200, 2000])?;
 
         assert_eq!(caps.step_hint(), Dpi::new(400));
+		log::debug!("<<< Exiting step_hint_returns_smallest_positive_gap()");
         Ok(())
     }
 
     #[test]
     fn adjacent_test_target_prefers_next_then_previous_value() -> Result<(), WriteError> {
+		log::debug!(">>> Entering adjacent_test_target_prefers_next_then_previous_value()");
         let caps = DpiCapabilities::new(vec![400, 800, 1600])?;
 
         assert_eq!(
@@ -232,11 +243,13 @@ mod tests {
             caps.adjacent_test_target(Dpi::new(1600)),
             Some(Dpi::new(800))
         );
+		log::debug!("<<< Exiting adjacent_test_target_prefers_next_then_previous_value()");
         Ok(())
     }
 
     #[test]
     fn adjacent_test_target_handles_current_outside_list() -> Result<(), WriteError> {
+		log::debug!(">>> Entering adjacent_test_target_handles_current_outside_list()");
         let caps = DpiCapabilities::new(vec![400, 800, 1600])?;
 
         assert_eq!(
@@ -247,6 +260,7 @@ mod tests {
             caps.adjacent_test_target(Dpi::new(2000)),
             Some(Dpi::new(1600))
         );
+		log::debug!("<<< Exiting adjacent_test_target_handles_current_outside_list()");
         Ok(())
     }
 }

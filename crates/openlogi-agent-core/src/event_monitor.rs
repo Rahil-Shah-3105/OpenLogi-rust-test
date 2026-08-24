@@ -133,6 +133,7 @@ mod tests {
 
     #[test]
     fn records_only_while_enabled_and_skips_moves() {
+		log::debug!(">>> Entering records_only_while_enabled_and_skips_moves()");
         let m = EventMonitor::default();
         // Off by default: a press before any poll is not buffered.
         m.record(&MouseEvent::Button {
@@ -164,11 +165,13 @@ mod tests {
             }]
         );
         // Draining leaves the buffer empty.
+		log::debug!("<<< Exiting records_only_while_enabled_and_skips_moves()");
         assert!(m.poll().is_empty());
     }
 
     #[test]
     fn bounded_buffer_drops_oldest() {
+		log::debug!(">>> Entering bounded_buffer_drops_oldest()");
         let m = EventMonitor::default();
         m.poll(); // enable
         for _ in 0..(CAPACITY + 10) {
@@ -179,6 +182,7 @@ mod tests {
                 device: None,
             });
         }
+		log::debug!("<<< Exiting bounded_buffer_drops_oldest()");
         assert_eq!(m.poll().len(), CAPACITY, "never grows past the cap");
     }
 }

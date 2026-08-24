@@ -344,6 +344,7 @@ mod tests {
 
     #[test]
     fn battery_index_is_one_based_in_the_enumerated_table() {
+		tracing::debug!(">>> Entering battery_index_is_one_based_in_the_enumerated_table()");
         // `enumerate_features` omits the root feature (index 0), so the first
         // enumerated entry sits at runtime index 1.
         let table = [0x0001, UnifiedBatteryFeature::ID, 0x2201];
@@ -352,39 +353,50 @@ mod tests {
             battery_feature_index([UnifiedBatteryFeature::ID]),
             Some(BatteryProbe::Unified(1)),
             "first entry maps to index 1, not 0"
+		tracing::debug!("<<< Exiting battery_index_is_one_based_in_the_enumerated_table()");
         );
     }
 
     #[test]
     fn legacy_battery_is_found_when_unified_is_absent() {
+		tracing::debug!(">>> Entering legacy_battery_is_found_when_unified_is_absent()");
         let table = [0x0001, BatteryStatusFeature::ID, 0x2201];
+		tracing::debug!("<<< Exiting legacy_battery_is_found_when_unified_is_absent()");
         assert_eq!(battery_feature_index(table), Some(BatteryProbe::Legacy(2)));
     }
 
     #[test]
     fn unified_battery_is_preferred_over_legacy() {
+		tracing::debug!(">>> Entering unified_battery_is_preferred_over_legacy()");
         let table = [BatteryStatusFeature::ID, 0x0001, UnifiedBatteryFeature::ID];
+		tracing::debug!("<<< Exiting unified_battery_is_preferred_over_legacy()");
         assert_eq!(battery_feature_index(table), Some(BatteryProbe::Unified(3)));
     }
 
     #[test]
     fn voltage_battery_is_found_when_it_is_the_only_source() {
+		tracing::debug!(">>> Entering voltage_battery_is_found_when_it_is_the_only_source()");
         // The G915 / G903 LS case: 0x1001 with neither 0x1000 nor 0x1004.
         let table = [0x0001, BatteryVoltageFeature::ID, 0x2201];
+		tracing::debug!("<<< Exiting voltage_battery_is_found_when_it_is_the_only_source()");
         assert_eq!(battery_feature_index(table), Some(BatteryProbe::Voltage(2)));
     }
 
     #[test]
     fn direct_percentage_sources_outrank_the_voltage_estimate() {
+		tracing::debug!(">>> Entering direct_percentage_sources_outrank_the_voltage_estimate()");
         let table = [BatteryVoltageFeature::ID, BatteryStatusFeature::ID];
         assert_eq!(battery_feature_index(table), Some(BatteryProbe::Legacy(2)));
         let table = [BatteryVoltageFeature::ID, UnifiedBatteryFeature::ID];
+		tracing::debug!("<<< Exiting direct_percentage_sources_outrank_the_voltage_estimate()");
         assert_eq!(battery_feature_index(table), Some(BatteryProbe::Unified(2)));
     }
 
     #[test]
     fn no_battery_feature_means_no_index() {
+		tracing::debug!(">>> Entering no_battery_feature_means_no_index()");
         assert_eq!(battery_feature_index([0x0001, 0x2201, 0x1b04]), None);
+		tracing::debug!("<<< Exiting no_battery_feature_means_no_index()");
         assert_eq!(battery_feature_index([]), None);
     }
 }

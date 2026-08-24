@@ -477,6 +477,7 @@ mod tests {
     use std::collections::HashMap;
 
     fn mx_master_3s_entry(model_ids: Vec<String>) -> DeviceEntry {
+		tracing::debug!(">>> Entering mx_master_3s_entry(model_ids={:?})", model_ids);
         DeviceEntry {
             model_id: "2b043".to_string(),
             model_ids,
@@ -488,8 +489,10 @@ mod tests {
     }
 
     fn index_of(depot: &str, entry: DeviceEntry) -> Index {
+		tracing::debug!(">>> Entering index_of(depot={})", depot);
         let mut devices = HashMap::new();
         devices.insert(depot.to_string(), entry);
+		tracing::debug!("<<< Exiting index_of(depot={})", depot);
         Index {
             schema_version: 1,
             devices,
@@ -499,6 +502,7 @@ mod tests {
     /// The current registry: the 3S depot lists both bolt pids Logi ships for
     /// it (`b043` via a Bolt receiver, `b034` over BTLE).
     fn mx_master_3s_index() -> Index {
+		tracing::debug!(">>> Entering mx_master_3s_index()");
         index_of(
             "mx_master_3s",
             mx_master_3s_entry(vec!["2b043".into(), "2b034".into()]),
@@ -508,6 +512,7 @@ mod tests {
     /// A legacy index generated before `modelIds` existed: only the primary
     /// pid `2b043` is listed, so the BTLE pid `b034` matches nothing.
     fn legacy_mx_master_3s_index() -> Index {
+		tracing::debug!(">>> Entering legacy_mx_master_3s_index()");
         index_of("mx_master_3s", mx_master_3s_entry(Vec::new()))
     }
 
@@ -516,6 +521,7 @@ mod tests {
     /// depot lists `2b034`/`2b043` (ext 2) — so the suffix `b034` is what
     /// bridges it.
     fn btle_3s_model() -> DeviceModelInfo {
+		tracing::debug!(">>> Entering btle_3s_model()");
         DeviceModelInfo {
             entity_count: 0,
             serial_number: None,
@@ -531,31 +537,38 @@ mod tests {
 
     #[test]
     fn secondary_pid_resolves_btle_3s_without_codename() {
+		tracing::debug!(">>> Entering secondary_pid_resolves_btle_3s_without_codename()");
         // The fix: the depot lists `2b034` alongside `2b043`, so the suffix
         // match on `b034` resolves the BTLE 3S by pid — no codename needed.
         let index = mx_master_3s_index();
         let hit = resolve_in_index(&index, &btle_3s_model(), None);
+		tracing::debug!("<<< Exiting secondary_pid_resolves_btle_3s_without_codename()");
         assert_eq!(hit.map(|(depot, _)| depot), Some("mx_master_3s"));
     }
 
     #[test]
     fn legacy_index_misses_btle_3s_by_pid() {
+		tracing::debug!(">>> Entering legacy_index_misses_btle_3s_by_pid()");
         // Before `modelIds`: only `2b043` is listed, so neither strict nor
         // suffix pid matching finds the BTLE 3S (`b034`).
         let index = legacy_mx_master_3s_index();
+		tracing::debug!("<<< Exiting legacy_index_misses_btle_3s_by_pid()");
         assert!(resolve_in_index(&index, &btle_3s_model(), None).is_none());
     }
 
     #[test]
     fn codename_bridges_btle_3s_on_legacy_index() {
+		tracing::debug!(">>> Entering codename_bridges_btle_3s_on_legacy_index()");
         // Back-compat: on a legacy index the firmware codename still bridges
         // to the depot via displayName.
         let index = legacy_mx_master_3s_index();
         let hit = resolve_in_index(&index, &btle_3s_model(), Some("MX Master 3S"));
+		tracing::debug!("<<< Exiting codename_bridges_btle_3s_on_legacy_index()");
         assert_eq!(hit.map(|(depot, _)| depot), Some("mx_master_3s"));
     }
 
     fn bare_model() -> DeviceModelInfo {
+		tracing::debug!(">>> Entering bare_model()");
         DeviceModelInfo {
             entity_count: 0,
             serial_number: None,
@@ -569,11 +582,13 @@ mod tests {
     /// A 24-byte PNG: signature + an `IHDR` chunk header carrying only the
     /// width/height — all `read_png_dimensions` actually reads.
     fn png_header(width: u32, height: u32) -> Vec<u8> {
+		tracing::debug!(">>> Entering png_header(width={},height={})", width, height);
         let mut bytes = vec![0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a];
         bytes.extend_from_slice(&13u32.to_be_bytes());
         bytes.extend_from_slice(b"IHDR");
         bytes.extend_from_slice(&width.to_be_bytes());
         bytes.extend_from_slice(&height.to_be_bytes());
+		tracing::debug!("<<< Exiting png_header(width={},height={})", width, height);
         bytes
     }
 
@@ -582,8 +597,10 @@ mod tests {
     /// MX Vertical and the older mice render.
     #[test]
     fn resolves_old_schema_depot_on_disk() {
+		tracing::debug!(">>> Entering resolves_old_schema_depot_on_disk()");
         let root = tempfile::tempdir().expect("create temp dir");
         let depot = "mx_vertical";
+		tracing::debug!("resolves_old_schema_depot_on_disk(): depot → {}", depot);
         let dir = root.path().join(depot);
         std::fs::create_dir_all(&dir).expect("create depot dir");
         std::fs::write(
@@ -626,6 +643,7 @@ mod tests {
 
     #[test]
     fn resolves_standalone_registry_model_without_synthetic_hidpp_info() {
+		tracing::debug!(">>> Entering resolves_standalone_registry_model_without_synthetic_hidpp_info()");
         let root = tempfile::tempdir().expect("create temp dir");
         let depot = root.path().join("litra_glow");
         std::fs::create_dir_all(&depot).expect("create depot dir");
@@ -660,11 +678,13 @@ mod tests {
         assert_eq!(asset.display_name, "Litra Glow");
         assert_eq!(asset.kind, DeviceKind::Light);
         assert_eq!(asset.image_path, depot.join("front.png"));
+		tracing::debug!("<<< Exiting resolves_standalone_registry_model_without_synthetic_hidpp_info()");
         assert_eq!((asset.png_width, asset.png_height), (396, 396));
     }
 
     #[test]
     fn standalone_registry_lookup_does_not_cross_model_depots() {
+		tracing::debug!(">>> Entering standalone_registry_lookup_does_not_cross_model_depots()");
         let root = tempfile::tempdir().expect("create temp dir");
         let depot = root.path().join("litra_beam");
         std::fs::create_dir_all(&depot).expect("create depot dir");
@@ -715,11 +735,13 @@ mod tests {
                 .expect("beam should resolve")
                 .display_name,
             "Litra Beam"
+		tracing::debug!("<<< Exiting standalone_registry_lookup_does_not_cross_model_depots()");
         );
     }
 
     #[test]
     fn unsafe_standalone_manifest_filename_is_rejected() {
+		tracing::debug!(">>> Entering unsafe_standalone_manifest_filename_is_rejected()");
         let root = tempfile::tempdir().expect("create temp dir");
         let depot = root.path().join("litra_glow");
         std::fs::create_dir_all(&depot).expect("create depot dir");
@@ -749,11 +771,13 @@ mod tests {
                 },
             )),
         };
+		tracing::debug!("<<< Exiting unsafe_standalone_manifest_filename_is_rejected()");
         assert!(resolver.resolve_registry_model("8c900").is_none());
     }
 
     #[test]
     fn standalone_resolution_prefers_the_first_read_root() {
+		tracing::debug!(">>> Entering standalone_resolution_prefers_the_first_read_root()");
         let roots = [
             tempfile::tempdir().expect("create bundle root"),
             tempfile::tempdir().expect("create cache root"),
@@ -795,11 +819,13 @@ mod tests {
         assert_eq!(
             asset.image_path,
             roots[0].path().join("litra_glow/front.png")
+		tracing::debug!("<<< Exiting standalone_resolution_prefers_the_first_read_root()");
         );
     }
 
     #[test]
     fn cleanup_removes_only_legacy_glow_pngs() {
+		tracing::debug!(">>> Entering cleanup_removes_only_legacy_glow_pngs()");
         let root = tempfile::tempdir().expect("create temp dir");
         let depot = root.path().join("g513");
         std::fs::create_dir_all(&depot).expect("create depot dir");
@@ -817,6 +843,7 @@ mod tests {
         assert!(
             depot.join("front.png").exists() && depot.join("metadata.json").exists(),
             "real assets must be left untouched"
+		tracing::debug!("<<< Exiting cleanup_removes_only_legacy_glow_pngs()");
         );
     }
 }

@@ -513,6 +513,7 @@ mod tests {
     };
 
     fn app() -> AppInfo {
+		log::debug!(">>> Entering app()");
         AppInfo {
             gui_version: "0.6.6".to_string(),
             build_profile: "release".to_string(),
@@ -538,6 +539,7 @@ mod tests {
     }
 
     fn assets() -> AssetInfo {
+		log::debug!(">>> Entering assets()");
         AssetInfo {
             source: AssetSource::Bundle,
             index_loaded: true,
@@ -549,6 +551,7 @@ mod tests {
     }
 
     fn sample() -> DiagnosticsReport {
+		log::debug!(">>> Entering sample()");
         DiagnosticsReport {
             app: app(),
             assets: assets(),
@@ -617,8 +620,10 @@ mod tests {
 
     #[test]
     fn renders_header_and_sections() {
+		log::debug!(">>> Entering renders_header_and_sections()");
         let md = sample().to_markdown();
         assert!(md.starts_with("### OpenLogi Diagnostics"));
+		log::debug!("renders_header_and_sections(): md → {}", md);
         assert!(md.contains("**App**"));
         assert!(md.contains("**Assets**"));
         assert!(md.contains("**Devices (2)**"));
@@ -632,13 +637,16 @@ mod tests {
         assert!(
             md.contains("- Source: app bundle · Index: loaded (142 models) · User cache: present")
         );
+		log::debug!("<<< Exiting renders_header_and_sections()");
         assert!(md.contains("- Config: schema 2 · 3 configured device(s) · thumbwheel 0"));
     }
 
     #[test]
     fn renders_device_detail() {
+		log::debug!(">>> Entering renders_device_detail()");
         let md = sample().to_markdown();
         assert!(md.contains("- MX Keys — keyboard (codename: MX Keys)"));
+		log::debug!("renders_device_detail(): md → {}", md);
         assert!(md.contains(
             "Connection: Logi Bolt receiver · Online: yes · Battery: 80% (discharging, good)"
         ));
@@ -650,46 +658,63 @@ mod tests {
         assert!(md.contains("DPI: 1600 dpi (range 200–8000, 5 steps)"));
         assert!(md.contains("Transports: USB"));
         assert!(md.contains("Render: mx_master_3s · Slot 1"));
+		log::debug!("<<< Exiting renders_device_detail()");
         assert!(md.contains("Battery: n/a"));
     }
 
     #[test]
     fn flags_version_and_protocol_mismatch() {
+		log::debug!(">>> Entering flags_version_and_protocol_mismatch()");
         let mut report = sample();
         report.app.agent_version = Some("0.6.5".to_string());
+		log::debug!("flags_version_and_protocol_mismatch(): report → {:?}", report);
         report.app.protocol_agent = Some(2);
         let md = report.to_markdown();
+		log::debug!("flags_version_and_protocol_mismatch(): md → {}", md);
         assert!(md.contains("v0.6.5 (connected) ⚠️ version mismatch with GUI"));
+		log::debug!("<<< Exiting flags_version_and_protocol_mismatch()");
         assert!(md.contains("GUI 1 / agent 2 ⚠️ mismatch"));
     }
 
     #[test]
     fn omits_unique_identifiers_and_footer() {
+		log::debug!(">>> Entering omits_unique_identifiers_and_footer()");
         let md = sample().to_markdown();
         assert!(!md.contains("Serial"));
+		log::debug!("omits_unique_identifiers_and_footer(): md → {}", md);
         assert!(!md.to_lowercase().contains("unit id"));
+		log::debug!("<<< Exiting omits_unique_identifiers_and_footer()");
         assert!(!md.contains("omitted by design"));
     }
 
     #[test]
     fn direct_slot_renders_as_direct() {
+		log::debug!(">>> Entering direct_slot_renders_as_direct()");
         let mut report = sample();
         report.devices[0].slot = 0xFF;
+		log::debug!("direct_slot_renders_as_direct(): report → {:?}", report);
         let md = report.to_markdown();
+		log::debug!("direct_slot_renders_as_direct(): md → {}", md);
         assert!(md.contains("· direct"));
+		log::debug!("<<< Exiting direct_slot_renders_as_direct()");
         assert!(!md.contains("Slot 255"));
     }
 
     #[test]
     fn unprobed_capabilities_render_not_probed() {
+		log::debug!(">>> Entering unprobed_capabilities_render_not_probed()");
         let mut report = sample();
         report.devices[0].capabilities = None;
+		log::debug!("unprobed_capabilities_render_not_probed(): report → {:?}", report);
         let md = report.to_markdown();
+		log::debug!("unprobed_capabilities_render_not_probed(): md → {}", md);
+		log::debug!("<<< Exiting unprobed_capabilities_render_not_probed()");
         assert!(md.contains("  - Capabilities: not probed"));
     }
 
     #[test]
     fn empty_inventory_still_renders() {
+		log::debug!(">>> Entering empty_inventory_still_renders()");
         let report = DiagnosticsReport {
             app: app(),
             assets: assets(),
@@ -697,29 +722,37 @@ mod tests {
             devices: Vec::new(),
         };
         let md = report.to_markdown();
+		log::debug!("empty_inventory_still_renders(): md → {}", md);
         assert!(md.contains("**Devices (0)**"));
+		log::debug!("<<< Exiting empty_inventory_still_renders()");
         assert!(md.contains("- No devices detected."));
     }
 
     #[test]
     fn unreachable_agent_renders_unknowns() {
+		log::debug!(">>> Entering unreachable_agent_renders_unknowns()");
         let mut report = sample();
         report.app.agent_version = None;
+		log::debug!("unreachable_agent_renders_unknowns(): report → {:?}", report);
         report.app.protocol_agent = None;
         report.app.inventory = None;
         report.app.hook_installed = None;
         report.app.launch_at_login = None;
         let md = report.to_markdown();
+		log::debug!("unreachable_agent_renders_unknowns(): md → {}", md);
         assert!(md.contains("- Agent: not connected"));
         assert!(md.contains("GUI 1 / agent —"));
         assert!(md.contains("- Inventory: —"));
+		log::debug!("<<< Exiting unreachable_agent_renders_unknowns()");
         assert!(md.contains("Input hook: unknown"));
     }
 
     #[test]
     fn incomplete_enumeration_is_flagged() {
+		log::debug!(">>> Entering incomplete_enumeration_is_flagged()");
         let mut report = sample();
         report.app.inventory = Some(InventoryState::Scanning);
+		log::debug!("incomplete_enumeration_is_flagged(): report → {:?}", report);
         assert!(
             report
                 .to_markdown()
@@ -730,6 +763,7 @@ mod tests {
             report
                 .to_markdown()
                 .contains("- Inventory: ⚠️ unavailable (enumeration failed — see agent log)")
+		log::debug!("<<< Exiting incomplete_enumeration_is_flagged()");
         );
     }
 }

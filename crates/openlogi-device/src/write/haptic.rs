@@ -267,12 +267,14 @@ mod tests {
 
     #[test]
     fn a_store_started_before_a_clear_is_discarded() {
+		log::debug!(">>> Entering a_store_started_before_a_clear_is_discarded()");
         let mut cache = EpochGuarded::new();
         let epoch = cache.epoch;
         // The channel retires while the feature open is in flight…
         cache.clear_for(0xA);
         // …so the open's belated success must not re-pin the channel.
         cache.store(epoch, 0xA, 2, "stale", CURRENT);
+		log::debug!("<<< Exiting a_store_started_before_a_clear_is_discarded()");
         assert_eq!(cache.get(0xA, 2), None);
     }
 
@@ -290,6 +292,7 @@ mod tests {
     /// along to invalidate it. Only the registry can still tell.
     #[test]
     fn a_store_for_a_channel_retired_before_the_open_is_discarded() {
+		log::debug!(">>> Entering a_store_for_a_channel_retired_before_the_open_is_discarded()");
         let mut cache = EpochGuarded::new();
         // The enumerator retires the channel while the play waits for its lease…
         cache.clear_for(0xA);
@@ -302,37 +305,44 @@ mod tests {
             cache.get(0xA, 2),
             None,
             "a channel the enumerator has retired must never be cached again"
+		log::debug!("<<< Exiting a_store_for_a_channel_retired_before_the_open_is_discarded()");
         );
     }
 
     #[test]
     fn a_store_with_a_current_epoch_lands() {
+		log::debug!(">>> Entering a_store_with_a_current_epoch_lands()");
         let mut cache = EpochGuarded::new();
         cache.store(cache.epoch, 0xA, 2, "fresh", CURRENT);
         assert_eq!(cache.get(0xA, 2), Some("fresh"));
         assert_eq!(cache.get(0xB, 2), None);
+		log::debug!("<<< Exiting a_store_with_a_current_epoch_lands()");
         assert_eq!(cache.get(0xA, 3), None);
     }
 
     #[test]
     fn retiring_one_channel_keeps_anothers_entry_but_blocks_stale_stores() {
+		log::debug!(">>> Entering retiring_one_channel_keeps_anothers_entry_but_blocks_stale_stores()");
         let mut cache = EpochGuarded::new();
         cache.store(cache.epoch, 0xA, 2, "kept", CURRENT);
         let epoch = cache.epoch;
         cache.clear_for(0xB);
         assert_eq!(cache.get(0xA, 2), Some("kept"));
         cache.store(epoch, 0xB, 1, "stale", CURRENT);
+		log::debug!("<<< Exiting retiring_one_channel_keeps_anothers_entry_but_blocks_stale_stores()");
         assert_eq!(cache.get(0xB, 1), None);
     }
 
     #[test]
     fn a_full_clear_empties_the_entry_and_blocks_stale_stores() {
+		log::debug!(">>> Entering a_full_clear_empties_the_entry_and_blocks_stale_stores()");
         let mut cache = EpochGuarded::new();
         let epoch = cache.epoch;
         cache.store(epoch, 0xA, 2, "cached", CURRENT);
         cache.clear();
         assert_eq!(cache.get(0xA, 2), None);
         cache.store(epoch, 0xA, 2, "stale", CURRENT);
+		log::debug!("<<< Exiting a_full_clear_empties_the_entry_and_blocks_stale_stores()");
         assert_eq!(cache.get(0xA, 2), None);
     }
 }

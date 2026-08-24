@@ -9,6 +9,7 @@
 // window contents, no input. ESM module style; targets GNOME Shell 45+.
 
 import Gio from 'gi://Gio';
+const logger = console;
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 const DBUS_NAME = 'org.openlogi.Frontmost';
@@ -17,6 +18,8 @@ const DBUS_INTERFACE = `
 <node>
   <interface name="org.openlogi.Frontmost">
     <method name="GetFocusedWmClass">
+	logger.debug('>>> Entering GetFocusedWmClass()');
+	logger.debug('<<< Exiting GetFocusedWmClass()');
       <arg type="s" direction="out" name="wmClass"/>
     </method>
   </interface>
@@ -24,6 +27,7 @@ const DBUS_INTERFACE = `
 
 export default class OpenLogiFrontmostExtension extends Extension {
     enable() {
+		logger.debug('>>> Entering enable()');
         this._dbus = Gio.DBusExportedObject.wrapJSObject(DBUS_INTERFACE, this);
         this._dbus.export(Gio.DBus.session, DBUS_PATH);
         this._nameId = Gio.bus_own_name_on_connection(
@@ -32,21 +36,26 @@ export default class OpenLogiFrontmostExtension extends Extension {
             Gio.BusNameOwnerFlags.NONE,
             null,
             null);
+			logger.debug('<<< Exiting enable()');
     }
 
     disable() {
+		logger.debug('>>> Entering disable()');
         if (this._nameId) {
             Gio.bus_unown_name(this._nameId);
             this._nameId = 0;
         }
         if (this._dbus) {
+			logger.debug(`disable(): this._nameId → ${this._nameId}`);
             this._dbus.unexport();
             this._dbus = null;
+			logger.debug(`disable(): this._dbus → ${this._dbus}`);
         }
     }
 
     // D-Bus method org.openlogi.Frontmost.GetFocusedWmClass.
     GetFocusedWmClass() {
+		logger.debug('>>> Entering GetFocusedWmClass()');
         const win = global.display.focus_window;
         if (!win)
             return '';

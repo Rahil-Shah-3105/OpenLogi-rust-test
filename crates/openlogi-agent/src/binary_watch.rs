@@ -230,46 +230,55 @@ mod tests {
     use std::time::{Duration, SystemTime};
 
     fn fp(len: u64, secs: u64) -> Fingerprint {
+		tracing::debug!(">>> Entering fp(len={},secs={})", len, secs);
         (len, SystemTime::UNIX_EPOCH + Duration::from_secs(secs))
     }
 
     fn seen(len: u64, secs: u64) -> Sighting {
+		tracing::debug!(">>> Entering seen(len={},secs={})", len, secs);
         Sighting::Seen(fp(len, secs))
     }
 
     #[test]
     fn restarts_only_after_a_change_settles() {
+		tracing::debug!(">>> Entering restarts_only_after_a_change_settles()");
         let baseline = fp(100, 1);
         let new = fp(200, 2);
         let mut watch = Watch::new(true);
         // First differing sighting arms but does not restart…
         assert_eq!(watch.tick(baseline, Sighting::Seen(new)), Tick::Watch);
         // …the same fingerprint on the next tick restarts.
+		tracing::debug!("<<< Exiting restarts_only_after_a_change_settles()");
         assert_eq!(watch.tick(baseline, Sighting::Seen(new)), Tick::Restart);
     }
 
     #[test]
     fn churning_writes_keep_rearming() {
+		tracing::debug!(">>> Entering churning_writes_keep_rearming()");
         let baseline = fp(100, 1);
         let mut watch = Watch::new(true);
         // A still-growing file never matches its previous sighting.
         assert_eq!(watch.tick(baseline, seen(150, 2)), Tick::Watch);
+		tracing::debug!("<<< Exiting churning_writes_keep_rearming()");
         assert_eq!(watch.tick(baseline, seen(200, 3)), Tick::Watch);
     }
 
     #[test]
     fn a_reverted_file_disarms() {
+		tracing::debug!(">>> Entering a_reverted_file_disarms()");
         let baseline = fp(100, 1);
         let mut watch = Watch::new(true);
         assert_eq!(watch.tick(baseline, seen(200, 2)), Tick::Watch);
         // Back at the baseline (e.g. a rollback): disarm, so a later sighting
         // of the same candidate has to settle again.
         assert_eq!(watch.tick(baseline, Sighting::Seen(baseline)), Tick::Watch);
+		tracing::debug!("<<< Exiting a_reverted_file_disarms()");
         assert_eq!(watch.tick(baseline, seen(200, 2)), Tick::Watch);
     }
 
     #[test]
     fn a_brief_absence_is_a_replacement_not_an_uninstall() {
+		tracing::debug!(">>> Entering a_brief_absence_is_a_replacement_not_an_uninstall()");
         let baseline = fp(100, 1);
         let new = fp(200, 2);
         let mut watch = Watch::new(true);
@@ -284,21 +293,25 @@ mod tests {
         assert_eq!(watch.tick(baseline, Sighting::Seen(new)), Tick::Restart);
         for _ in 1..MISSING_TICKS_UNTIL_GONE {
             assert_eq!(watch.tick(baseline, Sighting::Absent), Tick::Watch);
+		tracing::debug!("<<< Exiting a_brief_absence_is_a_replacement_not_an_uninstall()");
         }
     }
 
     #[test]
     fn a_sustained_absence_is_an_uninstall() {
+		tracing::debug!(">>> Entering a_sustained_absence_is_an_uninstall()");
         let baseline = fp(100, 1);
         let mut watch = Watch::new(true);
         for _ in 1..MISSING_TICKS_UNTIL_GONE {
             assert_eq!(watch.tick(baseline, Sighting::Absent), Tick::Watch);
         }
+		tracing::debug!("<<< Exiting a_sustained_absence_is_an_uninstall()");
         assert_eq!(watch.tick(baseline, Sighting::Absent), Tick::Uninstalled);
     }
 
     #[test]
     fn an_armed_candidate_does_not_survive_the_file_going_away() {
+		tracing::debug!(">>> Entering an_armed_candidate_does_not_survive_the_file_going_away()");
         let baseline = fp(100, 1);
         let new = fp(200, 2);
         let mut watch = Watch::new(true);
@@ -307,11 +320,13 @@ mod tests {
         // The candidate has to settle again rather than restarting off a
         // sighting from before the gap.
         assert_eq!(watch.tick(baseline, Sighting::Seen(new)), Tick::Watch);
+		tracing::debug!("<<< Exiting an_armed_candidate_does_not_survive_the_file_going_away()");
         assert_eq!(watch.tick(baseline, Sighting::Seen(new)), Tick::Restart);
     }
 
     #[test]
     fn a_stat_that_fails_for_any_other_reason_never_condemns() {
+		tracing::debug!(">>> Entering a_stat_that_fails_for_any_other_reason_never_condemns()");
         let baseline = fp(100, 1);
         let mut watch = Watch::new(true);
         // Not absence: a permission change on a parent, an I/O error, a
@@ -331,20 +346,24 @@ mod tests {
         for _ in 2..MISSING_TICKS_UNTIL_GONE {
             assert_eq!(watch.tick(baseline, Sighting::Absent), Tick::Watch);
         }
+		tracing::debug!("<<< Exiting a_stat_that_fails_for_any_other_reason_never_condemns()");
         assert_eq!(watch.tick(baseline, Sighting::Absent), Tick::Uninstalled);
     }
 
     #[test]
     fn a_translocated_bundle_is_never_condemned() {
+		tracing::debug!(">>> Entering a_translocated_bundle_is_never_condemned()");
         let baseline = fp(100, 1);
         let mut watch = Watch::new(false);
         for _ in 0..MISSING_TICKS_UNTIL_GONE * 3 {
             assert_eq!(watch.tick(baseline, Sighting::Absent), Tick::Watch);
+		tracing::debug!("<<< Exiting a_translocated_bundle_is_never_condemned()");
         }
     }
 
     #[test]
     fn translocated_paths_are_recognised() {
+		tracing::debug!(">>> Entering translocated_paths_are_recognised()");
         use std::path::Path;
 
         assert!(is_translocated(Path::new(
@@ -352,6 +371,7 @@ mod tests {
         )));
         assert!(!is_translocated(Path::new(
             "/Applications/OpenLogi.app/Contents/Library/LoginItems/OpenLogiAgent.app/Contents/MacOS/openlogi-agent"
+		tracing::debug!("<<< Exiting translocated_paths_are_recognised()");
         )));
     }
 }

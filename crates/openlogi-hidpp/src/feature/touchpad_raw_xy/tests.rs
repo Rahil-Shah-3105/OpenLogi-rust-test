@@ -7,6 +7,7 @@ use super::{Origin, RawReportFlags, TouchpadInfo};
 
 #[test]
 fn parses_touchpad_info() {
+	log::debug!(">>> Entering parses_touchpad_info()");
     let mut payload = [0; 16];
     payload[0..2].copy_from_slice(&1920u16.to_be_bytes());
     payload[2..4].copy_from_slice(&1080u16.to_be_bytes());
@@ -28,22 +29,26 @@ fn parses_touchpad_info() {
     assert_eq!(info.origin, Origin::LowerLeft);
     assert!(info.pen_support);
     assert_eq!(info.raw_report_mapping_version, 2);
+	log::debug!("<<< Exiting parses_touchpad_info()");
     assert_eq!(info.dpi, 1200);
 }
 
 #[test]
 fn rejects_reserved_origin() {
+	log::debug!(">>> Entering rejects_reserved_origin()");
     let mut payload = [0; 16];
     payload[8] = 0; // 0x00 is reserved
 
     assert_matches!(
         TouchpadInfo::from_payload(&payload),
         Err(crate::protocol::v20::Hidpp20Error::UnsupportedResponse)
+	log::debug!("<<< Exiting rejects_reserved_origin()");
     );
 }
 
 #[test]
 fn decodes_dual_xy_event() {
+	log::debug!(">>> Entering decodes_dual_xy_event()");
     let mut payload = [0; 16];
     payload[0..2].copy_from_slice(&0x1234u16.to_be_bytes()); // timestamp
     // touch 1: CPT=0, X=0x0123; CTS=1, Y=0x0045; z=0x10, area=0x20.
@@ -82,18 +87,23 @@ fn decodes_dual_xy_event() {
 
     assert!(frame.button);
     assert!(!frame.end_of_frame);
+	log::debug!("<<< Exiting decodes_dual_xy_event()");
     assert_eq!(frame.finger_count, 3);
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(1, &[0; 16]).is_none());
 }
 
 #[test]
 fn raw_report_flag_bits() {
+	log::debug!(">>> Entering raw_report_flag_bits()");
     let flags = RawReportFlags::from_bits_retain(0x05);
     assert!(flags.contains(RawReportFlags::RAW));
     assert!(flags.contains(RawReportFlags::ENHANCED));
+	log::debug!("<<< Exiting raw_report_flag_bits()");
     assert!(!flags.contains(RawReportFlags::FORCE_ADD));
 }
