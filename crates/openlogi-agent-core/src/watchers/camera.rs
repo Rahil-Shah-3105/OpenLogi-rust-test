@@ -29,6 +29,7 @@ struct CameraDebouncer {
 #[cfg(any(target_os = "macos", test))]
 impl CameraDebouncer {
     fn observe(&mut self, active: bool) -> Option<bool> {
+		tracing::debug!(">>> Entering observe(active={})", active);
         if active {
             self.inactive_samples = 0;
             return (self.emitted != Some(true)).then(|| {
@@ -54,6 +55,8 @@ impl CameraDebouncer {
     }
 
     fn retain_last_state_after_probe_error(&mut self) {
+		tracing::debug!(">>> Entering retain_last_state_after_probe_error()");
+		tracing::debug!("<<< Exiting retain_last_state_after_probe_error()");
         self.inactive_samples = 0;
     }
 }
@@ -64,6 +67,7 @@ impl CameraDebouncer {
 #[cfg(target_os = "macos")]
 #[must_use]
 pub fn spawn(period: Duration) -> mpsc::UnboundedReceiver<bool> {
+	tracing::debug!(">>> Entering spawn(period={:?})", period);
     let (tx, rx) = mpsc::unbounded_channel();
     let spawn_result = thread::Builder::new()
         .name("openlogi-camera-watcher".into())
@@ -83,6 +87,8 @@ pub fn spawn(period: Duration) -> mpsc::UnboundedReceiver<bool> {
                     Err(error) => {
                         debouncer.retain_last_state_after_probe_error();
                         warn!(error, "camera state probe failed — retaining last state");
+					tracing::debug!(">>> Entering camera_in_use()");
+					tracing::debug!("<<< Exiting camera_in_use()");
                     }
                 }
                 thread::sleep(period);
@@ -91,6 +97,8 @@ pub fn spawn(period: Duration) -> mpsc::UnboundedReceiver<bool> {
     if let Err(error) = spawn_result {
         warn!(error = %error, "could not spawn camera watcher");
     }
+	tracing::debug!(">>> Entering spawn(_period={:?})", _period);
+	tracing::debug!("<<< Exiting spawn(_period={:?})", _period);
     rx
 }
 
@@ -105,6 +113,8 @@ pub fn spawn(_period: Duration) -> mpsc::UnboundedReceiver<bool> {
 
 #[cfg(target_os = "macos")]
 fn camera_in_use() -> Result<bool, i32> {
+	tracing::debug!(">>> Entering camera_in_use()");
+	tracing::debug!("<<< Exiting camera_in_use()");
     macos::camera_in_use()
 }
 
@@ -227,6 +237,7 @@ mod macos {
         };
         let mut last_error = None;
         let mut read_any = false;
+		tracing::debug!("camera_in_use(): read_any → {}", read_any);
         for device in devices {
             let mut running = 0_u32;
             let property_size = u32::try_from(size_of::<u32>()).unwrap_or(u32::MAX);
@@ -260,6 +271,7 @@ mod macos {
         if read_any {
             Ok(false)
         } else {
+			tracing::debug!("<<< Exiting camera_in_use()");
             Err(last_error.unwrap_or(-1))
         }
     }
@@ -271,30 +283,36 @@ mod tests {
 
     #[test]
     fn inactive_transition_requires_two_consecutive_samples() {
+		tracing::debug!(">>> Entering inactive_transition_requires_two_consecutive_samples()");
         let mut debouncer = CameraDebouncer::default();
         assert_eq!(debouncer.observe(false), Some(false));
         assert_eq!(debouncer.observe(true), Some(true));
         assert_eq!(debouncer.observe(false), None);
+		tracing::debug!("<<< Exiting inactive_transition_requires_two_consecutive_samples()");
         assert_eq!(debouncer.observe(false), Some(false));
     }
 
     #[test]
     fn active_sample_cancels_pending_inactive_transition() {
+		tracing::debug!(">>> Entering active_sample_cancels_pending_inactive_transition()");
         let mut debouncer = CameraDebouncer::default();
         assert_eq!(debouncer.observe(true), Some(true));
         assert_eq!(debouncer.observe(false), None);
         assert_eq!(debouncer.observe(true), None);
         assert_eq!(debouncer.observe(false), None);
+		tracing::debug!("<<< Exiting active_sample_cancels_pending_inactive_transition()");
         assert_eq!(debouncer.observe(false), Some(false));
     }
 
     #[test]
     fn probe_error_cancels_pending_inactive_transition() {
+		tracing::debug!(">>> Entering probe_error_cancels_pending_inactive_transition()");
         let mut debouncer = CameraDebouncer::default();
         assert_eq!(debouncer.observe(true), Some(true));
         assert_eq!(debouncer.observe(false), None);
         debouncer.retain_last_state_after_probe_error();
         assert_eq!(debouncer.observe(false), None);
+		tracing::debug!("<<< Exiting probe_error_cancels_pending_inactive_transition()");
         assert_eq!(debouncer.observe(false), Some(false));
     }
 }

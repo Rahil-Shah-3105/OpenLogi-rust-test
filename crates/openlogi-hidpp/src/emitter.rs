@@ -46,6 +46,7 @@ mod tests {
 
     #[test]
     fn create_receiver_prunes_abandoned_senders_without_waiting_for_emit() {
+		log::debug!(">>> Entering create_receiver_prunes_abandoned_senders_without_waiting_for_emit()");
         let emitter = EventEmitter::<u8>::new();
 
         let rx = emitter.create_receiver();
@@ -53,11 +54,13 @@ mod tests {
 
         let _rx = emitter.create_receiver();
 
+		log::debug!("<<< Exiting create_receiver_prunes_abandoned_senders_without_waiting_for_emit()");
         assert_eq!(emitter.senders.lock().unwrap().len(), 1);
     }
 
     #[test]
     fn emit_prunes_abandoned_senders() {
+		log::debug!(">>> Entering emit_prunes_abandoned_senders()");
         let emitter = EventEmitter::<u8>::new();
 
         let live = emitter.create_receiver();
@@ -67,6 +70,7 @@ mod tests {
         emitter.emit(7);
 
         assert_eq!(live.recv_blocking().unwrap(), 7);
+		log::debug!("<<< Exiting emit_prunes_abandoned_senders()");
         assert_eq!(emitter.senders.lock().unwrap().len(), 1);
     }
 }

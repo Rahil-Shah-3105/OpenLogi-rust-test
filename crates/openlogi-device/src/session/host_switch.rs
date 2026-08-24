@@ -561,25 +561,30 @@ mod tests {
     /// but **not** on host 2 — a keyboard with three host keys and only two
     /// machines paired, which is the shape that used to strand devices.
     fn keyboard_with_an_empty_third_slot(request: &[u8]) -> Option<Vec<u8>> {
+		tracing::debug!(">>> Entering keyboard_with_an_empty_third_slot(request={:?})", request);
         scripted_keyboard(request, SlotStatus::Reported)
     }
 
     /// The same keyboard without `0x1815`, so its slot pairing is unknowable.
     fn keyboard_without_hosts_info(request: &[u8]) -> Option<Vec<u8>> {
+		tracing::debug!(">>> Entering keyboard_without_hosts_info(request={:?})", request);
         scripted_keyboard(request, SlotStatus::Unimplemented)
     }
 
     /// The same keyboard, whose firmware errors when asked for `0x1815`.
     fn keyboard_erroring_on_hosts_info_lookup(request: &[u8]) -> Option<Vec<u8>> {
+		tracing::debug!(">>> Entering keyboard_erroring_on_hosts_info_lookup(request={:?})", request);
         scripted_keyboard(request, SlotStatus::LookupErrors)
     }
 
     /// The same keyboard, whose `0x1815` reads come back an error.
     fn keyboard_erroring_on_slot_status(request: &[u8]) -> Option<Vec<u8>> {
+		tracing::debug!(">>> Entering keyboard_erroring_on_slot_status(request={:?})", request);
         scripted_keyboard(request, SlotStatus::ReadErrors)
     }
 
     fn scripted_keyboard(request: &[u8], slot_status: SlotStatus) -> Option<Vec<u8>> {
+		tracing::debug!(">>> Entering scripted_keyboard(request={:?})", request);
         if request.len() < 7 || !matches!(request[0], 0x10 | 0x11) {
             return None;
         }
@@ -616,16 +621,20 @@ mod tests {
         response[0] = 0x10;
         response[1..4].copy_from_slice(&request[1..4]);
         response[4..].copy_from_slice(&payload[..3]);
+		tracing::debug!("<<< Exiting scripted_keyboard(request={:?})", request);
         Some(response)
     }
 
     async fn scripted_channel(responder: crate::channel::scripted::Responder) -> Arc<HidppChannel> {
+		tracing::debug!(">>> Entering scripted_channel()");
         let (raw, _handle) = ScriptedRawHidChannel::with_responder(responder);
+		tracing::debug!("<<< Exiting scripted_channel()");
         crate::channel::scripted::scripted_channel(raw).await
     }
 
     #[tokio::test]
     async fn switching_to_an_unpaired_slot_is_refused() {
+		tracing::debug!(">>> Entering switching_to_an_unpaired_slot_is_refused()");
         // ChangeHost would allow it: host 2 is within the device's channel
         // count. But nothing is paired there, and `setCurrentHost` is
         // fire-and-forget — the device would simply leave and not come back.
@@ -638,22 +647,26 @@ mod tests {
         assert!(
             matches!(error, HostSwitchError::HostSlotEmpty { host: 2 }),
             "got {error:?}"
+		tracing::debug!("<<< Exiting switching_to_an_unpaired_slot_is_refused()");
         );
     }
 
     #[tokio::test]
     async fn switching_to_a_paired_slot_proceeds() {
+		tracing::debug!(">>> Entering switching_to_a_paired_slot_proceeds()");
         let channel = scripted_channel(keyboard_with_an_empty_third_slot).await;
 
         let change = prepare_host_change_on(&channel, 1, 1)
             .await
             .expect("a paired slot must be switchable");
 
+		tracing::debug!("<<< Exiting switching_to_a_paired_slot_proceeds()");
         assert!(change.required, "host 1 differs from the current host 0");
     }
 
     #[tokio::test]
     async fn a_device_without_hosts_info_is_still_switched() {
+		tracing::debug!(">>> Entering a_device_without_hosts_info_is_still_switched()");
         // 0x1815 is the only source of per-slot pairing status. Without it the
         // guard must not block, or this change would regress every device that
         // does not implement it.
@@ -663,11 +676,13 @@ mod tests {
             .await
             .expect("a device that cannot report slot status must still switch");
 
+		tracing::debug!("<<< Exiting a_device_without_hosts_info_is_still_switched()");
         assert!(change.required);
     }
 
     #[tokio::test]
     async fn a_failed_hosts_info_lookup_does_not_block_the_switch() {
+		tracing::debug!(">>> Entering a_failed_hosts_info_lookup_does_not_block_the_switch()");
         // Firmware that answers an unknown feature id with an error rather than
         // index 0 must read the same as not implementing 0x1815 at all: the
         // pairing status is unknowable, which is not a reason to refuse.
@@ -677,11 +692,13 @@ mod tests {
             .await
             .expect("an errored feature lookup must not abort the switch");
 
+		tracing::debug!("<<< Exiting a_failed_hosts_info_lookup_does_not_block_the_switch()");
         assert!(change.required);
     }
 
     #[tokio::test]
     async fn an_unreadable_slot_status_does_not_block_the_switch() {
+		tracing::debug!(">>> Entering an_unreadable_slot_status_does_not_block_the_switch()");
         // The guard is advisory. A device that has 0x1815 but cannot answer for
         // it right now has not said the slot is empty, so refusing here would
         // turn a transient read failure into a dead host key.
@@ -691,11 +708,13 @@ mod tests {
             .await
             .expect("an errored status read must not abort the switch");
 
+		tracing::debug!("<<< Exiting an_unreadable_slot_status_does_not_block_the_switch()");
         assert!(change.required);
     }
 
     #[tokio::test]
     async fn a_switch_to_the_current_host_never_consults_slot_status() {
+		tracing::debug!(">>> Entering a_switch_to_the_current_host_never_consults_slot_status()");
         // Already-there is decided before the pairing check, so a device on an
         // unpaired-looking slot is not blocked from staying put.
         let channel = scripted_channel(keyboard_with_an_empty_third_slot).await;
@@ -704,10 +723,12 @@ mod tests {
             .await
             .expect("staying on the current host is always fine");
 
+		tracing::debug!("<<< Exiting a_switch_to_the_current_host_never_consults_slot_status()");
         assert!(!change.required);
     }
 
     fn reporting(diverted: bool, raw_xy: bool, analytics_key_events: bool) -> CidReporting {
+		tracing::debug!(">>> Entering reporting(diverted={},raw_xy={},analytics_key_events={})", diverted, raw_xy, analytics_key_events);
         CidReporting {
             cid: ControlId(0x00d3),
             diverted,
@@ -722,6 +743,7 @@ mod tests {
 
     #[test]
     fn receiver_slots_share_one_channel() {
+		tracing::debug!(">>> Entering receiver_slots_share_one_channel()");
         let keyboard = DeviceRoute::Bolt {
             receiver_uid: "AABB".into(),
             slot: 1,
@@ -730,30 +752,36 @@ mod tests {
             receiver_uid: "aabb".into(),
             slot: 2,
         };
+		tracing::debug!("<<< Exiting receiver_slots_share_one_channel()");
         assert!(shares_channel(&keyboard, &mouse));
     }
 
     #[test]
     fn direct_devices_do_not_share_channels() {
+		tracing::debug!(">>> Entering direct_devices_do_not_share_channels()");
         let route = DeviceRoute::Direct {
             vendor_id: 0x046d,
             product_id: 0xb025,
         };
+		tracing::debug!("<<< Exiting direct_devices_do_not_share_channels()");
         assert!(!shares_channel(&route, &route));
     }
 
     #[test]
     fn host_controls_are_recognized_by_task_when_cid_varies() {
+		tracing::debug!(">>> Entering host_controls_are_recognized_by_task_when_cid_varies()");
         let info = CtrlIdInfo {
             cid: 0x1234,
             task_id: 0x00af,
             flags: 0,
         };
+		tracing::debug!("<<< Exiting host_controls_are_recognized_by_task_when_cid_varies()");
         assert_eq!(host_channel(info), Some(1));
     }
 
     #[test]
     fn analytics_event_selects_the_matching_host() {
+		tracing::debug!(">>> Entering analytics_event_selects_the_matching_host()");
         let controls = [ArmedControl {
             cid: 0x00d3,
             host: 2,
@@ -768,29 +796,37 @@ mod tests {
         assert_eq!(
             event_host(&controls, ReprogControlsEvent::AnalyticsKeyEvents(events)),
             Some(2)
+		tracing::debug!("<<< Exiting analytics_event_selects_the_matching_host()");
         );
     }
 
     #[test]
     fn current_host_does_not_require_a_change() {
+		tracing::debug!(">>> Entering current_host_does_not_require_a_change()");
+		tracing::debug!("<<< Exiting current_host_does_not_require_a_change()");
         assert!(matches!(host_change_required(1, 3, 1), Ok(false)));
     }
 
     #[test]
     fn different_valid_host_requires_a_change() {
+		tracing::debug!(">>> Entering different_valid_host_requires_a_change()");
+		tracing::debug!("<<< Exiting different_valid_host_requires_a_change()");
         assert!(matches!(host_change_required(0, 3, 2), Ok(true)));
     }
 
     #[test]
     fn host_outside_device_range_is_rejected() {
+		tracing::debug!(">>> Entering host_outside_device_range_is_rejected()");
         assert!(
             host_change_required(0, 2, 2).is_err(),
             "host 2 is outside a device that reports 2 hosts and must be rejected"
+		tracing::debug!("<<< Exiting host_outside_device_range_is_rejected()");
         );
     }
 
     #[test]
     fn diverted_cleanup_restores_only_the_original_temporary_bits() {
+		tracing::debug!(">>> Entering diverted_cleanup_restores_only_the_original_temporary_bits()");
         let change = restoration_change(ArmedControl {
             cid: 0x00d3,
             host: 2,
@@ -802,11 +838,13 @@ mod tests {
         assert_eq!(change.raw_xy, Some(true));
         assert_eq!(change.analytics_key_events, None);
         assert_eq!(change.persistently_diverted, None);
+		tracing::debug!("<<< Exiting diverted_cleanup_restores_only_the_original_temporary_bits()");
         assert_eq!(change.remap, None);
     }
 
     #[test]
     fn analytics_cleanup_restores_the_original_analytics_bit() {
+		tracing::debug!(">>> Entering analytics_cleanup_restores_the_original_analytics_bit()");
         let change = restoration_change(ArmedControl {
             cid: 0x00d3,
             host: 2,
@@ -816,6 +854,7 @@ mod tests {
 
         assert_eq!(change.analytics_key_events, Some(true));
         assert_eq!(change.diverted, None);
+		tracing::debug!("<<< Exiting analytics_cleanup_restores_the_original_analytics_bit()");
         assert_eq!(change.raw_xy, None);
     }
 }

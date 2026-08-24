@@ -144,43 +144,55 @@ mod is_optional_asset_tests {
 
     #[test]
     fn side_render_names_are_optional() {
+		log::debug!(">>> Entering side_render_names_are_optional()");
         assert!(is_optional_asset("side_core.png"));
+		log::debug!("<<< Exiting side_render_names_are_optional()");
         assert!(is_optional_asset("side.png"));
     }
 
     #[test]
     fn colour_variant_names_are_optional() {
+		log::debug!(">>> Entering colour_variant_names_are_optional()");
         assert!(is_optional_asset("front_ext1.png"));
         assert!(is_optional_asset("front_ext_2.png"));
+		log::debug!("<<< Exiting colour_variant_names_are_optional()");
         assert!(is_optional_asset("side_ext_3.png"));
     }
 
     #[test]
     fn baseline_and_metadata_files_are_not_optional() {
+		log::debug!(">>> Entering baseline_and_metadata_files_are_not_optional()");
         assert!(!is_optional_asset("front_core.png"));
         assert!(!is_optional_asset("front.png"));
         assert!(!is_optional_asset("manifest.json"));
+		log::debug!("<<< Exiting baseline_and_metadata_files_are_not_optional()");
         assert!(!is_optional_asset("core_metadata.json"));
     }
 
     #[test]
     fn non_png_files_are_never_optional_even_with_a_matching_prefix() {
+		log::debug!(">>> Entering non_png_files_are_never_optional_even_with_a_matching_prefix()");
+		log::debug!("<<< Exiting non_png_files_are_never_optional_even_with_a_matching_prefix()");
         assert!(!is_optional_asset("front_ext.json"));
     }
 
     #[test]
     fn prefix_match_is_loose_and_also_matches_unintended_names() {
+		log::debug!(">>> Entering prefix_match_is_loose_and_also_matches_unintended_names()");
         // `starts_with("front_ext")` also matches names that merely begin the
         // same way, not just the `front_extN` / `front_ext_N` schema —
         // pinning this as current behaviour, not a spec.
+		log::debug!("<<< Exiting prefix_match_is_loose_and_also_matches_unintended_names()");
         assert!(is_optional_asset("front_extra_special.png"));
     }
 
     #[test]
     fn prefix_match_is_case_sensitive_while_the_extension_check_is_not() {
+		log::debug!(">>> Entering prefix_match_is_case_sensitive_while_the_extension_check_is_not()");
         // The extension check folds case (`eq_ignore_ascii_case`), but the
         // prefix check is a plain `starts_with`, so an all-caps name fails
         // the prefix half even though its extension would pass alone.
+		log::debug!("<<< Exiting prefix_match_is_case_sensitive_while_the_extension_check_is_not()");
         assert!(!is_optional_asset("FRONT_EXT1.PNG"));
     }
 }

@@ -77,6 +77,8 @@ impl NativeBackend {
 #[async_trait]
 impl HidBackend for NativeBackend {
     async fn enumerate(&self) -> Result<Vec<NodeInfo>, BackendError> {
+        let __log_start = std::time::Instant::now();
+        log::info!("enumerate(): database query executed in {} ms", __log_start.elapsed().as_millis());
         Ok(self
             .refresh()
             .await?
@@ -86,6 +88,8 @@ impl HidBackend for NativeBackend {
     }
 
     async fn enumerate_hidpp(&self) -> Result<Vec<NodeInfo>, BackendError> {
+        let __log_start = std::time::Instant::now();
+        log::info!("enumerate_hidpp(): database query executed in {} ms", __log_start.elapsed().as_millis());
         Ok(self
             .refresh()
             .await?

@@ -31,15 +31,18 @@ fn cache_entry(probed_tick: u64) -> Cached {
 
 #[test]
 fn direct_codename_prefers_hidpp_marketing_name_over_generic_os_name() {
+	log::debug!(">>> Entering direct_codename_prefers_hidpp_marketing_name_over_generic_os_name()");
     assert_eq!(
         preferred_direct_codename(Some("Wireless Mouse MX Master 2S"), "Mouse"),
         "Wireless Mouse MX Master 2S"
     );
+	log::debug!("<<< Exiting direct_codename_prefers_hidpp_marketing_name_over_generic_os_name()");
     assert_eq!(preferred_direct_codename(None, "Mouse"), "Mouse");
 }
 
 #[test]
 fn cache_dirty_tracks_only_persistable_keys() {
+	log::debug!(">>> Entering cache_dirty_tracks_only_persistable_keys()");
     // A system whose devices never persist (direct-only, or Unifying) must not
     // rewrite probe-cache.json on every refresh pass: the file's content
     // wouldn't change.
@@ -70,11 +73,13 @@ fn cache_dirty_tracks_only_persistable_keys() {
     assert!(
         e.cache_dirty,
         "persistable fresh probe must dirty the cache"
+	log::debug!("<<< Exiting cache_dirty_tracks_only_persistable_keys()");
     );
 }
 
 #[test]
 fn cache_entry_survives_grace_then_evicts() {
+	log::debug!(">>> Entering cache_entry_survives_grace_then_evicts()");
     let mut e = Enumerator::with_backend(ScriptedBackend::new(Vec::new()));
     let key = CacheKey::Bolt {
         unit_id: [1, 2, 3, 4],
@@ -94,11 +99,13 @@ fn cache_entry_survives_grace_then_evicts() {
     assert!(
         !e.cache.contains_key(&key),
         "should evict past the grace window"
+	log::debug!("<<< Exiting cache_entry_survives_grace_then_evicts()");
     );
 }
 
 #[test]
 fn being_seen_resets_the_miss_counter() {
+	log::debug!(">>> Entering being_seen_resets_the_miss_counter()");
     let mut e = Enumerator::with_backend(ScriptedBackend::new(Vec::new()));
     let key = CacheKey::Bolt { unit_id: [9; 4] };
     e.cache.insert(key.clone(), cache_entry(0));
@@ -112,11 +119,13 @@ fn being_seen_resets_the_miss_counter() {
     assert!(
         e.cache.contains_key(&key),
         "counter reset by a sighting, so still within grace"
+	log::debug!("<<< Exiting being_seen_resets_the_miss_counter()");
     );
 }
 
 #[test]
 fn cached_probe_is_reused_until_refresh_ticks() {
+	log::debug!(">>> Entering cached_probe_is_reused_until_refresh_ticks()");
     let cached = Cached {
         probe: ProbedFeatures::default(),
         battery: None,
@@ -130,6 +139,7 @@ fn cached_probe_is_reused_until_refresh_ticks() {
     assert!(
         is_stale(&cached, 10 + REFRESH_TICKS),
         "at the window the probe is refreshed"
+	log::debug!("<<< Exiting cached_probe_is_reused_until_refresh_ticks()");
     );
 }
 
@@ -160,6 +170,7 @@ fn inventory(slots: &[u8]) -> Vec<DeviceInventory> {
 
 #[test]
 fn settled_inventories_publish_exact_receiver_routes() {
+	log::debug!(">>> Entering settled_inventories_publish_exact_receiver_routes()");
     assert_eq!(
         routes_for_inventories(&inventory(&[1, 4])),
         vec![
@@ -181,11 +192,13 @@ fn settled_inventories_publish_exact_receiver_routes() {
             slot: 4,
         }],
         "a vanished slot must not survive the next atomic node replacement"
+	log::debug!("<<< Exiting settled_inventories_publish_exact_receiver_routes()");
     );
 }
 
 #[test]
 fn settled_direct_inventory_publishes_one_direct_route() {
+	log::debug!(">>> Entering settled_direct_inventory_publishes_one_direct_route()");
     let direct = vec![DeviceInventory {
         receiver: ReceiverInfo {
             name: "MX Keys".into(),
@@ -211,11 +224,13 @@ fn settled_direct_inventory_publishes_one_direct_route() {
             vendor_id: 0x046d,
             product_id: 0xb35b,
         }]
+	log::debug!("<<< Exiting settled_direct_inventory_publishes_one_direct_route()");
     );
 }
 
 #[test]
 fn channel_cache_retires_and_defers_reopen_until_a_later_tick() {
+	log::debug!(">>> Entering channel_cache_retires_and_defers_reopen_until_a_later_tick()");
     let mut cache = ChannelCache::<u8, Arc<()>>::default();
     let channel = Arc::new(());
     cache.insert(1, Arc::clone(&channel));
@@ -234,11 +249,13 @@ fn channel_cache_retires_and_defers_reopen_until_a_later_tick() {
     assert!(
         cache.prepare_open(&1, |channel| Arc::strong_count(channel) == 1),
         "only a later tick may reopen"
+	log::debug!("<<< Exiting channel_cache_retires_and_defers_reopen_until_a_later_tick()");
     );
 }
 
 #[test]
 fn absent_channels_retire_and_quiescent_absent_retirement_is_reaped() {
+	log::debug!(">>> Entering absent_channels_retire_and_quiescent_absent_retirement_is_reaped()");
     let mut cache = ChannelCache::<u8, Arc<()>>::default();
     cache.insert(1, Arc::new(()));
     cache.insert(2, Arc::new(()));
@@ -252,11 +269,13 @@ fn absent_channels_retire_and_quiescent_absent_retirement_is_reaped() {
     cache.reap_absent(&HashSet::from([2]), |channel| {
         Arc::strong_count(channel) == 1
     });
+	log::debug!("<<< Exiting absent_channels_retire_and_quiescent_absent_retirement_is_reaped()");
     assert!(!cache.is_retiring(&1));
 }
 
 #[test]
 fn retiring_node_replays_ledger_and_marks_tick_unhealthy() {
+	log::debug!(">>> Entering retiring_node_replays_ledger_and_marks_tick_unhealthy()");
     let mut ledger = super::ledger::NodeLedger::<u8>::default();
     let expected = inventory(&[1]);
     let settled = ledger.settle(&1, true, Some(expected[0].clone()));
@@ -268,11 +287,13 @@ fn retiring_node_replays_ledger_and_marks_tick_unhealthy() {
 
     assert_eq!(replay, Some(expected[0].clone()));
     assert!(!complete);
+	log::debug!("<<< Exiting retiring_node_replays_ledger_and_marks_tick_unhealthy()");
     assert!(!healthy);
 }
 
 #[test]
 fn retiring_node_inventory_expires_after_the_existing_ledger_grace() {
+	log::debug!(">>> Entering retiring_node_inventory_expires_after_the_existing_ledger_grace()");
     let mut ledger = super::ledger::NodeLedger::<u8>::default();
     let expected = inventory(&[1]);
     ledger.settle(&1, true, Some(expected[0].clone()));
@@ -289,21 +310,25 @@ fn retiring_node_inventory_expires_after_the_existing_ledger_grace() {
         settle_unhealthy_node(&mut ledger, &1, &mut complete, &mut healthy),
         None,
         "retirement must not extend stale inventory beyond ledger policy"
+	log::debug!("<<< Exiting retiring_node_inventory_expires_after_the_existing_ledger_grace()");
     );
 }
 
 #[test]
 fn one_shot_retry_stops_when_first_attempt_is_complete() {
+	log::debug!(">>> Entering one_shot_retry_stops_when_first_attempt_is_complete()");
     let current = inventory(&[1, 2]);
 
     assert!(
         one_shot_should_stop(None, &current, true, true, 1),
         "complete inventories keep the one-pass happy path"
+	log::debug!("<<< Exiting one_shot_retry_stops_when_first_attempt_is_complete()");
     );
 }
 
 #[test]
 fn one_shot_retry_waits_for_healthy_incomplete_inventory_to_stabilize() {
+	log::debug!(">>> Entering one_shot_retry_waits_for_healthy_incomplete_inventory_to_stabilize()");
     let partial = inventory(&[1]);
     let full = inventory(&[1, 2]);
 
@@ -318,31 +343,37 @@ fn one_shot_retry_waits_for_healthy_incomplete_inventory_to_stabilize() {
     assert!(
         one_shot_should_stop(Some(full.as_slice()), &full, false, true, 3),
         "once the returned inventory stabilizes, retrying stops"
+	log::debug!("<<< Exiting one_shot_retry_waits_for_healthy_incomplete_inventory_to_stabilize()");
     );
 }
 
 #[test]
 fn one_shot_retry_stops_on_unchanged_incomplete_inventory() {
+	log::debug!(">>> Entering one_shot_retry_stops_on_unchanged_incomplete_inventory()");
     let partial = inventory(&[1]);
 
     assert!(
         one_shot_should_stop(Some(partial.as_slice()), &partial, false, true, 2),
         "stable partial inventories should not burn every retry attempt"
+	log::debug!("<<< Exiting one_shot_retry_stops_on_unchanged_incomplete_inventory()");
     );
 }
 
 #[test]
 fn one_shot_retry_keeps_unchanged_inventory_after_unhealthy_probe() {
+	log::debug!(">>> Entering one_shot_retry_keeps_unchanged_inventory_after_unhealthy_probe()");
     let partial = inventory(&[1]);
 
     assert!(
         !one_shot_should_stop(Some(partial.as_slice()), &partial, false, false, 2),
         "unchanged replay after a failed probe must keep retrying before the cap"
+	log::debug!("<<< Exiting one_shot_retry_keeps_unchanged_inventory_after_unhealthy_probe()");
     );
 }
 
 #[test]
 fn one_shot_retry_stops_at_attempt_cap_when_inventory_keeps_changing() {
+	log::debug!(">>> Entering one_shot_retry_stops_at_attempt_cap_when_inventory_keeps_changing()");
     let previous = inventory(&[1]);
     let current = inventory(&[1, 2]);
 
@@ -355,6 +386,7 @@ fn one_shot_retry_stops_at_attempt_cap_when_inventory_keeps_changing() {
             ONESHOT_ATTEMPTS
         ),
         "the retry loop must remain bounded even if the inventory changes every time"
+	log::debug!("<<< Exiting one_shot_retry_stops_at_attempt_cap_when_inventory_keeps_changing()");
     );
 }
 
@@ -397,6 +429,7 @@ fn paired_slots(probe: &NodeProbe) -> Vec<u8> {
 
 #[test]
 fn bolt_probe_is_complete_when_count_matches_readable_slots() {
+	log::debug!(">>> Entering bolt_probe_is_complete_when_count_matches_readable_slots()");
     // Two paired slots, both readable, and the pairing-count register agrees.
     // Empty slots are dropped in phase 1, so only occupied slots reach here;
     // `join` yields them in slot order, so the devices must come out ordered
@@ -413,11 +446,13 @@ fn bolt_probe_is_complete_when_count_matches_readable_slots() {
         probe.outcomes.len(),
         2,
         "one cache outcome per readable slot"
+	log::debug!("<<< Exiting bolt_probe_is_complete_when_count_matches_readable_slots()");
     );
 }
 
 #[test]
 fn bolt_probe_is_incomplete_when_a_counted_slot_is_unreadable() {
+	log::debug!(">>> Entering bolt_probe_is_incomplete_when_a_counted_slot_is_unreadable()");
     // The receiver reports two paired devices but only one slot's pairing
     // register read this tick. Presenting that partial walk as the new truth is
     // the #218 regression: it must stay incomplete so the ledger replays the
@@ -432,11 +467,13 @@ fn bolt_probe_is_incomplete_when_a_counted_slot_is_unreadable() {
     assert!(
         !probe.healthy,
         "an incomplete Bolt walk is not authoritative"
+	log::debug!("<<< Exiting bolt_probe_is_incomplete_when_a_counted_slot_is_unreadable()");
     );
 }
 
 #[test]
 fn bolt_probe_is_incomplete_when_the_count_register_is_unanswered() {
+	log::debug!(">>> Entering bolt_probe_is_incomplete_when_the_count_register_is_unanswered()");
     // A parked/unresponsive receiver channel returns no pairing count. Even with
     // slots surfaced from arrival events, the walk can't be trusted as the whole
     // truth, so it stays incomplete and the ledger keeps the prior snapshot.
@@ -446,6 +483,7 @@ fn bolt_probe_is_incomplete_when_the_count_register_is_unanswered() {
         !probe.complete,
         "no count register means we couldn't fully check"
     );
+	log::debug!("<<< Exiting bolt_probe_is_incomplete_when_the_count_register_is_unanswered()");
     assert!(!probe.healthy);
 }
 
@@ -474,6 +512,7 @@ fn probed(model_info: Option<DeviceModelInfo>, identity_incomplete: bool) -> Pro
 /// binding would vanish from the GUI for half a minute on a device that has it.
 #[test]
 fn an_incomplete_capability_walk_keeps_the_last_complete_answer() {
+	log::debug!(">>> Entering an_incomplete_capability_walk_keeps_the_last_complete_answer()");
     let mut fresh = probed(None, false);
     fresh.capabilities_incomplete = true;
     fresh.capabilities = Some(Capabilities::default());
@@ -489,12 +528,14 @@ fn an_incomplete_capability_walk_keeps_the_last_complete_answer() {
         fresh.capabilities.map(|caps| caps.haptic_panel),
         Some(true),
         "the panel the last complete walk saw must survive a lost reply"
+	log::debug!("<<< Exiting an_incomplete_capability_walk_keeps_the_last_complete_answer()");
     );
 }
 
 /// A device that genuinely lost a capability must still be able to say so.
 #[test]
 fn a_complete_capability_walk_is_left_alone() {
+	log::debug!(">>> Entering a_complete_capability_walk_is_left_alone()");
     let mut fresh = probed(None, false);
     fresh.capabilities = Some(Capabilities::default());
     let mut cached = probed(None, false);
@@ -508,11 +549,13 @@ fn a_complete_capability_walk_is_left_alone() {
     assert_eq!(
         fresh.capabilities.map(|caps| caps.haptic_panel),
         Some(false)
+	log::debug!("<<< Exiting a_complete_capability_walk_is_left_alone()");
     );
 }
 
 #[test]
 fn failed_device_info_read_backfills_from_cache() {
+	log::debug!(">>> Entering failed_device_info_read_backfills_from_cache()");
     let mut fresh = probed(None, true);
     let cached = probed(Some(model([0x46, 0, 0x2e, 0], None)), false);
 
@@ -522,11 +565,13 @@ fn failed_device_info_read_backfills_from_cache() {
     assert!(
         !fresh.identity_incomplete,
         "a backfilled identity is complete and may be cached"
+	log::debug!("<<< Exiting failed_device_info_read_backfills_from_cache()");
     );
 }
 
 #[test]
 fn failed_serial_read_backfills_only_the_serial() {
+	log::debug!(">>> Entering failed_serial_read_backfills_only_the_serial()");
     let mut fresh = probed(Some(model([1, 2, 3, 4], None)), true);
     let cached = probed(Some(model([9, 9, 9, 9], Some("abc123"))), false);
 
@@ -537,11 +582,13 @@ fn failed_serial_read_backfills_only_the_serial() {
     };
     assert_eq!(info.serial_number.as_deref(), Some("abc123"));
     assert_eq!(info.unit_id, [1, 2, 3, 4], "fresh unit id wins");
+	log::debug!("<<< Exiting failed_serial_read_backfills_only_the_serial()");
     assert!(!fresh.identity_incomplete);
 }
 
 #[test]
 fn complete_probe_is_never_overwritten_by_cache() {
+	log::debug!(">>> Entering complete_probe_is_never_overwritten_by_cache()");
     let mut fresh = probed(Some(model([1, 2, 3, 4], None)), false);
     let cached = probed(Some(model([9, 9, 9, 9], Some("stale"))), false);
 
@@ -554,11 +601,13 @@ fn complete_probe_is_never_overwritten_by_cache() {
     assert!(
         info.serial_number.is_none(),
         "no serial was read, none faked"
+	log::debug!("<<< Exiting complete_probe_is_never_overwritten_by_cache()");
     );
 }
 
 #[test]
 fn incomplete_probe_without_cached_identity_stays_incomplete() {
+	log::debug!(">>> Entering incomplete_probe_without_cached_identity_stays_incomplete()");
     let mut fresh = probed(None, true);
     let cached = probed(None, false);
 
@@ -567,21 +616,25 @@ fn incomplete_probe_without_cached_identity_stays_incomplete() {
     assert!(
         fresh.identity_incomplete,
         "nothing to backfill from — the caller must not memoize this probe"
+	log::debug!("<<< Exiting incomplete_probe_without_cached_identity_stays_incomplete()");
     );
 }
 
 #[test]
 fn failed_kind_read_is_carried_forward() {
+	log::debug!(">>> Entering failed_kind_read_is_carried_forward()");
     let mut fresh = ProbedFeatures::default();
     let cached = probed(None, false);
 
     backfill_identity(&mut fresh, &cached);
 
+	log::debug!("<<< Exiting failed_kind_read_is_carried_forward()");
     assert_eq!(fresh.kind, Some(DeviceKind::Mouse));
 }
 
 #[test]
 fn codename_reads_len_prefixed_name() {
+	log::debug!(">>> Entering codename_reads_len_prefixed_name()");
     // wire-verified MX Master 2S reply: `40 0c "MX Master 2S"` then padding.
     let mut buf = vec![0x40, 0x0c];
     buf.extend_from_slice(b"MX Master 2S");
@@ -589,29 +642,36 @@ fn codename_reads_len_prefixed_name() {
     assert_eq!(
         parse_codename_unifying(&buf).as_deref(),
         Some("MX Master 2S")
+	log::debug!("<<< Exiting codename_reads_len_prefixed_name()");
     );
 }
 
 #[test]
 fn codename_clamps_overlong_len() {
+	log::debug!(">>> Entering codename_clamps_overlong_len()");
     // a bogus length byte must not over-read past the buffer.
     let buf = [0x40, 0xff, b'h', b'i'];
+	log::debug!("<<< Exiting codename_clamps_overlong_len()");
     assert_eq!(parse_codename_unifying(&buf).as_deref(), Some("hi"));
 }
 
 #[test]
 fn codename_rejects_short_response() {
+	log::debug!(">>> Entering codename_rejects_short_response()");
+	log::debug!("<<< Exiting codename_rejects_short_response()");
     assert_eq!(parse_codename_unifying(&[0x40]), None);
 }
 
 #[test]
 fn live_cached_channel_survives_a_transient_enumeration_gap() {
+	log::debug!(">>> Entering live_cached_channel_survives_a_transient_enumeration_gap()");
     let enumerated = std::collections::HashSet::from([1_u8]);
     let cached_channels = [(1_u8, true), (2_u8, true), (3_u8, false)];
     let retained = retained_nodes(&enumerated, cached_channels);
     assert!(retained.contains(&1));
     assert!(retained.contains(&2));
     assert!(!retained.contains(&3));
+	log::debug!("<<< Exiting live_cached_channel_survives_a_transient_enumeration_gap()");
     assert_eq!(retained, std::collections::HashSet::from([1, 2]));
 }
 

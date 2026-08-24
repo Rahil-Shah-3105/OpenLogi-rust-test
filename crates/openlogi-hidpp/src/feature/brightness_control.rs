@@ -94,6 +94,7 @@ mod tests {
 
     #[test]
     fn parses_split_steps_field() {
+		log::debug!(">>> Entering parses_split_steps_field()");
         let mut payload = [0; 16];
         payload[0..=1].copy_from_slice(&1000u16.to_be_bytes());
         payload[2] = 0x34;
@@ -109,6 +110,7 @@ mod tests {
         assert!(
             info.capabilities
                 .contains(BrightnessCapabilities::ILLUMINATION)
+		log::debug!("<<< Exiting parses_split_steps_field()");
         );
     }
 }

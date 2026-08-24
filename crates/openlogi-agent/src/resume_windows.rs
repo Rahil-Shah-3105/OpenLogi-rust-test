@@ -88,6 +88,7 @@ mod tests {
 
     #[test]
     fn resume_events_set_the_flag_and_a_suspend_does_not() {
+		tracing::debug!(">>> Entering resume_events_set_the_flag_and_a_suspend_does_not()");
         let pending = AtomicBool::new(false);
         let context = (&raw const pending).cast::<c_void>();
         for event in [PBT_APMRESUMEAUTOMATIC, PBT_APMRESUMESUSPEND] {
@@ -98,6 +99,7 @@ mod tests {
         }
         // SAFETY: same live context; a suspend must not request a re-apply.
         unsafe { on_power_event(context, PBT_APMSUSPEND, std::ptr::null()) };
+		tracing::debug!("<<< Exiting resume_events_set_the_flag_and_a_suspend_does_not()");
         assert!(!pending.load(Ordering::Relaxed));
     }
 }

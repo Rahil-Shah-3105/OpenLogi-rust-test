@@ -320,6 +320,7 @@ fn spawn_inner(
                                 // arrived; a `None` here is the stream closing, so report it now
                                 // rather than after a spurious extra enumerate next tick.
                                 let mut alive = true;
+								tracing::debug!("spawn_inner(period={:?}): alive → {}", period, alive);
                                 while let Some(drained) =
                                     futures_lite::future::poll_once(stream.next()).await
                                 {
@@ -362,11 +363,13 @@ mod tests {
     /// A transport-level enumerate failure — what the watcher's `Err` arm now
     /// sees (a partial per-node read is replayed by the hid ledger as `Ok`).
     fn enumerate_failed() -> InventoryError {
+		tracing::debug!(">>> Entering enumerate_failed()");
         InventoryError::Hid(BackendError::Disconnected)
     }
 
     #[test]
     fn completed_enumeration_is_forwarded_even_when_empty() {
+		tracing::debug!(">>> Entering completed_enumeration_is_forwarded_even_when_empty()");
         let mut state = WatchState::default();
         // A genuine "checked, nothing there" still propagates as a disconnect —
         // the resilience must not swallow a real empty.
@@ -374,11 +377,13 @@ mod tests {
             state.classify(Ok((vec![], vec![]))),
             Some(InventoryEvent::Snapshot { inventories, standalone, .. }) if inventories.is_empty() && standalone.is_empty()
         );
+		tracing::debug!("<<< Exiting completed_enumeration_is_forwarded_even_when_empty()");
         assert!(state.succeeded);
     }
 
     #[test]
     fn failure_after_a_success_keeps_the_last_snapshot() {
+		tracing::debug!(">>> Entering failure_after_a_success_keeps_the_last_snapshot()");
         let mut state = WatchState::default();
         // A good tick first, so there is a last-known-good set to preserve.
         assert_matches!(
@@ -388,13 +393,16 @@ mod tests {
         // Then transient enumerate failures emit nothing — the agent keeps the
         // last snapshot instead of flapping to "No devices" (#218).
         assert!(state.classify(Err(enumerate_failed())).is_none());
+		tracing::debug!("<<< Exiting failure_after_a_success_keeps_the_last_snapshot()");
         assert!(state.classify(Err(enumerate_failed())).is_none());
     }
 
     #[test]
     fn standalone_failure_keeps_raw_nodes_without_suppressing_the_snapshot() {
+		tracing::debug!(">>> Entering standalone_failure_keeps_raw_nodes_without_suppressing_the_snapshot()");
         let mut state = WatchState::default();
         let _ = state.classify(Ok((vec![], vec![raw_light("serial:glow-1")])));
+		tracing::debug!("standalone_failure_keeps_raw_nodes_without_suppressing_the_snapshot(): _ → {:?}", _);
 
         assert_matches!(
             state.classify_parts(vec![], Err(enumerate_failed()), false),
@@ -402,11 +410,13 @@ mod tests {
                 if inventories.is_empty()
                     && standalone.len() == 1
                     && standalone[0].online
+		tracing::debug!("<<< Exiting standalone_failure_keeps_raw_nodes_without_suppressing_the_snapshot()");
         );
     }
 
     #[test]
     fn persistent_initial_failure_reports_unavailable_once_then_recovers() {
+		tracing::debug!(">>> Entering persistent_initial_failure_reports_unavailable_once_then_recovers()");
         let mut state = WatchState::default();
         // No snapshot has ever landed, so repeated failure must eventually stop
         // looking like "still scanning".
@@ -423,10 +433,12 @@ mod tests {
         assert_matches!(
             state.classify(Ok((vec![], vec![]))),
             Some(InventoryEvent::Snapshot { .. })
+		tracing::debug!("<<< Exiting persistent_initial_failure_reports_unavailable_once_then_recovers()");
         );
     }
 
     fn raw_light(identity: &str) -> StandaloneDevice {
+		tracing::debug!(">>> Entering raw_light(identity={})", identity);
         StandaloneDevice {
             address: RawDeviceAddress {
                 vendor_id: 0x046d,
@@ -450,6 +462,7 @@ mod tests {
 
     #[test]
     fn raw_node_omission_is_graced_and_recovers() {
+		tracing::debug!(">>> Entering raw_node_omission_is_graced_and_recovers()");
         let mut state = WatchState::default();
         assert_matches!(
             state.classify(Ok((vec![], vec![raw_light("id:node")]))) ,
@@ -462,18 +475,22 @@ mod tests {
         assert_matches!(
             state.classify(Ok((vec![], vec![raw_light("id:node")]))) ,
             Some(InventoryEvent::Snapshot { standalone, .. }) if standalone.len() == 1 && standalone[0].online
+		tracing::debug!("<<< Exiting raw_node_omission_is_graced_and_recovers()");
         );
     }
 
     #[test]
     fn raw_node_is_removed_after_grace_is_exhausted() {
+		tracing::debug!(">>> Entering raw_node_is_removed_after_grace_is_exhausted()");
         let mut state = WatchState::default();
         let _ = state.classify(Ok((vec![], vec![raw_light("id:node")])));
+		tracing::debug!("raw_node_is_removed_after_grace_is_exhausted(): _ → {:?}", _);
         let _ = state.classify(Ok((vec![], vec![])));
         let _ = state.classify(Ok((vec![], vec![])));
         assert_matches!(
             state.classify(Ok((vec![], vec![]))),
             Some(InventoryEvent::Snapshot { standalone, .. }) if standalone.is_empty()
+		tracing::debug!("<<< Exiting raw_node_is_removed_after_grace_is_exhausted()");
         );
     }
 }

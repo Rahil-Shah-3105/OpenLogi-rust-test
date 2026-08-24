@@ -30,6 +30,7 @@ pub(crate) async fn channel_with_reader(raw: MockRawHidChannel) -> HidppChannel 
 
 #[test]
 fn short_payload_widens_preserving_header_and_padding() {
+	log::debug!(">>> Entering short_payload_widens_preserving_header_and_padding()");
     // [device, feature, function|sw, p0, p1, p2]
     let short = [0xff, 0x05, 0x1e, 0xaa, 0xbb, 0xcc];
     let HidppMessage::Long(long) = HidppMessage::Short(short).widened() else {
@@ -37,18 +38,22 @@ fn short_payload_widens_preserving_header_and_padding() {
     };
     assert_eq!(&long[..short.len()], &short[..]); // header + payload copied verbatim
     assert!(long[short.len()..].iter().all(|&b| b == 0)); // remainder zero-padded
+	log::debug!("<<< Exiting short_payload_widens_preserving_header_and_padding()");
     assert_eq!(long.len(), LONG_REPORT_LENGTH - 1);
 }
 
 #[test]
 fn widening_an_already_long_message_is_a_no_op() {
+	log::debug!(">>> Entering widening_an_already_long_message_is_a_no_op()");
     let long = HidppMessage::Long([0x5a; LONG_REPORT_LENGTH - 1]);
 
+	log::debug!("<<< Exiting widening_an_already_long_message_is_a_no_op()");
     assert_eq!(long.widened(), long);
 }
 
 #[test]
 fn send_returns_response_before_timeout() {
+	log::debug!(">>> Entering send_returns_response_before_timeout()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -69,11 +74,13 @@ fn send_returns_response_before_timeout() {
         assert_eq!(actual, response);
         assert_eq!(handle.written_reports().len(), 1);
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_returns_response_before_timeout()");
     });
 }
 
 #[test]
 fn send_times_out_and_removes_pending_message() {
+	log::debug!(">>> Entering send_times_out_and_removes_pending_message()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -94,11 +101,13 @@ fn send_times_out_and_removes_pending_message() {
         assert!(started.elapsed() < Duration::from_secs(1));
         assert_eq!(handle.written_reports().len(), 1);
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_times_out_and_removes_pending_message()");
     });
 }
 
 #[test]
 fn timeout_removes_only_its_own_pending_message() {
+	log::debug!(">>> Entering timeout_removes_only_its_own_pending_message()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -128,11 +137,13 @@ fn timeout_removes_only_its_own_pending_message() {
         assert!(matches!(timed_out.unwrap_err(), ChannelError::Timeout));
         assert_eq!(answered.unwrap(), slow_response);
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting timeout_removes_only_its_own_pending_message()");
     });
 }
 
 #[test]
 fn late_response_after_timeout_is_ignored() {
+	log::debug!(">>> Entering late_response_after_timeout_is_ignored()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -177,11 +188,13 @@ fn late_response_after_timeout_is_ignored() {
         wait_for_event_count(&events, 2).await;
         assert_eq!(events.lock().unwrap()[1], (followup_response, true));
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting late_response_after_timeout_is_ignored()");
     });
 }
 
 #[test]
 fn send_and_forget_writes_without_pending_message() {
+	log::debug!(">>> Entering send_and_forget_writes_without_pending_message()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -190,11 +203,13 @@ fn send_and_forget_writes_without_pending_message() {
 
         assert_eq!(handle.written_reports().len(), 1);
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_and_forget_writes_without_pending_message()");
     });
 }
 
 #[test]
 fn raw_report_write_forwards_exact_bytes_and_length() {
+	log::debug!(">>> Entering raw_report_write_forwards_exact_bytes_and_length()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -204,11 +219,13 @@ fn raw_report_write_forwards_exact_bytes_and_length() {
 
         assert_eq!(written, report.len());
         assert_eq!(handle.written_reports(), [report.to_vec()]);
+	log::debug!("<<< Exiting raw_report_write_forwards_exact_bytes_and_length()");
     });
 }
 
 #[test]
 fn raw_report_write_rejects_empty_and_oversized_inputs_without_io() {
+	log::debug!(">>> Entering raw_report_write_rejects_empty_and_oversized_inputs_without_io()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -225,11 +242,13 @@ fn raw_report_write_rejects_empty_and_oversized_inputs_without_io() {
             ChannelError::InvalidRawReportLength(65)
         ));
         assert!(handle.written_reports().is_empty());
+	log::debug!("<<< Exiting raw_report_write_rejects_empty_and_oversized_inputs_without_io()");
     });
 }
 
 #[test]
 fn raw_report_write_times_out_when_the_transport_parks() {
+	log::debug!(">>> Entering raw_report_write_times_out_when_the_transport_parks()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         handle.park_writes();
@@ -243,11 +262,13 @@ fn raw_report_write_times_out_when_the_transport_parks() {
 
         assert!(matches!(error, ChannelError::Timeout));
         assert!(started.elapsed() < Duration::from_secs(1));
+	log::debug!("<<< Exiting raw_report_write_times_out_when_the_transport_parks()");
     });
 }
 
 #[test]
 fn listener_can_remove_another_listener_during_dispatch() {
+	log::debug!(">>> Entering listener_can_remove_another_listener_during_dispatch()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = Arc::new(channel_with_reader(raw).await);
@@ -274,6 +295,7 @@ fn listener_can_remove_another_listener_during_dispatch() {
         wait_for_atomic_count(&removing_listener_calls, 2).await;
 
         assert_eq!(removed_listener_calls.load(Ordering::SeqCst), 1);
+	log::debug!("<<< Exiting listener_can_remove_another_listener_during_dispatch()");
     });
 }
 
@@ -288,6 +310,7 @@ fn listener_can_remove_another_listener_during_dispatch() {
 
 #[test]
 fn send_v20_matches_response_by_header_ignoring_unrelated_messages() {
+	log::debug!(">>> Entering send_v20_matches_response_by_header_ignoring_unrelated_messages()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -337,11 +360,13 @@ fn send_v20_matches_response_by_header_ignoring_unrelated_messages() {
 
         assert_eq!(result.unwrap(), response);
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_v20_matches_response_by_header_ignoring_unrelated_messages()");
     });
 }
 
 #[test]
 fn send_v20_broadcast_event_does_not_resolve_pending_request() {
+	log::debug!(">>> Entering send_v20_broadcast_event_does_not_resolve_pending_request()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -395,11 +420,13 @@ fn send_v20_broadcast_event_does_not_resolve_pending_request() {
             ]
         );
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_v20_broadcast_event_does_not_resolve_pending_request()");
     });
 }
 
 #[test]
 fn send_v20_response_may_arrive_as_a_different_report_width() {
+	log::debug!(">>> Entering send_v20_response_may_arrive_as_a_different_report_width()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -422,11 +449,13 @@ fn send_v20_response_may_arrive_as_a_different_report_width() {
 
         assert_eq!(result, response);
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_v20_response_may_arrive_as_a_different_report_width()");
     });
 }
 
 #[test]
 fn send_v20_error_frame_resolves_to_feature_error() {
+	log::debug!(">>> Entering send_v20_error_frame_resolves_to_feature_error()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -448,11 +477,13 @@ fn send_v20_error_frame_resolves_to_feature_error() {
             Hidpp20Error::Feature(ErrorType::InvalidArgument)
         ));
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_v20_error_frame_resolves_to_feature_error()");
     });
 }
 
 #[test]
 fn send_v20_error_frame_with_unmapped_code_is_unsupported_response() {
+	log::debug!(">>> Entering send_v20_error_frame_with_unmapped_code_is_unsupported_response()");
     futures::executor::block_on(async {
         let (raw, handle) = MockRawHidChannel::new();
         let channel = channel_with_reader(raw).await;
@@ -472,6 +503,7 @@ fn send_v20_error_frame_with_unmapped_code_is_unsupported_response() {
 
         assert!(matches!(err, Hidpp20Error::UnsupportedResponse));
         assert_pending_empty(&channel);
+	log::debug!("<<< Exiting send_v20_error_frame_with_unmapped_code_is_unsupported_response()");
     });
 }
 

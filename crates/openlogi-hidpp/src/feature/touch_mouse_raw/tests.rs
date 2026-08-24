@@ -5,6 +5,7 @@ use super::{Origin, RawMode, TouchMouseInfo};
 
 #[test]
 fn parses_touch_mouse_info() {
+	log::debug!(">>> Entering parses_touch_mouse_info()");
     let mut payload = [0; 16];
     payload[0..2].copy_from_slice(&2048u16.to_be_bytes());
     payload[2..4].copy_from_slice(&1280u16.to_be_bytes());
@@ -19,11 +20,13 @@ fn parses_touch_mouse_info() {
     assert_eq!(info.resolution_dpi, 1200);
     assert_eq!(info.origin, Origin::UpperLeft);
     assert_eq!(info.max_finger_count, 4);
+	log::debug!("<<< Exiting parses_touch_mouse_info()");
     assert_eq!(info.width_height_data_range, 15);
 }
 
 #[test]
 fn decodes_raw_data_with_lifted_fingers() {
+	log::debug!(">>> Entering decodes_raw_data_with_lifted_fingers()");
     // touch 0 present (X=0x123, Y=0x045, Wx=2, Wy=3); touch 2 present (X=0x200,
     // Y=0x100, Wx=1, Wy=1); touches 1 and 3 lifted (0xFF).
     let payload = [
@@ -55,11 +58,13 @@ fn decodes_raw_data_with_lifted_fingers() {
             width_y: 1
         })
     );
+	log::debug!("<<< Exiting decodes_raw_data_with_lifted_fingers()");
     assert_eq!(touches[3], None);
 }
 
 #[test]
 fn decodes_status_event() {
+	log::debug!(">>> Entering decodes_status_event()");
     let mut payload = [0; 16];
     payload[0] = 0b11; // mouse lifted + button down
 
@@ -67,18 +72,23 @@ fn decodes_status_event() {
         panic!("expected status event");
     };
     assert!(status.contains(TouchMouseStatus::MOUSE_LIFTED));
+	log::debug!("<<< Exiting decodes_status_event()");
     assert!(status.contains(TouchMouseStatus::BUTTON_DOWN));
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(2, &[0; 16]).is_none());
 }
 
 #[test]
 fn maps_raw_mode_wire_values() {
+	log::debug!(">>> Entering maps_raw_mode_wire_values()");
     assert_eq!(RawMode::try_from(0u8).unwrap(), RawMode::NativeGestures);
     assert_eq!(RawMode::try_from(4u8).unwrap(), RawMode::RawUnfilteredWithZ);
     RawMode::try_from(5u8).unwrap_err();
+	log::debug!("<<< Exiting maps_raw_mode_wire_values()");
     assert_eq!(u8::from(RawMode::RawFiltered), 1);
 }

@@ -138,6 +138,7 @@ mod tests {
 
     #[test]
     fn discrete_range_rejects_missing_values() {
+		log::debug!(">>> Entering discrete_range_rejects_missing_values()");
         let range = ControlRange {
             min: 0,
             max: 3,
@@ -148,6 +149,7 @@ mod tests {
 
         assert!(range.supports(1));
         assert!(!range.supports(2));
+		log::debug!("<<< Exiting discrete_range_rejects_missing_values()");
         assert!(range.supports(3));
     }
 }

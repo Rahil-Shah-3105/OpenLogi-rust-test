@@ -415,6 +415,7 @@ mod tests {
 
     #[test]
     fn host_switch_targets_round_trip_as_physical_keys() -> Result<(), Box<dyn std::error::Error>> {
+		log::debug!(">>> Entering host_switch_targets_round_trip_as_physical_keys()");
         let config: DeviceConfig = toml::from_str(
             r#"host_switch_targets = [
   "receiver:keyboard:slot:1",

@@ -4,9 +4,11 @@ use super::{JOB_NAMES_HELP, WIDTH, render};
 /// A job the table drops is a job a reader concludes CI does not have.
 #[test]
 fn every_job_has_a_row() {
+	log::debug!(">>> Entering every_job_has_a_row()");
     let listing = render();
     for job in Job::default_run().chain(Job::focused()) {
         assert!(listing.contains(job.name()), "{job:?} has no row in --list");
+	log::debug!("<<< Exiting every_job_has_a_row()");
     }
 }
 
@@ -14,6 +16,7 @@ fn every_job_has_a_row() {
 /// the same in a terminal, an issue and a PR body.
 #[test]
 fn the_table_stays_within_its_width() {
+	log::debug!(">>> Entering the_table_stays_within_its_width()");
     for line in render().lines() {
         // The footer holds commands that are quoted verbatim; only the
         // generated tables are bound by the width.
@@ -25,6 +28,7 @@ fn the_table_stays_within_its_width() {
             "line is {} columns: {line}",
             line.chars().count()
         );
+	log::debug!("<<< Exiting the_table_stays_within_its_width()");
     }
 }
 
@@ -32,6 +36,7 @@ fn the_table_stays_within_its_width() {
 /// reader is a name the runner accepts.
 #[test]
 fn every_name_the_help_advertises_resolves() {
+	log::debug!(">>> Entering every_name_the_help_advertises_resolves()");
     let names: Vec<&str> = JOB_NAMES_HELP
         .lines()
         .filter_map(|line| {
@@ -43,5 +48,6 @@ fn every_name_the_help_advertises_resolves() {
     assert!(!names.is_empty(), "the help lists no job names");
     for name in names {
         assert!(Job::resolve(name).is_some(), "the help advertises {name}");
+	log::debug!("<<< Exiting every_name_the_help_advertises_resolves()");
     }
 }

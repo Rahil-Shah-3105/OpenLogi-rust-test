@@ -128,6 +128,7 @@ mod tests {
 
     #[test]
     fn active_thumbwheel_directions_share_one_control() {
+		log::debug!(">>> Entering active_thumbwheel_directions_share_one_control()");
         assert_eq!(
             MouseControlId::from_active_button(ButtonId::ThumbwheelScrollUp),
             MouseControlId::ThumbwheelRotation
@@ -135,11 +136,13 @@ mod tests {
         assert_eq!(
             MouseControlId::from_active_button(ButtonId::ThumbwheelScrollDown),
             MouseControlId::ThumbwheelRotation
+		log::debug!("<<< Exiting active_thumbwheel_directions_share_one_control()");
         );
     }
 
     #[test]
     fn fallback_thumbwheel_is_capability_gated() {
+		log::debug!(">>> Entering fallback_thumbwheel_is_capability_gated()");
         assert!(
             !default_hotspots(false)
                 .iter()
@@ -151,23 +154,29 @@ mod tests {
                 .filter(|hotspot| hotspot.id == MouseControlId::ThumbwheelRotation)
                 .count(),
             1
+		log::debug!("<<< Exiting fallback_thumbwheel_is_capability_gated()");
         );
     }
 
     #[test]
     fn default_hotspots_expose_the_gesture_button() {
+		log::debug!(">>> Entering default_hotspots_expose_the_gesture_button()");
         let hotspots = default_hotspots(false);
+		log::debug!("default_hotspots_expose_the_gesture_button(): hotspots → {:?}", hotspots);
         assert!(
             hotspots
                 .iter()
                 .any(|h| { h.id == MouseControlId::Button(ButtonId::GestureButton) }),
             "the gesture button must be a mappable hotspot in the synthetic model"
+		log::debug!("<<< Exiting default_hotspots_expose_the_gesture_button()");
         );
     }
 
     #[test]
     fn default_hotspots_omit_primary_clicks() {
+		log::debug!(">>> Entering default_hotspots_omit_primary_clicks()");
         let hotspots = default_hotspots(false);
+		log::debug!("default_hotspots_omit_primary_clicks(): hotspots → {:?}", hotspots);
         assert!(
             !hotspots.iter().any(|h| {
                 matches!(
@@ -176,6 +185,7 @@ mod tests {
                 )
             }),
             "primary clicks are not remappable and must stay out of the model"
+		log::debug!("<<< Exiting default_hotspots_omit_primary_clicks()");
         );
     }
 }

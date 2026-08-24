@@ -123,6 +123,7 @@ mod tests {
     use super::*;
 
     fn route() -> DeviceRoute {
+		log::debug!(">>> Entering route()");
         DeviceRoute::Bolt {
             receiver_uid: "cafe".into(),
             slot: 2,
@@ -131,6 +132,7 @@ mod tests {
 
     #[test]
     fn both_hidpp_sources_gesture_when_both_are_in_gesture_mode() {
+		log::debug!(">>> Entering both_hidpp_sources_gesture_when_both_are_in_gesture_mode()");
         // On MX Master 4 the dedicated button and the haptic panel can gesture
         // at the same time: the plan arms a raw-XY divert for each and keeps
         // both out of the plain-divert list.
@@ -139,6 +141,7 @@ mod tests {
         cfg.set_gesture_mode("2b042", ButtonId::HapticPanel, true);
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("both_hidpp_sources_gesture_when_both_are_in_gesture_mode(): plan → {:?}", plan);
         assert!(
             plan.gesture_bindings.contains_key(&ButtonId::GestureButton)
                 && plan.gesture_bindings.contains_key(&ButtonId::HapticPanel),
@@ -151,11 +154,13 @@ mod tests {
                 .iter()
                 .any(|&(cid, _)| cid == GESTURE_BUTTON_CID || cid == HAPTIC_PANEL_CID),
             "a raw-XY-diverted source must never also be plain-diverted"
+		log::debug!("<<< Exiting both_hidpp_sources_gesture_when_both_are_in_gesture_mode()");
         );
     }
 
     #[test]
     fn haptic_panel_gestures_when_promoted() {
+		log::debug!(">>> Entering haptic_panel_gestures_when_promoted()");
         // The MX Master 4 haptic panel is a HID++ gesture source: promoting it
         // into gesture mode must arm the raw-XY gesture divert, exactly like
         // the dedicated gesture button.
@@ -163,6 +168,7 @@ mod tests {
         cfg.set_gesture_mode("2b042", ButtonId::HapticPanel, true);
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("haptic_panel_gestures_when_promoted(): plan → {:?}", plan);
         assert!(
             plan.gesture_bindings.contains_key(&ButtonId::HapticPanel),
             "a gesture-mode panel must arm the HID++ gesture divert"
@@ -173,11 +179,13 @@ mod tests {
                 .iter()
                 .any(|&(cid, _)| cid == HAPTIC_PANEL_CID),
             "a gesture-mode source is delivered via raw-XY divert, never a plain one"
+		log::debug!("<<< Exiting haptic_panel_gestures_when_promoted()");
         );
     }
 
     #[test]
     fn single_bound_haptic_panel_is_plain_diverted_when_not_in_gesture_mode() {
+		log::debug!(">>> Entering single_bound_haptic_panel_is_plain_diverted_when_not_in_gesture_mode()");
         // While only the dedicated button gestures (the default), a single
         // action bound to the panel is deliverable only via a plain HID++
         // divert dispatching ButtonId::HapticPanel.
@@ -189,28 +197,34 @@ mod tests {
         );
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("single_bound_haptic_panel_is_plain_diverted_when_not_in_gesture_mode(): plan → {:?}", plan);
         assert!(
             plan.divert_buttons
                 .contains(&(HAPTIC_PANEL_CID, ButtonId::HapticPanel)),
             "a single-bound panel must be plain-diverted, or the binding can never fire"
+		log::debug!("<<< Exiting single_bound_haptic_panel_is_plain_diverted_when_not_in_gesture_mode()");
         );
     }
 
     #[test]
     fn haptic_panel_default_is_diverted_for_actions_ring() {
+		log::debug!(">>> Entering haptic_panel_default_is_diverted_for_actions_ring()");
         // Default binding is ShowActionsRing — the panel has no native OS path
         // and must be HID++-diverted so the ring can open.
         let plan = plan_for_device(&Config::default(), "2b042", route(), None, 0);
+		log::debug!("haptic_panel_default_is_diverted_for_actions_ring(): plan → {:?}", plan);
 
         assert!(
             plan.divert_buttons
                 .contains(&(HAPTIC_PANEL_CID, ButtonId::HapticPanel)),
             "the panel's default Actions Ring binding must be HID++-diverted"
+		log::debug!("<<< Exiting haptic_panel_default_is_diverted_for_actions_ring()");
         );
     }
 
     #[test]
     fn explicit_none_haptic_panel_stays_native() {
+		log::debug!(">>> Entering explicit_none_haptic_panel_stays_native()");
         // Action::None means leave firmware haptics alone — do not divert.
         let mut cfg = Config::default();
         cfg.set_binding(
@@ -220,17 +234,20 @@ mod tests {
         );
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("explicit_none_haptic_panel_stays_native(): plan → {:?}", plan);
         assert!(
             !plan
                 .divert_buttons
                 .iter()
                 .any(|&(cid, _)| cid == HAPTIC_PANEL_CID),
             "an explicitly unbound panel must keep its native behavior"
+		log::debug!("<<< Exiting explicit_none_haptic_panel_stays_native()");
         );
     }
 
     #[test]
     fn gestures_off_single_bound_gesture_button_is_plain_diverted() {
+		log::debug!(">>> Entering gestures_off_single_bound_gesture_button_is_plain_diverted()");
         // The dedicated gesture button (CID 0x00c3) never reaches the OS hook,
         // so with gestures off a non-default single binding on it is only
         // deliverable via a plain HID++ divert.
@@ -242,6 +259,7 @@ mod tests {
         );
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("gestures_off_single_bound_gesture_button_is_plain_diverted(): plan → {:?}", plan);
         assert!(
             plan.gesture_bindings.is_empty(),
             "gestures are off — no raw-XY gesture divert"
@@ -250,11 +268,13 @@ mod tests {
             plan.divert_buttons
                 .contains(&(GESTURE_BUTTON_CID, ButtonId::GestureButton)),
             "a single-bound gesture button must be plain-diverted, or the binding can never fire"
+		log::debug!("<<< Exiting gestures_off_single_bound_gesture_button_is_plain_diverted()");
         );
     }
 
     #[test]
     fn gesture_mode_button_is_never_plain_diverted() {
+		log::debug!(">>> Entering gesture_mode_button_is_never_plain_diverted()");
         // While the gesture button is in gesture mode, the raw-XY gesture
         // divert owns CID 0x00c3 — a plain divert on top would strip raw-XY.
         // (Its default Click projects to a non-default single action, so only
@@ -263,6 +283,7 @@ mod tests {
         cfg.set_gesture_mode("2b042", ButtonId::GestureButton, true);
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("gesture_mode_button_is_never_plain_diverted(): plan → {:?}", plan);
         assert!(
             !plan.gesture_bindings.is_empty(),
             "the gesture button owns the gesture role"
@@ -273,23 +294,27 @@ mod tests {
                 .iter()
                 .any(|&(cid, _)| cid == GESTURE_BUTTON_CID),
             "the gesture owner is delivered via raw-XY divert, never a plain one"
+		log::debug!("<<< Exiting gesture_mode_button_is_never_plain_diverted()");
         );
     }
 
     #[test]
     fn gestures_off_default_gesture_button_stays_native() {
+		log::debug!(">>> Entering gestures_off_default_gesture_button_stays_native()");
         // With gestures off and no explicit binding, the gesture button keeps
         // its native HID behavior — same contract as the standard buttons.
         let mut cfg = Config::default();
         cfg.set_gesture_mode("2b042", ButtonId::GestureButton, false);
 
         let plan = plan_for_device(&cfg, "2b042", route(), None, 0);
+		log::debug!("gestures_off_default_gesture_button_stays_native(): plan → {:?}", plan);
         assert!(
             !plan
                 .divert_buttons
                 .iter()
                 .any(|&(cid, _)| cid == GESTURE_BUTTON_CID),
             "an unbound gesture button must not be captured"
+		log::debug!("<<< Exiting gestures_off_default_gesture_button_stays_native()");
         );
     }
 }

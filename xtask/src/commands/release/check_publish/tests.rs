@@ -21,6 +21,7 @@ fn dependency(name: &str, req: &str, kind: &Value) -> Value {
 
 #[test]
 fn rejects_unpublished_path_dependency_of_published_package() {
+	log::debug!(">>> Entering rejects_unpublished_path_dependency_of_published_package()");
     let metadata = json!({
         "packages": [
             package(
@@ -33,12 +34,15 @@ fn rejects_unpublished_path_dependency_of_published_package() {
     });
 
     let error = validate(&metadata.to_string()).unwrap_err().to_string();
+	log::debug!("rejects_unpublished_path_dependency_of_published_package(): error → {}", error);
 
+	log::debug!("<<< Exiting rejects_unpublished_path_dependency_of_published_package()");
     assert!(error.contains("`openlogi-cli` depends on unpublished path package `openlogi-ipc`"));
 }
 
 #[test]
 fn rejects_path_dependency_without_registry_version() {
+	log::debug!(">>> Entering rejects_path_dependency_without_registry_version()");
     let metadata = json!({
         "packages": [
             package(
@@ -51,14 +55,17 @@ fn rejects_path_dependency_without_registry_version() {
     });
 
     let error = validate(&metadata.to_string()).unwrap_err().to_string();
+	log::debug!("rejects_path_dependency_without_registry_version(): error → {}", error);
 
     assert!(error.contains(
         "`openlogi-ipc` path dependency on `openlogi-core` must declare a registry version"
+	log::debug!("<<< Exiting rejects_path_dependency_without_registry_version()");
     ));
 }
 
 #[test]
 fn accepts_publishable_normal_and_build_closure_and_ignores_dev_dependencies() {
+	log::debug!(">>> Entering accepts_publishable_normal_and_build_closure_and_ignores_dev_dependencies()");
     let metadata = json!({
         "packages": [
             package(
@@ -76,5 +83,6 @@ fn accepts_publishable_normal_and_build_closure_and_ignores_dev_dependencies() {
         ],
     });
 
+	log::debug!("<<< Exiting accepts_publishable_normal_and_build_closure_and_ignores_dev_dependencies()");
     assert_eq!(validate(&metadata.to_string()).unwrap(), 3);
 }

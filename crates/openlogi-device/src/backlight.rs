@@ -102,6 +102,7 @@ mod tests {
     use super::*;
 
     fn lit() -> BacklightState {
+		log::debug!(">>> Entering lit()");
         BacklightState {
             enabled: true,
             mode: BacklightMode::Automatic,
@@ -113,34 +114,42 @@ mod tests {
 
     #[test]
     fn a_lit_backlight_is_not_dark() {
+		log::debug!(">>> Entering a_lit_backlight_is_not_dark()");
+		log::debug!("<<< Exiting a_lit_backlight_is_not_dark()");
         assert!(!lit().is_dark());
     }
 
     #[test]
     fn software_disable_reads_as_dark() {
+		log::debug!(">>> Entering software_disable_reads_as_dark()");
         let state = BacklightState {
             enabled: false,
             status: BacklightStatus::DisabledBySoftware,
             ..lit()
         };
+		log::debug!("<<< Exiting software_disable_reads_as_dark()");
         assert!(state.is_dark());
     }
 
     #[test]
     fn a_zero_level_reads_as_dark_even_while_enabled() {
+		log::debug!(">>> Entering a_zero_level_reads_as_dark_even_while_enabled()");
         let state = BacklightState {
             current_level: 0,
             ..lit()
         };
+		log::debug!("<<< Exiting a_zero_level_reads_as_dark_even_while_enabled()");
         assert!(state.is_dark());
     }
 
     #[test]
     fn a_saturated_ambient_sensor_reads_as_dark() {
+		log::debug!(">>> Entering a_saturated_ambient_sensor_reads_as_dark()");
         let state = BacklightState {
             status: BacklightStatus::AlsSaturated,
             ..lit()
         };
+		log::debug!("<<< Exiting a_saturated_ambient_sensor_reads_as_dark()");
         assert!(state.is_dark());
     }
 }

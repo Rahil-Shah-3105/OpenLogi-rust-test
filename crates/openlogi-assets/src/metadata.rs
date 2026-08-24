@@ -126,6 +126,7 @@ mod tests {
     /// slot names already degrade to "no hotspot" in the consumer.
     #[test]
     fn old_slot_id_only_metadata_parses() {
+		log::debug!(">>> Entering old_slot_id_only_metadata_parses()");
         let json = r#"{
           "images": [
             {
@@ -138,6 +139,7 @@ mod tests {
                   "label":  { "x": -1200, "y": 300 } }
               ]
             }
+		log::debug!("<<< Exiting old_slot_id_only_metadata_parses()");
           ]
         }"#;
         let meta: Metadata = serde_json::from_str(json).expect("old schema must parse");
@@ -152,6 +154,7 @@ mod tests {
     /// only the `device_buttons_image` entry).
     #[test]
     fn camera_metadata_without_markers_parses() {
+		log::debug!(">>> Entering camera_metadata_without_markers_parses()");
         let json = r#"{
           "images": [
             { "key": "device_image", "origin": { "width": 1280, "height": 800 } },
@@ -164,6 +167,7 @@ mod tests {
                   "disableAssignmentClick": true }
               ]
             }
+		log::debug!("<<< Exiting camera_metadata_without_markers_parses()");
           ]
         }"#;
         let meta: Metadata = serde_json::from_str(json).expect("camera schema must parse");

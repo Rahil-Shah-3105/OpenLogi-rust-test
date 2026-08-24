@@ -114,12 +114,15 @@ mod tests {
 
     #[test]
     fn every_ring_gallery_icon_is_embedded() {
+		log::debug!(">>> Entering every_ring_gallery_icon_is_embedded()");
         for icon in ActionRingIcon::ALL {
             let loaded = ActionIcons.load(icon.asset_path());
+			log::debug!("every_ring_gallery_icon_is_embedded(): loaded → {:?}", loaded);
             assert!(
                 matches!(loaded, Ok(Some(_))),
                 "missing embedded asset for {icon:?}"
             );
+		log::debug!("<<< Exiting every_ring_gallery_icon_is_embedded()");
         }
     }
 }

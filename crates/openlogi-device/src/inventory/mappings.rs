@@ -222,26 +222,31 @@ mod tests {
 
     #[test]
     fn probe_overrides_a_misreporting_register() {
+		log::debug!(">>> Entering probe_overrides_a_misreporting_register()");
         // The crux of #127: a Bolt register calling an MX Anywhere 3S a
         // `Keyboard` must lose to the device's own `0x0005` = `Mouse`.
         assert_eq!(
             resolve_device_kind(Some(DeviceKind::Mouse), DeviceKind::Keyboard),
             DeviceKind::Mouse
+		log::debug!("<<< Exiting probe_overrides_a_misreporting_register()");
         );
     }
 
     #[test]
     fn probe_supplies_the_kind_on_the_direct_path() {
+		log::debug!(">>> Entering probe_supplies_the_kind_on_the_direct_path()");
         // No pairing register on the direct path (register = Unknown); the probe
         // is what restores the button/pointer tabs for a BT-direct mouse.
         assert_eq!(
             resolve_device_kind(Some(DeviceKind::Mouse), DeviceKind::Unknown),
             DeviceKind::Mouse
+		log::debug!("<<< Exiting probe_supplies_the_kind_on_the_direct_path()");
         );
     }
 
     #[test]
     fn register_is_the_fallback_when_the_probe_is_absent_or_unmodelled() {
+		log::debug!(">>> Entering register_is_the_fallback_when_the_probe_is_absent_or_unmodelled()");
         // Offline device / no `0x0005` answer → trust the register.
         assert_eq!(
             resolve_device_kind(None, DeviceKind::Mouse),
@@ -256,11 +261,13 @@ mod tests {
         assert_eq!(
             resolve_device_kind(None, DeviceKind::Unknown),
             DeviceKind::Unknown
+		log::debug!("<<< Exiting register_is_the_fallback_when_the_probe_is_absent_or_unmodelled()");
         );
     }
 
     #[test]
     fn legacy_percentage_buckets_into_levels() {
+		log::debug!(">>> Entering legacy_percentage_buckets_into_levels()");
         assert_eq!(
             legacy_battery_level_from_percentage(100),
             BatteryLevel::Full
@@ -277,60 +284,75 @@ mod tests {
         assert_eq!(
             legacy_battery_level_from_percentage(0),
             BatteryLevel::Critical
+		log::debug!("<<< Exiting legacy_percentage_buckets_into_levels()");
         );
     }
 
     #[test]
     fn voltage_percentage_clamps_at_the_curve_ends() {
+		log::debug!(">>> Entering voltage_percentage_clamps_at_the_curve_ends()");
         assert_eq!(voltage_battery_percentage(4400), 100);
         assert_eq!(voltage_battery_percentage(4186), 100);
         assert_eq!(voltage_battery_percentage(3500), 0);
+		log::debug!("<<< Exiting voltage_percentage_clamps_at_the_curve_ends()");
         assert_eq!(voltage_battery_percentage(3200), 0);
     }
 
     #[test]
     fn voltage_percentage_hits_the_curve_points_exactly() {
+		log::debug!(">>> Entering voltage_percentage_hits_the_curve_points_exactly()");
         assert_eq!(voltage_battery_percentage(4067), 90);
         assert_eq!(voltage_battery_percentage(3811), 50);
+		log::debug!("<<< Exiting voltage_percentage_hits_the_curve_points_exactly()");
         assert_eq!(voltage_battery_percentage(3646), 5);
     }
 
     #[test]
     fn voltage_percentage_interpolates_between_curve_points() {
+		log::debug!(">>> Entering voltage_percentage_interpolates_between_curve_points()");
         // Midway through the 3811 (50%) → 3778 (40%) segment.
         let midpoint = voltage_battery_percentage(3795);
+		log::debug!("voltage_percentage_interpolates_between_curve_points(): midpoint → {}", midpoint);
         assert!(
             (44..=46).contains(&midpoint),
             "expected ~45%, got {midpoint}%"
+		log::debug!("<<< Exiting voltage_percentage_interpolates_between_curve_points()");
         );
     }
 
     #[test]
     fn voltage_percentage_is_monotonic() {
+		log::debug!(">>> Entering voltage_percentage_is_monotonic()");
         let mut last = voltage_battery_percentage(3400);
         for mv in 3400..=4300 {
+			log::debug!("voltage_percentage_is_monotonic(): last → {}", last);
             let percent = voltage_battery_percentage(mv);
+			log::debug!("voltage_percentage_is_monotonic(): percent → {}", percent);
             assert!(
                 percent >= last,
                 "{mv} mV mapped to {percent}%, below the {last}% of the previous millivolt"
             );
             last = percent;
+		log::debug!("<<< Exiting voltage_percentage_is_monotonic()");
         }
     }
 
     #[test]
     fn legacy_status_value_7_maps_to_unknown_not_vanish() {
+		log::debug!(">>> Entering legacy_status_value_7_maps_to_unknown_not_vanish()");
         use super::{BatteryStatus, HidppLegacyBatteryStatus, map_legacy_battery_status};
         // Value 7 ("other charging error") must parse and surface as Unknown so
         // the battery indicator stays visible instead of disappearing.
         let mapped = HidppLegacyBatteryStatus::try_from(7u8)
             .ok()
             .map(map_legacy_battery_status);
+		log::debug!("<<< Exiting legacy_status_value_7_maps_to_unknown_not_vanish()");
         assert_eq!(mapped, Some(BatteryStatus::Unknown));
     }
 
     #[test]
     fn unifying_kind_maps_all_variants() {
+		log::debug!(">>> Entering unifying_kind_maps_all_variants()");
         let cases = [
             (UnifyingDeviceKind::Unknown, DeviceKind::Unknown),
             (UnifyingDeviceKind::Keyboard, DeviceKind::Keyboard),
@@ -347,6 +369,7 @@ mod tests {
                 expected,
                 "kind {input:?} mapped incorrectly"
             );
+		log::debug!("<<< Exiting unifying_kind_maps_all_variants()");
         }
     }
 }

@@ -674,6 +674,7 @@ mod tests {
     };
 
     fn paired_device_no_model_info(slot: u8, wpid: Option<u16>) -> PairedDevice {
+		tracing::debug!(">>> Entering paired_device_no_model_info(slot={},wpid={:?})", slot, wpid);
         PairedDevice {
             slot,
             codename: None,
@@ -687,6 +688,7 @@ mod tests {
     }
 
     fn inventory_with(devices: Vec<PairedDevice>) -> DeviceInventory {
+		tracing::debug!(">>> Entering inventory_with()");
         DeviceInventory {
             receiver: ReceiverInfo {
                 name: "Unifying Receiver".into(),
@@ -699,6 +701,7 @@ mod tests {
     }
 
     fn direct_inventory(model_info: DeviceModelInfo) -> DeviceInventory {
+		tracing::debug!(">>> Entering direct_inventory()");
         DeviceInventory {
             receiver: ReceiverInfo {
                 name: "MX Master 3S".into(),
@@ -720,6 +723,7 @@ mod tests {
     }
 
     fn online_record(key: &str) -> DeviceRecord {
+		tracing::debug!(">>> Entering online_record(key={})", key);
         DeviceRecord {
             config_key: key.to_string(),
             persistent: true,
@@ -744,6 +748,7 @@ mod tests {
     }
 
     fn mouse_identity(name: &str) -> DeviceIdentity {
+		tracing::debug!(">>> Entering mouse_identity(name={})", name);
         DeviceIdentity {
             display_name: name.to_string(),
             kind: DeviceKind::Mouse,
@@ -767,6 +772,7 @@ mod tests {
 
     #[test]
     fn standalone_registry_identity_is_preserved_without_hidpp_model_info() {
+		tracing::debug!(">>> Entering standalone_registry_identity_is_preserved_without_hidpp_model_info()");
         let device = StandaloneDevice {
             address: RawDeviceAddress {
                 vendor_id: 0x046d,
@@ -799,56 +805,70 @@ mod tests {
         assert_eq!(list[0].registry_model_id.as_deref(), Some("8c901"));
         assert_eq!(list[0].model_key, "raw:c901");
         assert_eq!(list[0].config_key, "raw:046d:c901:ff43:0202:serial:beam-1");
+		tracing::debug!("<<< Exiting standalone_registry_identity_is_preserved_without_hidpp_model_info()");
         assert!(list[0].asset.is_none());
     }
 
     #[test]
     fn no_model_info_uses_receiver_slot_as_config_key() {
+		tracing::debug!(">>> Entering no_model_info_uses_receiver_slot_as_config_key()");
         let inv = inventory_with(vec![paired_device_no_model_info(1, Some(0x4076))]);
         let cache = AssetResolver::new();
         let list = build_device_list(&[inv], &[], &cache, &Config::default(), &[]);
+		tracing::debug!("no_model_info_uses_receiver_slot_as_config_key(): list → {:?}", list);
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].config_key, "receiver:da2699e1:slot:1");
         assert_eq!(list[0].model_key, "wpid4076");
         assert!(list[0].serial_number.is_none());
+		tracing::debug!("<<< Exiting no_model_info_uses_receiver_slot_as_config_key()");
         assert_eq!(list[0].unit_id, [0u8; 4]);
     }
 
     #[test]
     fn no_model_info_falls_back_to_slot_when_no_wpid() {
+		tracing::debug!(">>> Entering no_model_info_falls_back_to_slot_when_no_wpid()");
         let inv = inventory_with(vec![paired_device_no_model_info(3, None)]);
         let cache = AssetResolver::new();
         let list = build_device_list(&[inv], &[], &cache, &Config::default(), &[]);
+		tracing::debug!("no_model_info_falls_back_to_slot_when_no_wpid(): list → {:?}", list);
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].config_key, "receiver:da2699e1:slot:3");
+		tracing::debug!("<<< Exiting no_model_info_falls_back_to_slot_when_no_wpid()");
         assert_eq!(list[0].model_key, "slot3");
     }
 
     #[test]
     fn no_model_info_display_name_falls_back_to_slot() {
+		tracing::debug!(">>> Entering no_model_info_display_name_falls_back_to_slot()");
         let inv = inventory_with(vec![paired_device_no_model_info(2, Some(0x4051))]);
         let cache = AssetResolver::new();
         let list = build_device_list(&[inv], &[], &cache, &Config::default(), &[]);
+		tracing::debug!("no_model_info_display_name_falls_back_to_slot(): list → {:?}", list);
+		tracing::debug!("<<< Exiting no_model_info_display_name_falls_back_to_slot()");
         assert_eq!(list[0].display_name, "Slot 2");
     }
 
     #[test]
     fn offline_record_is_present_but_inert() {
+		tracing::debug!(">>> Entering offline_record_is_present_but_inert()");
         // A persisted identity renders as an offline card that still carries its
         // measured capabilities (so its panels show) but no route (so writes are
         // no-ops until it wakes).
         let id = mouse_identity("MX Master 3S");
         let cache = AssetResolver::new();
         let rec = offline_record("2b034", &id, &cache);
+		tracing::debug!("offline_record_is_present_but_inert(): rec → {:?}", rec);
         assert_eq!(rec.config_key, "2b034");
         assert_eq!(rec.display_name, "MX Master 3S");
         assert!(!rec.online);
         assert!(rec.route.is_none());
+		tracing::debug!("<<< Exiting offline_record_is_present_but_inert()");
         assert_eq!(rec.capabilities, Some(id.capabilities));
     }
 
     #[test]
     fn offline_standalone_record_keeps_registry_and_physical_keys() {
+		tracing::debug!(">>> Entering offline_standalone_record_keeps_registry_and_physical_keys()");
         let id = DeviceIdentity {
             display_name: "Litra Glow".into(),
             kind: DeviceKind::Light,
@@ -874,11 +894,13 @@ mod tests {
             record.config_key,
             "raw:046d:c900:ff43:0202:serial:known-light"
         );
+		tracing::debug!("<<< Exiting offline_standalone_record_keeps_registry_and_physical_keys()");
         assert!(record.model_info.is_none());
     }
 
     #[test]
     fn known_devices_are_appended_only_when_absent_from_live() {
+		tracing::debug!(">>> Entering known_devices_are_appended_only_when_absent_from_live()");
         // "A" is live; "B" is known-but-asleep. The union keeps the live "A"
         // untouched and adds "B" back as an offline placeholder — the core of
         // the #159 fix: a sleeping device never drops out of the list.
@@ -901,10 +923,12 @@ mod tests {
         assert!(
             list.iter().any(|r| r.config_key == "B" && !r.online),
             "B is added back as a persisted offline placeholder"
+		tracing::debug!("<<< Exiting known_devices_are_appended_only_when_absent_from_live()");
         );
     }
 
     fn model_info(ext: u8, pid: u16) -> DeviceModelInfo {
+		tracing::debug!(">>> Entering model_info(ext={},pid={})", ext, pid);
         DeviceModelInfo {
             entity_count: 0,
             serial_number: None,
@@ -917,6 +941,7 @@ mod tests {
 
     #[test]
     fn zero_unit_direct_inventory_is_transient() {
+		tracing::debug!(">>> Entering zero_unit_direct_inventory_is_transient()");
         let cache = AssetResolver::new();
         let list = build_device_list(
             &[direct_inventory(model_info(2, 0xb034))],
@@ -929,11 +954,13 @@ mod tests {
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].config_key, "direct:046d:b023:unit:00000000");
         assert!(!list[0].is_persistent());
+		tracing::debug!("<<< Exiting zero_unit_direct_inventory_is_transient()");
         assert!(list[0].persistent_config_key().is_none());
     }
 
     #[test]
     fn historical_zero_unit_identity_does_not_create_offline_card() {
+		tracing::debug!(">>> Entering historical_zero_unit_identity_does_not_create_offline_card()");
         let id = mouse_identity("MX Master 3S");
         let cache = AssetResolver::new();
         let mut list = Vec::new();
@@ -945,11 +972,13 @@ mod tests {
             &HashSet::new(),
         );
 
+		tracing::debug!("<<< Exiting historical_zero_unit_identity_does_not_create_offline_card()");
         assert!(list.is_empty());
     }
 
     #[test]
     fn same_model_physical_bluetooth_devices_remain_distinct() {
+		tracing::debug!(">>> Entering same_model_physical_bluetooth_devices_remain_distinct()");
         let mut id_a = mouse_identity("MX Master 3S");
         id_a.model_info = Some(model_info(2, 0xb034));
         let id_b = id_a.clone();
@@ -967,24 +996,29 @@ mod tests {
             &HashSet::new(),
         );
 
+		tracing::debug!("<<< Exiting same_model_physical_bluetooth_devices_remain_distinct()");
         assert_eq!(list.len(), 2);
     }
 
     #[test]
     fn persisted_selection_does_not_target_transient_identity() {
+		tracing::debug!(">>> Entering persisted_selection_does_not_target_transient_identity()");
         let stable = online_record("receiver:aabb:slot:1");
         let mut transient = online_record("direct:046d:b023:unit:00000000");
         transient.persistent = false;
         let list = vec![stable, transient];
+		tracing::debug!("persisted_selection_does_not_target_transient_identity(): stable → {:?}", stable);
 
         assert_eq!(
             pick_initial_device(&list, Some("direct:046d:b023:unit:00000000")),
             0
+		tracing::debug!("<<< Exiting persisted_selection_does_not_target_transient_identity()");
         );
     }
 
     #[test]
     fn placeholders_for_absent_receivers_are_hidden() {
+		tracing::debug!(">>> Entering placeholders_for_absent_receivers_are_hidden()");
         // The work receiver's mouse must not haunt the list at home: with its
         // receiver unplugged the device is unreachable, so no card is shown.
         let id = mouse_identity("MX Master 3S");
@@ -1003,11 +1037,13 @@ mod tests {
             &cache,
             &HashSet::from(["aabb".to_string()]),
         );
+		tracing::debug!("<<< Exiting placeholders_for_absent_receivers_are_hidden()");
         assert_eq!(list.len(), 1);
     }
 
     #[test]
     fn same_model_placeholder_is_blocked_by_a_live_unit() {
+		tracing::debug!(">>> Entering same_model_placeholder_is_blocked_by_a_live_unit()");
         // #271: the live mouse reads ext-model 02 while the stale identity was
         // recorded as 00 — the wire PID still identifies them as one model, so
         // the phantom card is suppressed.
@@ -1023,11 +1059,13 @@ mod tests {
             &cache,
             &HashSet::new(),
         );
+		tracing::debug!("<<< Exiting same_model_placeholder_is_blocked_by_a_live_unit()");
         assert_eq!(list.len(), 1);
     }
 
     #[test]
     fn legacy_same_model_placeholders_collapse_to_one_card() {
+		tracing::debug!(">>> Entering legacy_same_model_placeholders_collapse_to_one_card()");
         // Two persisted identities of one model render identically — a second
         // offline card carries no information, only confusion.
         let id_a = mouse_identity("MX Master 3S");
@@ -1040,11 +1078,13 @@ mod tests {
             &cache,
             &HashSet::new(),
         );
+		tracing::debug!("<<< Exiting legacy_same_model_placeholders_collapse_to_one_card()");
         assert_eq!(list.len(), 1);
     }
 
     #[test]
     fn direct_key_prefix_names_the_wire_product() {
+		tracing::debug!(">>> Entering direct_key_prefix_names_the_wire_product()");
         assert_eq!(
             direct_key_prefix("direct:046d:c09d:unit:46002e00"),
             Some("direct:046d:c09d")
@@ -1057,40 +1097,48 @@ mod tests {
             direct_key_prefix("direct:046d:c09d:unit:00000000"),
             Some("direct:046d:c09d"),
             "transient keys share the prefix of their physical siblings"
+		tracing::debug!("<<< Exiting direct_key_prefix_names_the_wire_product()");
         );
     }
 
     #[test]
     fn non_direct_keys_have_no_wire_prefix() {
+		tracing::debug!(">>> Entering non_direct_keys_have_no_wire_prefix()");
         assert_eq!(direct_key_prefix("receiver:da2699e1:slot:1"), None);
         assert_eq!(direct_key_prefix("unknown:slot:0:unit:00000000"), None);
         assert_eq!(direct_key_prefix("2b034"), None);
         assert_eq!(direct_key_prefix("direct:046d:c09d:"), None);
+		tracing::debug!("<<< Exiting non_direct_keys_have_no_wire_prefix()");
         assert_eq!(direct_key_prefix("direct:046d"), None);
     }
 
     #[test]
     fn asset_kind_overrides_a_misreporting_hid_kind() {
+		tracing::debug!(">>> Entering asset_kind_overrides_a_misreporting_hid_kind()");
         // #127: the registry knows this depot is a mouse, so a HID++ source that
         // reported `Keyboard` loses.
         assert_eq!(
             effective_kind(DeviceKind::Keyboard, Some(DeviceKind::Mouse)),
             DeviceKind::Mouse
+		tracing::debug!("<<< Exiting asset_kind_overrides_a_misreporting_hid_kind()");
         );
     }
 
     #[test]
     fn hid_kind_is_used_without_a_modelled_asset() {
+		tracing::debug!(">>> Entering hid_kind_is_used_without_a_modelled_asset()");
         // No asset, or an asset whose type we don't model → keep the HID kind.
         assert_eq!(effective_kind(DeviceKind::Mouse, None), DeviceKind::Mouse);
         assert_eq!(
             effective_kind(DeviceKind::Mouse, Some(DeviceKind::Unknown)),
             DeviceKind::Mouse
+		tracing::debug!("<<< Exiting hid_kind_is_used_without_a_modelled_asset()");
         );
     }
 
     #[test]
     fn webcams_are_appended_as_camera_records() {
+		tracing::debug!(">>> Entering webcams_are_appended_as_camera_records()");
         // A discovered UVC webcam joins the list as a routeless Camera record.
         // With a USB serial the config key is port-stable; capture_id keeps the
         // OS open id the preview needs.
@@ -1105,6 +1153,7 @@ mod tests {
         };
         let cache = AssetResolver::new();
         let list = build_device_list(&[], &[], &cache, &Config::default(), &[camera]);
+		tracing::debug!("webcams_are_appended_as_camera_records(): list → {:?}", list);
 
         assert_eq!(list.len(), 1);
         assert_eq!(list[0].kind, DeviceKind::Camera);
@@ -1114,11 +1163,13 @@ mod tests {
         assert_eq!(list[0].display_name, "Logitech StreamCam");
         assert!(list[0].route.is_none());
         assert!(list[0].capabilities.is_none());
+		tracing::debug!("<<< Exiting webcams_are_appended_as_camera_records()");
         assert!(list[0].online);
     }
 
     #[test]
     fn webcam_without_serial_uses_model_scoped_key() {
+		tracing::debug!(">>> Entering webcam_without_serial_uses_model_scoped_key()");
         let camera = Camera {
             name: "Logitech C920".to_string(),
             unique_id: "0x14110000046d082d".to_string(),
@@ -1130,14 +1181,17 @@ mod tests {
         };
         let cache = AssetResolver::new();
         let list = build_device_list(&[], &[], &cache, &Config::default(), &[camera]);
+		tracing::debug!("webcam_without_serial_uses_model_scoped_key(): list → {:?}", list);
         // Port-stable even without a serial: settings follow the model, not the
         // OS capture id (which embeds the USB location on macOS/Windows).
         assert_eq!(list[0].config_key, "camera:046d:082d");
+		tracing::debug!("<<< Exiting webcam_without_serial_uses_model_scoped_key()");
         assert_eq!(list[0].capture_id.as_deref(), Some("0x14110000046d082d"));
     }
 
     #[test]
     fn webcam_config_key_survives_a_usb_port_change() {
+		tracing::debug!(">>> Entering webcam_config_key_survives_a_usb_port_change()");
         let port_a = Camera {
             name: "Logitech StreamCam".to_string(),
             unique_id: "0x1123000046d0893".to_string(),
@@ -1153,13 +1207,17 @@ mod tests {
         };
         let cache = AssetResolver::new();
         let a = build_device_list(&[], &[], &cache, &Config::default(), &[port_a]);
+		tracing::debug!("webcam_config_key_survives_a_usb_port_change(): a → {:?}", a);
         let b = build_device_list(&[], &[], &cache, &Config::default(), &[port_b]);
+		tracing::debug!("webcam_config_key_survives_a_usb_port_change(): b → {:?}", b);
         assert_eq!(a[0].config_key, b[0].config_key);
+		tracing::debug!("<<< Exiting webcam_config_key_survives_a_usb_port_change()");
         assert_ne!(a[0].capture_id, b[0].capture_id);
     }
 
     #[test]
     fn two_serial_less_same_model_cameras_stay_distinct() {
+		tracing::debug!(">>> Entering two_serial_less_same_model_cameras_stay_distinct()");
         // Settings share the model key (no USB serial to go on); inventory
         // identity uses capture_id so both still appear in the list.
         let a = Camera {
@@ -1177,10 +1235,12 @@ mod tests {
         };
         let cache = AssetResolver::new();
         let list = build_device_list(&[], &[], &cache, &Config::default(), &[a, b]);
+		tracing::debug!("two_serial_less_same_model_cameras_stay_distinct(): list → {:?}", list);
         assert_eq!(list.len(), 2);
         assert_eq!(list[0].config_key, list[1].config_key);
         assert_eq!(list[0].config_key, "camera:046d:0893");
         assert_ne!(list[0].inventory_key(), list[1].inventory_key());
+		tracing::debug!("<<< Exiting two_serial_less_same_model_cameras_stay_distinct()");
         assert_ne!(list[0].capture_id, list[1].capture_id);
     }
 }

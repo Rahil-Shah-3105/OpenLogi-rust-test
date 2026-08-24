@@ -444,29 +444,35 @@ mod tests {
 
     #[test]
     fn codename_with_oversized_length_clamps_to_available_chunk() {
+		log::debug!(">>> Entering codename_with_oversized_length_clamps_to_available_chunk()");
         let mut response = [0u8; 16];
         response[2] = 200;
         response[3..16].copy_from_slice(b"MX Anywhere 3");
 
+		log::debug!("<<< Exiting codename_with_oversized_length_clamps_to_available_chunk()");
         assert_eq!(parse_codename(&response), Some("MX Anywhere 3"));
     }
 
     #[test]
     fn codename_within_bounds_parses() {
+		log::debug!(">>> Entering codename_within_bounds_parses()");
         let mut response = [0u8; 16];
         response[2] = 5;
         response[3..8].copy_from_slice(b"Casa!");
 
+		log::debug!("<<< Exiting codename_within_bounds_parses()");
         assert_eq!(parse_codename(&response), Some("Casa!"));
     }
 
     #[test]
     fn codename_rejects_invalid_utf8() {
+		log::debug!(">>> Entering codename_rejects_invalid_utf8()");
         let mut response = [0u8; 16];
         response[2] = 2;
         response[3] = 0xff;
         response[4] = 0xfe;
 
+		log::debug!("<<< Exiting codename_rejects_invalid_utf8()");
         assert_eq!(parse_codename(&response), None);
     }
 }

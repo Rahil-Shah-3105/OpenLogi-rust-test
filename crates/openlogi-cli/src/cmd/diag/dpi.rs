@@ -77,7 +77,6 @@ pub async fn run(args: DpiArgs) -> Result<()> {
     }
     if after != target {
         if info.capabilities.contains(after) {
-            println!("  note: device snapped {target} → {after}");
         } else {
             anyhow::bail!(
                 "DPI write failed: requested {target}, device reports {after} \
@@ -128,23 +127,27 @@ mod summarize_dpi_tests {
 
     #[test]
     fn lists_values_verbatim_at_the_twelve_value_boundary() {
+		log::debug!(">>> Entering lists_values_verbatim_at_the_twelve_value_boundary()");
         let values: Vec<u16> = (1..=12).map(|n| n * 100).collect();
         let caps = DpiCapabilities::new(values).expect("non-empty");
 
         assert_eq!(
             DpiSummaryDisplay(&caps).to_string(),
             "100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200"
+		log::debug!("<<< Exiting lists_values_verbatim_at_the_twelve_value_boundary()");
         );
     }
 
     #[test]
     fn switches_to_a_range_summary_past_twelve_values() {
+		log::debug!(">>> Entering switches_to_a_range_summary_past_twelve_values()");
         let values: Vec<u16> = (1..=13).map(|n| n * 100).collect();
         let caps = DpiCapabilities::new(values).expect("non-empty");
 
         assert_eq!(
             DpiSummaryDisplay(&caps).to_string(),
             "100..1300 (step ≈ 100, 13 values)"
+		log::debug!("<<< Exiting switches_to_a_range_summary_past_twelve_values()");
         );
     }
 }

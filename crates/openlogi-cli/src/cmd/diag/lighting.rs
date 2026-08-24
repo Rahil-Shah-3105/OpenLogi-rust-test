@@ -103,6 +103,7 @@ mod color_validation_tests {
     use super::{LightingArgs, Method, run};
 
     fn args(color: &str) -> LightingArgs {
+		log::debug!(">>> Entering args(color={})", color);
         LightingArgs {
             color: color.to_string(),
             device: None,
@@ -115,17 +116,20 @@ mod color_validation_tests {
     /// are deliberately not exercised.
     #[tokio::test]
     async fn rejects_malformed_colors_before_touching_hardware() {
+		log::debug!(">>> Entering rejects_malformed_colors_before_touching_hardware()");
         for bad in ["zzz", "ff000", "ff00001", "gg0000", ""] {
             let err = run(args(bad)).await.unwrap_err();
             assert!(
                 err.downcast_ref::<RgbParseError>().is_some(),
                 "{bad:?} should fail Rgb parsing, got: {err}"
             );
+		log::debug!("<<< Exiting rejects_malformed_colors_before_touching_hardware()");
         }
     }
 
     #[tokio::test]
     async fn hash_prefix_is_stripped_before_validation() {
+		log::debug!(">>> Entering hash_prefix_is_stripped_before_validation()");
         // `#zzzzzz` still fails, and the rejected input the error reports is
         // `zzzzzz` — proving the `#` is stripped rather than counted toward
         // the 6-digit length.
@@ -136,6 +140,7 @@ mod color_validation_tests {
         assert_eq!(
             parse.to_string(),
             r#"invalid RGB color "zzzzzz": expected 6 hex digits ("RRGGBB", no '#')"#
+		log::debug!("<<< Exiting hash_prefix_is_stripped_before_validation()");
         );
     }
 }

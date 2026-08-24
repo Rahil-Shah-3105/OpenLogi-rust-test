@@ -77,17 +77,20 @@ mod tests {
 
     #[test]
     fn summarizes_empty_capabilities() {
+		log::debug!(">>> Entering summarizes_empty_capabilities()");
         let entry = ReprogControlEntry {
             cid: 0,
             task_id: 0,
             flags: openlogi_hid::reprog_controls::CidFlags::default(),
         };
 
+		log::debug!("<<< Exiting summarizes_empty_capabilities()");
         assert_eq!(ControlCapabilitiesDisplay(entry).to_string(), "-");
     }
 
     #[test]
     fn summarizes_haptic_relevant_capabilities() {
+		log::debug!(">>> Entering summarizes_haptic_relevant_capabilities()");
         let entry = ReprogControlEntry {
             cid: 0,
             task_id: 0,
@@ -99,6 +102,7 @@ mod tests {
         assert_eq!(
             ControlCapabilitiesDisplay(entry).to_string(),
             "divertable, force-raw-xy, analytics-events"
+		log::debug!("<<< Exiting summarizes_haptic_relevant_capabilities()");
         );
     }
 }

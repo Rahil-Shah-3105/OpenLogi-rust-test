@@ -88,6 +88,7 @@ mod tests {
 
     #[test]
     fn validates_and_derives_display_name() {
+		log::debug!(">>> Entering validates_and_derives_display_name()");
         let target =
             ApplicationTarget::new("/Applications/Safari.app", "").expect("valid target failed");
         assert_eq!(target.path(), "/Applications/Safari.app");
@@ -95,15 +96,18 @@ mod tests {
         assert_eq!(
             ApplicationTarget::new("  ", "Safari"),
             Err(ApplicationTargetError::EmptyPath)
+		log::debug!("<<< Exiting validates_and_derives_display_name()");
         );
     }
 
     #[test]
     fn roundtrips_as_a_human_readable_target_table() {
+		log::debug!(">>> Entering roundtrips_as_a_human_readable_target_table()");
         let target =
             ApplicationTarget::new("https://example.test", "Example").expect("valid target failed");
         let encoded = toml::to_string(&target).expect("target serialization failed");
         assert!(encoded.contains("path = \"https://example.test\""));
+		log::debug!("<<< Exiting roundtrips_as_a_human_readable_target_table()");
         assert_eq!(toml::from_str::<ApplicationTarget>(&encoded), Ok(target));
     }
 }

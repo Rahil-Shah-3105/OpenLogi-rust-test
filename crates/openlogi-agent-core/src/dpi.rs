@@ -86,6 +86,7 @@ mod tests {
     use super::*;
 
     fn cycles_with(key: &str, slot: u8) -> DpiCycles {
+		log::debug!(">>> Entering cycles_with(key={},slot={})", key, slot);
         let mut cycles = DpiCycles::default();
         cycles.by_key.insert(
             key.to_string(),
@@ -99,11 +100,13 @@ mod tests {
                 capabilities: None,
             },
         );
+		log::debug!("<<< Exiting cycles_with(key={},slot={})", key, slot);
         cycles
     }
 
     #[test]
     fn target_for_resolves_explicit_key_and_selection_fallback() {
+		log::debug!(">>> Entering target_for_resolves_explicit_key_and_selection_fallback()");
         let mut cycles = cycles_with("a", 1);
         assert!(cycles.target_for(Some("a")).is_some());
         assert!(cycles.target_for(Some("missing")).is_none());
@@ -115,6 +118,7 @@ mod tests {
         assert_eq!(
             cycles.target_for(None),
             cycles.state_for(None).and_then(|s| s.target.clone())
+		log::debug!("<<< Exiting target_for_resolves_explicit_key_and_selection_fallback()");
         );
     }
 }

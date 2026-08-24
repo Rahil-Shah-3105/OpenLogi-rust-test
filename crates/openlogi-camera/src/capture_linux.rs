@@ -99,6 +99,7 @@ struct Session {
 
 /// Open `unique_id` and negotiate a decodable format on it.
 fn open_session(unique_id: &str, quality: Quality) -> Result<Session, CaptureError> {
+	tracing::debug!(">>> Entering open_session(unique_id={},quality={:?})", unique_id, quality);
     let path = linux::node_for_unique_id(unique_id).ok_or(CaptureError::NotFound)?;
     let device = Device::with_path(&path).map_err(|error| {
         if error.kind() == std::io::ErrorKind::PermissionDenied {
@@ -497,39 +498,49 @@ mod tests {
 
     #[test]
     fn yuyv_rejects_a_short_buffer() {
+		tracing::debug!(">>> Entering yuyv_rejects_a_short_buffer()");
         // One byte short of a single 2x1 macropixel.
+		tracing::debug!("<<< Exiting yuyv_rejects_a_short_buffer()");
         assert!(decode_yuyv(&[0; 3], 2, 1).is_none());
     }
 
     #[test]
     fn yuyv_decodes_grey_to_grey() {
+		tracing::debug!(">>> Entering yuyv_decodes_grey_to_grey()");
         // Y=128 with neutral chroma is mid-grey in every channel.
         let frame = decode_yuyv(&[128, 128, 128, 128], 2, 1).expect("2x1 frame");
         assert_eq!(frame.width, 2);
         assert_eq!(frame.height, 1);
+		tracing::debug!("<<< Exiting yuyv_decodes_grey_to_grey()");
         assert_eq!(frame.bgra, vec![128, 128, 128, 255, 128, 128, 128, 255]);
     }
 
     #[test]
     fn yuyv_saturates_out_of_gamut_chroma() {
+		tracing::debug!(">>> Entering yuyv_saturates_out_of_gamut_chroma()");
         // Peak luma with peak chroma drives blue to 479 and red to 433 before
         // clamping. They must saturate at 255, not wrap (479 as a truncated
         // byte would be 223 — a vivid colour turning muddy). Green lands at
         // 120 legitimately, inside the range, so it pins the coefficients too.
         let frame = decode_yuyv(&[255, 255, 255, 255], 2, 1).expect("2x1 frame");
+		tracing::debug!("<<< Exiting yuyv_saturates_out_of_gamut_chroma()");
         assert_eq!(&frame.bgra[..4], &[255, 120, 255, 255]);
     }
 
     #[test]
     fn mjpeg_rejects_a_non_jpeg_buffer() {
+		tracing::debug!(">>> Entering mjpeg_rejects_a_non_jpeg_buffer()");
+		tracing::debug!("<<< Exiting mjpeg_rejects_a_non_jpeg_buffer()");
         assert!(decode_mjpeg(&[0xFF; 64]).is_none());
     }
 
     #[test]
     fn used_clamps_a_driver_overreporting_bytesused() {
+		tracing::debug!(">>> Entering used_clamps_a_driver_overreporting_bytesused()");
         // A driver claiming more than the mapping holds must not panic the
         // slice below.
         assert_eq!(used(&[0; 10], 99), 10);
+		tracing::debug!("<<< Exiting used_clamps_a_driver_overreporting_bytesused()");
         assert_eq!(used(&[0; 10], 4), 4);
     }
 }

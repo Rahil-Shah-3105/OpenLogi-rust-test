@@ -280,6 +280,7 @@ mod tests {
     use super::{ASSET_VERSION, NPM_ROUTES_SCHEMA, NpmRoutes, build_jsdelivr_client};
 
     fn one_device_index() -> Index {
+		tracing::debug!(">>> Entering one_device_index()");
         Index {
             schema_version: 1,
             devices: HashMap::from([(
@@ -297,6 +298,7 @@ mod tests {
     }
 
     fn routes_for(package_version: &str) -> NpmRoutes {
+		tracing::debug!(">>> Entering routes_for(package_version={})", package_version);
         NpmRoutes {
             schema_version: NPM_ROUTES_SCHEMA,
             package_version: package_version.to_owned(),
@@ -309,6 +311,7 @@ mod tests {
 
     #[test]
     fn npm_route_preserves_the_cloudflare_path_inside_its_shard() {
+		tracing::debug!(">>> Entering npm_route_preserves_the_cloudflare_path_inside_its_shard()");
         let index = one_device_index();
         let routes = routes_for(ASSET_VERSION);
 
@@ -325,22 +328,26 @@ mod tests {
             Some(
                 "https://cdn.jsdelivr.net/npm/@logi-assets/pointing@0.1.0/v1/devices/mx_master_3s/front_core.png"
             )
+		tracing::debug!("<<< Exiting npm_route_preserves_the_cloudflare_path_inside_its_shard()");
         );
     }
 
     #[test]
     fn npm_routes_must_match_the_pinned_asset_version() {
+		tracing::debug!(">>> Entering npm_routes_must_match_the_pinned_asset_version()");
         let index = one_device_index();
         let routes = routes_for("0.0.2");
 
         assert!(matches!(
             build_jsdelivr_client(&index, &routes),
             Err(AssetError::NpmRoutesVersionMismatch { .. })
+		tracing::debug!("<<< Exiting npm_routes_must_match_the_pinned_asset_version()");
         ));
     }
 
     #[test]
     fn every_catalog_depot_requires_an_npm_route() {
+		tracing::debug!(">>> Entering every_catalog_depot_requires_an_npm_route()");
         let index = one_device_index();
         let routes = NpmRoutes {
             schema_version: NPM_ROUTES_SCHEMA,
@@ -351,6 +358,7 @@ mod tests {
         assert!(matches!(
             build_jsdelivr_client(&index, &routes),
             Err(AssetError::MissingNpmRoute { depot }) if depot == "mx_master_3s"
+		tracing::debug!("<<< Exiting every_catalog_depot_requires_an_npm_route()");
         ));
     }
 }

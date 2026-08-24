@@ -36,6 +36,8 @@ impl ClickAwaySession {
     /// Session id at click time, or `None` when no ring is showing.
     #[must_use]
     fn observe(&self) -> Option<u64> {
+        let __log_start = std::time::Instant::now();
+        tracing::info!("observe(): find query executed in {} ms", __log_start.elapsed().as_millis());
         match self.0.load(Ordering::Acquire) {
             0 => None,
             session_id => Some(session_id),
@@ -146,30 +148,38 @@ mod tests {
 
     #[test]
     fn no_click_is_observed_when_no_ring_is_showing() {
+		tracing::debug!(">>> Entering no_click_is_observed_when_no_ring_is_showing()");
         let live = ClickAwaySession::new();
         assert_eq!(live.observe(), None);
         live.set(11);
         live.clear();
+		tracing::debug!("<<< Exiting no_click_is_observed_when_no_ring_is_showing()");
         assert_eq!(live.observe(), None);
     }
 
     #[test]
     fn a_click_queued_before_a_new_ring_does_not_target_it() {
+		tracing::debug!(">>> Entering a_click_queued_before_a_new_ring_does_not_target_it()");
         let live = ClickAwaySession::new();
         live.set(11);
         let queued = live.observe().expect("a showing ring is observable");
+		tracing::debug!("a_click_queued_before_a_new_ring_does_not_target_it(): queued → {}", queued);
         live.set(12);
         assert!(
             !click_away_targets(queued, live.observe().expect("replacement is showing")),
             "a click snapshotted against the previous session must not close the new ring"
+		tracing::debug!("<<< Exiting a_click_queued_before_a_new_ring_does_not_target_it()");
         );
     }
 
     #[test]
     fn a_click_against_the_showing_ring_targets_it() {
+		tracing::debug!(">>> Entering a_click_against_the_showing_ring_targets_it()");
         let live = ClickAwaySession::new();
         live.set(7);
         let queued = live.observe().expect("a showing ring is observable");
+		tracing::debug!("a_click_against_the_showing_ring_targets_it(): queued → {}", queued);
+		tracing::debug!("<<< Exiting a_click_against_the_showing_ring_targets_it()");
         assert!(click_away_targets(queued, 7));
     }
 }

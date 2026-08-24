@@ -606,6 +606,7 @@ mod tests {
 
     #[test]
     fn smartshift_rejects_values_outside_the_persisted_contract() {
+		log::debug!(">>> Entering smartshift_rejects_values_outside_the_persisted_contract()");
         let parse = |auto_disengage: u8, tunable_torque: u8| {
             let body = format!(
                 "mode = \"ratchet\"\nauto_disengage = {auto_disengage}\ntunable_torque = {tunable_torque}\n"
@@ -622,11 +623,13 @@ mod tests {
                 .expect("zero torque represents unsupported hardware")
                 .tunable_torque,
             None
+		log::debug!("<<< Exiting smartshift_rejects_values_outside_the_persisted_contract()");
         );
     }
 
     #[test]
     fn floating_thumbwheel_sensitivity_rounds_and_saturates_into_the_domain() {
+		log::debug!(">>> Entering floating_thumbwheel_sensitivity_rounds_and_saturates_into_the_domain()");
         assert_eq!(u8::from(ThumbwheelSensitivity::from_rounded(49.6)), 50);
         assert_eq!(
             ThumbwheelSensitivity::from_rounded(f32::NAN),
@@ -639,6 +642,7 @@ mod tests {
         assert_eq!(
             ThumbwheelSensitivity::from_rounded(f32::INFINITY),
             ThumbwheelSensitivity::MAX
+		log::debug!("<<< Exiting floating_thumbwheel_sensitivity_rounds_and_saturates_into_the_domain()");
         );
     }
 }

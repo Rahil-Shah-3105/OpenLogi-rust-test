@@ -54,6 +54,7 @@ mod tests {
 
     #[test]
     fn light_settings_expand_only_to_advertised_controls() {
+		log::debug!(">>> Entering light_settings_expand_only_to_advertised_controls()");
         let Ok(brightness) = LightValueRange::new(0, 100, 1, LightValueUnit::Percent) else {
             panic!("valid brightness fixture");
         };
@@ -66,6 +67,7 @@ mod tests {
             },
         );
 
+		log::debug!("<<< Exiting light_settings_expand_only_to_advertised_controls()");
         assert_eq!(commands, vec![LightCommand::BrightnessPercent(37)]);
     }
 }

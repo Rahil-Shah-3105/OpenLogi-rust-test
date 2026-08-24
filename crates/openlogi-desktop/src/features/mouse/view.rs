@@ -853,6 +853,7 @@ mod tests {
 
     #[test]
     fn active_thumbwheel_directions_highlight_the_paired_control() {
+		log::debug!(">>> Entering active_thumbwheel_directions_highlight_the_paired_control()");
         assert_eq!(
             MouseControlId::from_active_button(ButtonId::ThumbwheelScrollUp),
             MouseControlId::ThumbwheelRotation
@@ -860,11 +861,13 @@ mod tests {
         assert_eq!(
             MouseControlId::from_active_button(ButtonId::ThumbwheelScrollDown),
             MouseControlId::ThumbwheelRotation
+		log::debug!("<<< Exiting active_thumbwheel_directions_highlight_the_paired_control()");
         );
     }
 
     #[test]
     fn fallback_model_only_adds_thumbwheel_when_capability_is_measured() {
+		log::debug!(">>> Entering fallback_model_only_adds_thumbwheel_when_capability_is_measured()");
         let (_, _, without, _) = scaled_model(None, 560., 420., false);
         let (_, _, with, _) = scaled_model(None, 560., 420., true);
         assert_eq!(
@@ -879,6 +882,7 @@ mod tests {
                 .filter(|hotspot| hotspot.id == MouseControlId::ThumbwheelRotation)
                 .count(),
             1
+		log::debug!("<<< Exiting fallback_model_only_adds_thumbwheel_when_capability_is_measured()");
         );
     }
 }

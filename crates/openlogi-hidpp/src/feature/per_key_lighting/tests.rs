@@ -17,6 +17,7 @@ const RED: Rgb = Rgb {
 
 #[test]
 fn encodes_individual_zones() {
+	log::debug!(">>> Entering encodes_individual_zones()");
     let args = individual_zones_args(&[
         RgbZone {
             zone_id: 5,
@@ -34,22 +35,26 @@ fn encodes_individual_zones() {
     assert_eq!(args[0..4], [5, 0xff, 0, 0]);
     assert_eq!(args[4..8], [9, 1, 2, 3]);
     // Unused slots stay zero (the zone-id sentinel).
+	log::debug!("<<< Exiting encodes_individual_zones()");
     assert_eq!(args[8..16], [0; 8]);
 }
 
 #[test]
 fn individual_zones_caps_at_four() {
+	log::debug!(">>> Entering individual_zones_caps_at_four()");
     let zones = [RgbZone {
         zone_id: 1,
         color: RED,
     }; 6];
     let args = individual_zones_args(&zones);
     // Only four slots (16 bytes) are produced; the 5th/6th are dropped.
+	log::debug!("<<< Exiting individual_zones_caps_at_four()");
     assert_eq!(args[12..16], [1, 0xff, 0, 0]);
 }
 
 #[test]
 fn rejects_reserved_zone_ids() {
+	log::debug!(">>> Entering rejects_reserved_zone_ids()");
     for zone_id in [0, 0xff] {
         assert_matches!(
             validate_zone_id(zone_id),
@@ -75,11 +80,13 @@ fn rejects_reserved_zone_ids() {
     assert_matches!(
         validate_single_value_zones(&[1, 0xff]),
         Err(Hidpp20Error::Feature(ErrorType::InvalidArgument))
+	log::debug!("<<< Exiting rejects_reserved_zone_ids()");
     );
 }
 
 #[test]
 fn encodes_consecutive_zones() {
+	log::debug!(">>> Entering encodes_consecutive_zones()");
     let colors = [
         Rgb {
             red: 1,
@@ -110,11 +117,13 @@ fn encodes_consecutive_zones() {
     let args = consecutive_zones_args(20, colors);
     assert_eq!(args[0], 20);
     assert_eq!(args[1..4], [1, 2, 3]);
+	log::debug!("<<< Exiting encodes_consecutive_zones()");
     assert_eq!(args[13..16], [13, 14, 15]);
 }
 
 #[test]
 fn encodes_range_zones() {
+	log::debug!(">>> Entering encodes_range_zones()");
     let args = range_zones_args(&[
         RgbZoneRange {
             first_zone_id: 1,
@@ -132,11 +141,13 @@ fn encodes_range_zones() {
         },
     ]);
     assert_eq!(args[0..5], [1, 5, 0xff, 0, 0]);
+	log::debug!("<<< Exiting encodes_range_zones()");
     assert_eq!(args[5..10], [10, 12, 0, 0xff, 0]);
 }
 
 #[test]
 fn encodes_single_value_zones() {
+	log::debug!(">>> Entering encodes_single_value_zones()");
     let args = single_value_args(
         Rgb {
             red: 0x10,
@@ -147,32 +158,39 @@ fn encodes_single_value_zones() {
     );
     assert_eq!(args[0..3], [0x10, 0x20, 0x30]);
     assert_eq!(args[3..6], [1, 2, 3]);
+	log::debug!("<<< Exiting encodes_single_value_zones()");
     assert_eq!(args[6], 0);
 }
 
 #[test]
 fn encodes_frame_end_big_endian() {
+	log::debug!(">>> Entering encodes_frame_end_big_endian()");
     let args = frame_end_args(FramePersistence::VolatileAndNonVolatile, 0x0102, 0x0304);
     assert_eq!(args[0], 1);
     assert_eq!(args[1..3], [0x01, 0x02]);
+	log::debug!("<<< Exiting encodes_frame_end_big_endian()");
     assert_eq!(args[3..5], [0x03, 0x04]);
 }
 
 #[test]
 fn encodes_delta_payload_verbatim() {
+	log::debug!(">>> Entering encodes_delta_payload_verbatim()");
     let packed = [0xaa; 15];
     let args = delta_args(7, packed);
     assert_eq!(args[0], 7);
+	log::debug!("<<< Exiting encodes_delta_payload_verbatim()");
     assert_eq!(args[1..16], [0xaa; 15]);
 }
 
 #[test]
 fn maps_enum_wire_values() {
+	log::debug!(">>> Entering maps_enum_wire_values()");
     assert_eq!(u8::from(ZonePresencePage::Zones112To223), 1);
     assert_eq!(
         ZonePresencePage::try_from(2u8).unwrap(),
         ZonePresencePage::Zones224To255
     );
     ZonePresencePage::try_from(3u8).unwrap_err();
+	log::debug!("<<< Exiting maps_enum_wire_values()");
     assert_eq!(u8::from(FramePersistence::VolatileAndNonVolatile), 1);
 }
