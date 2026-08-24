@@ -112,6 +112,7 @@ define_class!(
             sbuf: *mut AnyObject,
             _conn: *mut AnyObject,
         ) {
+			log::debug!(">>> Entering did_output()");
             // SAFETY: `sbuf` is a valid CMSampleBuffer delivered by AVFoundation;
             // the image buffer is locked for the read and unlocked before return.
             unsafe {
@@ -121,12 +122,17 @@ define_class!(
                 }
                 let base = CVPixelBufferGetBaseAddress(pb).cast::<u8>();
                 let bytes_per_row = CVPixelBufferGetBytesPerRow(pb);
+				log::debug!("did_output(): bytes_per_row → {}", bytes_per_row);
+				let __log_start = std::time::Instant::now();
                 let width = CVPixelBufferGetWidth(pb);
+				log::debug!("did_output(): width → {}", width);
                 let height = CVPixelBufferGetHeight(pb);
                 let target = PREVIEW_TARGET_W.load(Ordering::Relaxed) as usize;
                 let step = if target > 0 && width > target {
                     width.div_ceil(target)
                 } else {
+					log::debug!("did_output(): height → {}", height);
+                    log::info!("did_output(): find query executed in {} ms", __log_start.elapsed().as_millis());
                     1
                 };
                 let out_w = width / step;
@@ -465,6 +471,7 @@ impl CameraStream {
     /// skip rebuilding its texture when no new frame has arrived.
     #[must_use]
     pub fn frame_generation(&self) -> u64 {
+        let __log_start = std::time::Instant::now();
         FRAME_GEN.load(Ordering::Relaxed)
     }
 }

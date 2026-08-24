@@ -592,6 +592,7 @@ mod tests {
     /// charge or a real 0% while discharging keeps the number.
     #[test]
     fn charging_without_reading_suppresses_percentage() {
+		tracing::debug!(">>> Entering charging_without_reading_suppresses_percentage()");
         let b = |percentage, status| BatteryInfo {
             percentage,
             level: BatteryLevel::Good,
@@ -609,11 +610,13 @@ mod tests {
         assert!(!battery_charging_no_reading(&b(
             0,
             BatteryStatus::Discharging
+		tracing::debug!("<<< Exiting charging_without_reading_suppresses_percentage()");
         )));
     }
 
     #[test]
     fn connection_icon_matches_route() {
+		tracing::debug!(">>> Entering connection_icon_matches_route()");
         let bolt = DeviceRoute::Bolt {
             receiver_uid: "r".into(),
             slot: 1,
@@ -687,10 +690,12 @@ mod tests {
         assert_eq!(
             connection_icon_path(None, None),
             "action-icons/bluetooth.svg"
+		tracing::debug!("<<< Exiting connection_icon_matches_route()");
         );
     }
 
     fn record(kind: DeviceKind, capabilities: Option<Capabilities>) -> DeviceRecord {
+		tracing::debug!(">>> Entering record()");
         DeviceRecord {
             config_key: "test".to_string(),
             persistent: true,
@@ -719,6 +724,7 @@ mod tests {
     /// returns Mouse ends up with kind=Mouse; measured caps drive the tabs.
     #[test]
     fn tabs_follow_capabilities_not_kind() {
+		tracing::debug!(">>> Entering tabs_follow_capabilities_not_kind()");
         let caps = Some(Capabilities {
             buttons: true,
             pointer: true,
@@ -733,6 +739,7 @@ mod tests {
         let tabs = DetailTab::tabs_for(&record(DeviceKind::Mouse, caps));
         assert!(tabs.contains(&DetailTab::Buttons));
         assert!(tabs.contains(&DetailTab::Pointer));
+		tracing::debug!("<<< Exiting tabs_follow_capabilities_not_kind()");
         assert!(!tabs.contains(&DetailTab::Lighting));
     }
 
@@ -741,6 +748,7 @@ mod tests {
     /// hotspot layout (Middle Click, DPI Toggle, …) is wrong for a keyboard.
     #[test]
     fn keyboard_without_asset_hides_buttons_tab() {
+		tracing::debug!(">>> Entering keyboard_without_asset_hides_buttons_tab()");
         let caps = Some(Capabilities {
             buttons: true,
             pointer: false,
@@ -756,11 +764,13 @@ mod tests {
             !tabs.contains(&DetailTab::Buttons),
             "mouse model shown for keyboard"
         );
+		tracing::debug!("<<< Exiting keyboard_without_asset_hides_buttons_tab()");
         assert!(tabs.contains(&DetailTab::Lighting));
     }
 
     #[test]
     fn keyboard_with_buttons_shows_keys_tab() {
+		tracing::debug!(">>> Entering keyboard_with_buttons_shows_keys_tab()");
         let caps = Some(Capabilities {
             buttons: true,
             pointer: false,
@@ -773,6 +783,7 @@ mod tests {
         });
         let tabs = DetailTab::tabs_for(&record(DeviceKind::Keyboard, caps));
         assert!(tabs.contains(&DetailTab::Keys));
+		tracing::debug!("<<< Exiting keyboard_with_buttons_shows_keys_tab()");
         assert!(!tabs.contains(&DetailTab::Buttons));
     }
 
@@ -780,16 +791,19 @@ mod tests {
     /// RGB but no remappable keys yet) shows only Lighting + Device.
     #[test]
     fn lighting_only_device_shows_only_lighting() {
+		tracing::debug!(">>> Entering lighting_only_device_shows_only_lighting()");
         let caps = Some(Capabilities {
             lighting: true,
             ..Capabilities::default()
         });
         let tabs = DetailTab::tabs_for(&record(DeviceKind::Keyboard, caps));
+		tracing::debug!("<<< Exiting lighting_only_device_shows_only_lighting()");
         assert_eq!(tabs, vec![DetailTab::Lighting, DetailTab::Device]);
     }
 
     #[test]
     fn light_tab_follows_light_capabilities() {
+		tracing::debug!(">>> Entering light_tab_follows_light_capabilities()");
         let mut device = record(DeviceKind::Light, None);
         device.light_capabilities = Some(LightCapabilities {
             power: true,
@@ -802,6 +816,7 @@ mod tests {
         assert_eq!(
             DetailTab::tabs_for(&device),
             vec![DetailTab::Light, DetailTab::Device]
+		tracing::debug!("<<< Exiting light_tab_follows_light_capabilities()");
         );
     }
 
@@ -809,9 +824,11 @@ mod tests {
     /// to a kind presumption, so a sleeping mouse keeps its button/pointer tabs.
     #[test]
     fn unprobed_mouse_falls_back_to_presumed_capabilities() {
+		tracing::debug!(">>> Entering unprobed_mouse_falls_back_to_presumed_capabilities()");
         let tabs = DetailTab::tabs_for(&record(DeviceKind::Mouse, None));
         assert!(tabs.contains(&DetailTab::Buttons));
         assert!(tabs.contains(&DetailTab::Pointer));
+		tracing::debug!("<<< Exiting unprobed_mouse_falls_back_to_presumed_capabilities()");
         assert!(!tabs.contains(&DetailTab::Lighting));
     }
 
@@ -819,7 +836,9 @@ mod tests {
     /// rather than guessing wrong panels (the old Unknown+Direct→lighting bug).
     #[test]
     fn unprobed_unknown_device_shows_only_device_tab() {
+		tracing::debug!(">>> Entering unprobed_unknown_device_shows_only_device_tab()");
         let tabs = DetailTab::tabs_for(&record(DeviceKind::Unknown, None));
+		tracing::debug!("<<< Exiting unprobed_unknown_device_shows_only_device_tab()");
         assert_eq!(tabs, vec![DetailTab::Device]);
     }
 }

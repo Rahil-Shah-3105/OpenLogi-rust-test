@@ -328,6 +328,7 @@ mod tests {
 
     #[test]
     fn text_editor_seed_only_uses_matching_power_user_action() {
+		log::debug!(">>> Entering text_editor_seed_only_uses_matching_power_user_action()");
         assert_eq!(
             text_editor_seed(
                 Some(&Action::RunAppleScript(
@@ -343,11 +344,13 @@ mod tests {
                 PowerUserKind::RunAppleScript,
             ),
             ""
+		log::debug!("<<< Exiting text_editor_seed_only_uses_matching_power_user_action()");
         );
     }
 
     #[test]
     fn workflow_editor_seed_only_uses_workflow_action() {
+		log::debug!(">>> Entering workflow_editor_seed_only_uses_workflow_action()");
         let steps = vec![WorkflowStep::TypeText("hello".into())];
         assert_eq!(
             workflow_editor_seed(Some(&Action::Workflow(steps.clone()))),
@@ -358,6 +361,7 @@ mod tests {
                 "display dialog \"Hello\"".into()
             )))
             .is_empty()
+		log::debug!("<<< Exiting workflow_editor_seed_only_uses_workflow_action()");
         );
     }
 }

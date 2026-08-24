@@ -331,14 +331,18 @@ mod tests {
 
     #[test]
     fn task_id_round_trips_through_u16() {
+		log::debug!(">>> Entering task_id_round_trips_through_u16()");
         assert_eq!(u16::from(TaskId::from(0x93)), 0x93);
+		log::debug!("<<< Exiting task_id_round_trips_through_u16()");
         assert_eq!(TaskId::from(0x93), super::SWITCH_PRESENTATION_SWITCH_SCREEN);
     }
 
     #[test]
     fn known_constants_have_expected_values() {
+		log::debug!(">>> Entering known_constants_have_expected_values()");
         assert_eq!(super::RIGHT_CMD, TaskId(0xfc));
         assert_eq!(control_ids::SMART_SHIFT.0, 0xc4);
+		log::debug!("<<< Exiting known_constants_have_expected_values()");
         assert_eq!(control_ids::DPI_SWITCH.0, 0xfd);
     }
 }

@@ -642,6 +642,7 @@ mod tests {
 
     #[test]
     fn flicker_and_low_light_use_standard_uvc_controls() {
+		log::debug!(">>> Entering flicker_and_low_light_use_standard_uvc_controls()");
         let flicker = CameraControl::PowerLineFrequency.spec();
         assert_eq!(flicker.unit, Unit::Processing);
         assert_eq!(flicker.selector, 0x05);
@@ -650,6 +651,7 @@ mod tests {
         let low_light = CameraControl::LowLightCompensation.spec();
         assert_eq!(low_light.unit, Unit::CameraTerminal);
         assert_eq!(low_light.selector, 0x03);
+		log::debug!("<<< Exiting flicker_and_low_light_use_standard_uvc_controls()");
         assert_eq!(low_light.payload, Payload::U8);
     }
 
@@ -660,39 +662,50 @@ mod tests {
     /// the exact-match requirement exposed).
     #[test]
     fn unpadded_location_parses() {
+		log::debug!(">>> Entering unpadded_location_parses()");
+		log::debug!("<<< Exiting unpadded_location_parses()");
         assert_eq!(location_hint("0x1123000046d0893"), Some(0x0112_3000));
     }
 
     #[test]
     fn padded_location_parses() {
+		log::debug!(">>> Entering padded_location_parses()");
+		log::debug!("<<< Exiting padded_location_parses()");
         assert_eq!(location_hint("0x14110000046d082d"), Some(0x1411_0000));
     }
 
     #[test]
     fn too_short_ids_yield_no_hint() {
+		log::debug!(">>> Entering too_short_ids_yield_no_hint()");
         assert_eq!(location_hint("0x46d0893"), None);
         assert_eq!(location_hint("46d0893"), None);
+		log::debug!("<<< Exiting too_short_ids_yield_no_hint()");
         assert_eq!(location_hint(""), None);
     }
 
     /// A 9-byte interface descriptor with the given number/class/subclass.
     fn interface(number: u8, class: u8, subclass: u8) -> Vec<u8> {
+		log::debug!(">>> Entering interface(number={},class={},subclass={})", number, class, subclass);
         vec![9, 0x04, number, 0, 0, class, subclass, 0, 0]
     }
 
     /// An 8-byte VC_INPUT_TERMINAL descriptor for `entity`.
     fn input_terminal(entity: u8, terminal_type: u16) -> Vec<u8> {
+		log::debug!(">>> Entering input_terminal(entity={},terminal_type={})", entity, terminal_type);
         let [type_lo, type_hi] = terminal_type.to_le_bytes();
+		log::debug!("<<< Exiting input_terminal(entity={},terminal_type={})", entity, terminal_type);
         vec![8, 0x24, 0x02, entity, type_lo, type_hi, 0, 0]
     }
 
     /// A minimal VC_PROCESSING_UNIT descriptor for `entity`.
     fn processing_unit(entity: u8) -> Vec<u8> {
+		log::debug!(">>> Entering processing_unit(entity={})", entity);
         vec![4, 0x24, 0x05, entity]
     }
 
     #[test]
     fn finds_the_processing_unit_behind_a_videocontrol_interface() {
+		log::debug!(">>> Entering finds_the_processing_unit_behind_a_videocontrol_interface()");
         let blob: Vec<u8> = [
             vec![9, 0x02, 0, 0, 0, 0, 0, 0, 0], // configuration header
             interface(3, 0x0E, 0x01),           // VideoControl
@@ -707,6 +720,7 @@ mod tests {
                 processing_unit: 2,
                 camera_terminal: Some(1),
             })
+		log::debug!("<<< Exiting finds_the_processing_unit_behind_a_videocontrol_interface()");
         );
     }
 
@@ -714,6 +728,7 @@ mod tests {
     /// controls must report unsupported rather than address the wrong entity.
     #[test]
     fn a_non_camera_input_terminal_leaves_lens_controls_unsupported() {
+		log::debug!(">>> Entering a_non_camera_input_terminal_leaves_lens_controls_unsupported()");
         let blob: Vec<u8> = [
             interface(0, 0x0E, 0x01),
             input_terminal(1, 0x0401), // ITT_MEDIA_TRANSPORT_INPUT
@@ -727,6 +742,7 @@ mod tests {
                 processing_unit: 5,
                 camera_terminal: None,
             })
+		log::debug!("<<< Exiting a_non_camera_input_terminal_leaves_lens_controls_unsupported()");
         );
     }
 
@@ -734,11 +750,13 @@ mod tests {
     /// some other function and must not be read as UVC entities.
     #[test]
     fn class_descriptors_outside_a_videocontrol_interface_are_ignored() {
+		log::debug!(">>> Entering class_descriptors_outside_a_videocontrol_interface_are_ignored()");
         let blob: Vec<u8> = [
             interface(0, 0x01, 0x01), // audio
             processing_unit(9),
         ]
         .concat();
+		log::debug!("<<< Exiting class_descriptors_outside_a_videocontrol_interface_are_ignored()");
         assert_eq!(scan_descriptors(&blob), None);
     }
 
@@ -750,6 +768,7 @@ mod tests {
     /// control to whatever entity happens to share that id.
     #[test]
     fn a_videostreaming_frame_descriptor_is_not_a_processing_unit() {
+		log::debug!(">>> Entering a_videostreaming_frame_descriptor_is_not_a_processing_unit()");
         // A real VS_FRAME_UNCOMPRESSED: 30 bytes, descriptor type 0x24 like a
         // VideoControl unit, subtype 0x05, and bFrameIndex sitting exactly
         // where a unit keeps its bUnitID.
@@ -765,6 +784,7 @@ mod tests {
             vs_frame,
         ]
         .concat();
+		log::debug!("<<< Exiting a_videostreaming_frame_descriptor_is_not_a_processing_unit()");
         assert_eq!(scan_descriptors(&blob), None);
     }
 
@@ -772,10 +792,12 @@ mod tests {
     /// of reading past it — and a zero length must not loop forever.
     #[test]
     fn malformed_lengths_stop_the_walk() {
+		log::debug!(">>> Entering malformed_lengths_stop_the_walk()");
         let overrun: Vec<u8> = [interface(0, 0x0E, 0x01), vec![64, 0x24, 0x05, 7]].concat();
         assert_eq!(scan_descriptors(&overrun), None);
 
         let zero_length: Vec<u8> = [interface(0, 0x0E, 0x01), vec![0, 0x24]].concat();
+		log::debug!("<<< Exiting malformed_lengths_stop_the_walk()");
         assert_eq!(scan_descriptors(&zero_length), None);
     }
 }

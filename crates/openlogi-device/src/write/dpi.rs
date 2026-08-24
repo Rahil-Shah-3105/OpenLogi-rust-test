@@ -328,5 +328,6 @@ pub async fn set_dpi_on(shared: &SharedChannel, dpi: Dpi) -> Result<(), WriteErr
 
 /// Read current DPI and supported values on an already-open [`SharedChannel`].
 pub async fn get_dpi_info_on(shared: &SharedChannel) -> Result<DpiInfo, WriteError> {
+	tracing::debug!(">>> Entering get_dpi_info_on()");
     get_dpi_info_on_channel(shared.channel(), shared.device_index()).await
 }

@@ -415,37 +415,46 @@ mod tests {
 
     #[test]
     fn exposure_auto_maps_only_two_menu_values_to_automatic() {
+		log::debug!(">>> Entering exposure_auto_maps_only_two_menu_values_to_automatic()");
         assert!(is_auto_mode(EXPOSURE_AUTO));
         assert!(is_auto_mode(EXPOSURE_APERTURE_PRIORITY));
         assert!(!is_auto_mode(EXPOSURE_MANUAL));
+		log::debug!("<<< Exiting exposure_auto_maps_only_two_menu_values_to_automatic()");
         assert!(!is_auto_mode(EXPOSURE_SHUTTER_PRIORITY));
     }
 
     #[test]
     fn a_control_handed_to_auto_is_skipped() {
+		log::debug!(">>> Entering a_control_handed_to_auto_is_skipped()");
         let autos = [(AutoToggle::Exposure, true)];
         // Exposure is gated by the toggle being switched on...
         assert!(gated_by_enabled_auto(CameraControl::Exposure, &autos));
         // ...while ungated controls, and controls gated by a *different*
         // toggle, still apply.
         assert!(!gated_by_enabled_auto(CameraControl::Zoom, &autos));
+		log::debug!("<<< Exiting a_control_handed_to_auto_is_skipped()");
         assert!(!gated_by_enabled_auto(CameraControl::Focus, &autos));
     }
 
     #[test]
     fn a_control_taken_off_auto_still_applies() {
+		log::debug!(">>> Entering a_control_taken_off_auto_still_applies()");
         // Switching auto *off* is exactly when the manual value must be written.
         let autos = [(AutoToggle::Focus, false)];
+		log::debug!("<<< Exiting a_control_taken_off_auto_still_applies()");
         assert!(!gated_by_enabled_auto(CameraControl::Focus, &autos));
     }
 
     #[test]
     fn an_unmentioned_toggle_leaves_its_control_writable() {
+		log::debug!(">>> Entering an_unmentioned_toggle_leaves_its_control_writable()");
+		log::debug!("<<< Exiting an_unmentioned_toggle_leaves_its_control_writable()");
         assert!(!gated_by_enabled_auto(CameraControl::WhiteBalance, &[]));
     }
 
     #[test]
     fn every_supported_control_has_a_known_class() {
+		log::debug!(">>> Entering every_supported_control_has_a_known_class()");
         // apply_settings batches per class; a control outside both would be
         // silently dropped from every batch.
         for control in CameraControl::ALL {
@@ -458,6 +467,7 @@ mod tests {
                 "{} has class {class:#x}",
                 control.name()
             );
+		log::debug!("<<< Exiting every_supported_control_has_a_known_class()");
         }
     }
 }

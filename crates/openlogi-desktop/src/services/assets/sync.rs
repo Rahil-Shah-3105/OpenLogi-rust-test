@@ -306,30 +306,37 @@ mod tests {
 
     #[test]
     fn automatic_preference_races_the_built_in_sources() {
+		tracing::debug!(">>> Entering automatic_preference_races_the_built_in_sources()");
         assert_eq!(
             source_for_sync(AssetSourcePreference::Automatic, None),
             None
+		tracing::debug!("<<< Exiting automatic_preference_races_the_built_in_sources()");
         );
     }
 
     #[test]
     fn openlogi_preference_uses_the_official_source() {
+		tracing::debug!(">>> Entering openlogi_preference_uses_the_official_source()");
         assert_eq!(
             source_for_sync(AssetSourcePreference::OpenLogi, None),
             Some(AssetSource::Production)
+		tracing::debug!("<<< Exiting openlogi_preference_uses_the_official_source()");
         );
     }
 
     #[test]
     fn fastly_preference_uses_the_shard_aware_jsdelivr_source() {
+		tracing::debug!(">>> Entering fastly_preference_uses_the_shard_aware_jsdelivr_source()");
         assert_eq!(
             source_for_sync(AssetSourcePreference::Fastly, None),
             Some(AssetSource::JsDelivr)
+		tracing::debug!("<<< Exiting fastly_preference_uses_the_shard_aware_jsdelivr_source()");
         );
     }
 
     #[test]
     fn environment_override_takes_precedence_over_the_saved_source() {
+		tracing::debug!(">>> Entering environment_override_takes_precedence_over_the_saved_source()");
         assert_eq!(
             source_for_sync(
                 AssetSourcePreference::Cloudflare,
@@ -338,16 +345,19 @@ mod tests {
             Some(AssetSource::Override(
                 "https://assets.example.test".to_owned()
             ))
+		tracing::debug!("<<< Exiting environment_override_takes_precedence_over_the_saved_source()");
         );
     }
 
     #[test]
     fn standalone_target_key_is_model_scoped_not_physical() {
+		tracing::debug!(">>> Entering standalone_target_key_is_model_scoped_not_physical()");
         assert_eq!(
             model_key(&AssetTarget::Standalone {
                 registry_model_id: "8c900".into(),
             }),
             "standalone:model:8c900"
+		tracing::debug!("<<< Exiting standalone_target_key_is_model_scoped_not_physical()");
         );
     }
 }

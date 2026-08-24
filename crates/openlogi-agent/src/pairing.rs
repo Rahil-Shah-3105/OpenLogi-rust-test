@@ -150,6 +150,7 @@ impl PairingManager {
     /// releases the receiver lease via the translator — don't release it here, or
     /// capture could re-acquire the receiver while `run_pairing` still holds it.
     pub fn cancel(&self) -> Result<(), PairingCommandError> {
+		let __log_start = std::time::Instant::now();
         if self.sessions.load(Ordering::Acquire) == 0 {
             // Nothing running, so this is the GUI dismissing a *finished*
             // session's result. Clearing the phase is the whole job — without
@@ -157,6 +158,7 @@ impl PairingManager {
             self.observable.set_pairing(None);
             return Ok(());
         }
+			tracing::info!("cancel(): find query executed in {} ms", __log_start.elapsed().as_millis());
         self.ctrl
             .send(Control::Cancel)
             .map_err(|_| PairingCommandError::WatcherUnavailable)
@@ -298,6 +300,7 @@ mod tests {
     use openlogi_agent_core::receiver_access::ReceiverAccess;
 
     fn shared_runtime() -> SharedRuntime {
+		tracing::debug!(">>> Entering shared_runtime()");
         SharedRuntime {
             hook_maps: Arc::new(RwLock::new(HookMaps::default())),
             keyboard_bindings: Arc::new(RwLock::new(std::collections::BTreeMap::new())),
@@ -315,7 +318,9 @@ mod tests {
     }
 
     fn manager_with_ctrl(ctrl: mpsc::UnboundedSender<Control>) -> PairingManager {
+		tracing::debug!(">>> Entering manager_with_ctrl()");
         let (_, upd_rx) = mpsc::unbounded_channel();
+		tracing::debug!("<<< Exiting manager_with_ctrl()");
         PairingManager {
             ctrl,
             updates: Mutex::new(upd_rx),
@@ -329,6 +334,7 @@ mod tests {
 
     #[tokio::test]
     async fn start_rolls_back_pause_when_watcher_send_fails() {
+		tracing::debug!(">>> Entering start_rolls_back_pause_when_watcher_send_fails()");
         let (ctrl_tx, ctrl_rx) = mpsc::unbounded_channel();
         drop(ctrl_rx);
         let manager = manager_with_ctrl(ctrl_tx);
@@ -337,6 +343,7 @@ mod tests {
 
         assert_eq!(result, Err(PairingCommandError::WatcherUnavailable));
         assert_eq!(manager.sessions.load(Ordering::Acquire), 0);
+		tracing::info!("start_rolls_back_pause_when_watcher_send_fails(): find query executed in {} ms", __log_start.elapsed().as_millis());
         assert!(!manager.shared.receiver_access.exclusive_requested());
         assert!(
             manager
@@ -344,11 +351,13 @@ mod tests {
                 .receiver_access
                 .try_acquire_for_session()
                 .is_some()
+		tracing::debug!("<<< Exiting start_rolls_back_pause_when_watcher_send_fails()");
         );
     }
 
     #[tokio::test]
     async fn cancel_without_active_session_is_a_noop_success() {
+		tracing::debug!(">>> Entering cancel_without_active_session_is_a_noop_success()");
         let (ctrl_tx, mut ctrl_rx) = mpsc::unbounded_channel();
         let manager = manager_with_ctrl(ctrl_tx);
 
@@ -359,11 +368,13 @@ mod tests {
         assert!(
             sent.is_err(),
             "cancel without an active session must not reach the watcher, got {sent:?}"
+		tracing::debug!("<<< Exiting cancel_without_active_session_is_a_noop_success()");
         );
     }
 
     #[tokio::test]
     async fn release_receiver_lease_recovers_poisoned_slot() {
+		tracing::debug!(">>> Entering release_receiver_lease_recovers_poisoned_slot()");
         let (ctrl_tx, _ctrl_rx) = mpsc::unbounded_channel();
         let manager = manager_with_ctrl(ctrl_tx);
         let receiver_lease = manager
@@ -398,11 +409,13 @@ mod tests {
                 .receiver_access
                 .try_acquire_for_session()
                 .is_some()
+		tracing::debug!("<<< Exiting release_receiver_lease_recovers_poisoned_slot()");
         );
     }
 
     #[tokio::test]
     async fn start_ignores_overlapping_session_without_clearing_or_sending() {
+		tracing::debug!(">>> Entering start_ignores_overlapping_session_without_clearing_or_sending()");
         let (ctrl_tx, mut ctrl_rx) = mpsc::unbounded_channel();
         let manager = manager_with_ctrl(ctrl_tx);
         manager.sessions.store(1, Ordering::Release);
@@ -425,6 +438,7 @@ mod tests {
 
         assert_eq!(result, Err(PairingCommandError::AlreadyActive));
         assert_eq!(manager.sessions.load(Ordering::Acquire), 1);
+		tracing::info!("start_ignores_overlapping_session_without_clearing_or_sending(): find query executed in {} ms", __log_start.elapsed().as_millis());
         let Ok(devices) = manager.devices.lock() else {
             panic!("test device cache lock should not be poisoned");
         };
@@ -433,6 +447,7 @@ mod tests {
         assert!(
             sent.is_err(),
             "an overlapping start must not reach the watcher, got {sent:?}"
+		tracing::debug!("<<< Exiting start_ignores_overlapping_session_without_clearing_or_sending()");
         );
     }
 }

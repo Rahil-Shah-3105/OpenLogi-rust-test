@@ -153,15 +153,18 @@ mod tests {
 
     /// Builds a long HID++ message from a 17-byte payload (`p[0]` = address).
     fn long(sub_id: u8, device_index: u8, p: [u8; 17]) -> HidppMessage {
+		log::debug!(">>> Entering long(sub_id={},device_index={},p={:?})", sub_id, device_index, p);
         let mut d = [0u8; 19];
         d[0] = device_index;
         d[1] = sub_id;
         d[2..19].copy_from_slice(&p);
+		log::debug!("<<< Exiting long(sub_id={},device_index={},p={:?})", sub_id, device_index, p);
         HidppMessage::Long(d)
     }
 
     #[test]
     fn decode_maps_long_payload_to_address_first() {
+		log::debug!(">>> Entering decode_maps_long_payload_to_address_first()");
         let msg = long(id::DEVICE_DISCOVERY, 0xff, {
             let mut p = [0u8; 17];
             p[0] = 0x07; // counter low (= Solaar address)
@@ -172,11 +175,13 @@ mod tests {
         assert_eq!(idx, 0xff);
         assert_eq!(sub, id::DEVICE_DISCOVERY);
         assert_eq!(payload[0], 0x07);
+		log::debug!("<<< Exiting decode_maps_long_payload_to_address_first()");
         assert_eq!(payload[1], 0x00);
     }
 
     #[test]
     fn parses_discovery_info_frame() {
+		log::debug!(">>> Entering parses_discovery_info_frame()");
         let mut p = [0u8; 17];
         p[0] = 0x05; // counter low
         p[1] = 0x00; // counter high
@@ -192,11 +197,13 @@ mod tests {
                 address: [0xde, 0xad, 0xbe, 0xef, 0x01, 0x02],
                 authentication: 0x01,
             })
+		log::debug!("<<< Exiting parses_discovery_info_frame()");
         );
     }
 
     #[test]
     fn parses_discovery_name_frame() {
+		log::debug!(">>> Entering parses_discovery_name_frame()");
         let mut p = [0u8; 17];
         p[0] = 0x05;
         p[1] = 0x00;
@@ -209,11 +216,13 @@ mod tests {
                 counter: 5,
                 name: "MX3".to_string(),
             })
+		log::debug!("<<< Exiting parses_discovery_name_frame()");
         );
     }
 
     #[test]
     fn parses_pairing_success_with_slot() {
+		log::debug!(">>> Entering parses_pairing_success_with_slot()");
         let mut p = [0u8; 17];
         p[0] = 0x02; // address 0x02 = complete
         p[1] = 0x00; // no error
@@ -221,22 +230,26 @@ mod tests {
         assert_eq!(
             parse_notification(id::PAIRING_STATUS, 0xff, p),
             Some(Notification::PairingSucceeded { slot: 3 })
+		log::debug!("<<< Exiting parses_pairing_success_with_slot()");
         );
     }
 
     #[test]
     fn parses_pairing_error() {
+		log::debug!(">>> Entering parses_pairing_error()");
         let mut p = [0u8; 17];
         p[0] = 0x00;
         p[1] = 0x01; // BoltPairingError::DEVICE_TIMEOUT
         assert_eq!(
             parse_notification(id::PAIRING_STATUS, 0xff, p),
             Some(Notification::PairingError(0x01))
+		log::debug!("<<< Exiting parses_pairing_error()");
         );
     }
 
     #[test]
     fn parses_passkey_digits() {
+		log::debug!(">>> Entering parses_passkey_digits()");
         let mut p = [0u8; 17];
         p[1..7].copy_from_slice(b"123456");
         assert_eq!(
@@ -245,11 +258,13 @@ mod tests {
                 digits: "123456".to_string(),
                 value: 123_456,
             })
+		log::debug!("<<< Exiting parses_passkey_digits()");
         );
     }
 
     #[test]
     fn parses_nul_padded_passkey() {
+		log::debug!(">>> Entering parses_nul_padded_passkey()");
         let mut p = [0u8; 17];
         p[1..4].copy_from_slice(b"042");
         assert_eq!(
@@ -258,30 +273,36 @@ mod tests {
                 digits: "042".to_string(),
                 value: 42,
             })
+		log::debug!("<<< Exiting parses_nul_padded_passkey()");
         );
     }
 
     #[test]
     fn non_digit_passkey_is_malformed() {
+		log::debug!(">>> Entering non_digit_passkey_is_malformed()");
         let mut p = [0u8; 17];
         p[1..7].copy_from_slice(b"12x456");
         assert_eq!(
             parse_notification(id::PASSKEY_REQUEST, 0xff, p),
             Some(Notification::MalformedPasskey)
+		log::debug!("<<< Exiting non_digit_passkey_is_malformed()");
         );
     }
 
     #[test]
     fn empty_passkey_is_malformed() {
+		log::debug!(">>> Entering empty_passkey_is_malformed()");
         let p = [0u8; 17];
         assert_eq!(
             parse_notification(id::PASSKEY_REQUEST, 0xff, p),
             Some(Notification::MalformedPasskey)
+		log::debug!("<<< Exiting empty_passkey_is_malformed()");
         );
     }
 
     #[test]
     fn parses_unifying_lock() {
+		log::debug!(">>> Entering parses_unifying_lock()");
         let mut p = [0u8; 17];
         p[0] = 0x01; // lock open
         assert_eq!(
@@ -290,6 +311,7 @@ mod tests {
                 open: true,
                 error: 0,
             })
+		log::debug!("<<< Exiting parses_unifying_lock()");
         );
     }
 }

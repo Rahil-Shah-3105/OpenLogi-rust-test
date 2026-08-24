@@ -9,6 +9,7 @@ use super::types::{
 
 #[test]
 fn parses_device_info() {
+	log::debug!(">>> Entering parses_device_info()");
     let mut payload = [0; 16];
     payload[0] = 0xff;
     payload[1] = 0xff;
@@ -28,11 +29,13 @@ fn parses_device_info() {
             .contains(RgbExtCapabilities::GET_ZONE_EFFECT)
     );
     assert!(info.ext_capabilities.contains(RgbExtCapabilities::SHUTDOWN));
+	log::debug!("<<< Exiting parses_device_info()");
     assert_eq!(info.multicluster_effect_count, 3);
 }
 
 #[test]
 fn parses_cluster_info() {
+	log::debug!(">>> Entering parses_cluster_info()");
     let mut payload = [0; 16];
     payload[0] = 1;
     payload[2..4].copy_from_slice(&2u16.to_be_bytes()); // location = Logo
@@ -54,11 +57,13 @@ fn parses_cluster_info() {
             .contains(DisplayPersistencyCapabilities::ON_THEN_OFF)
     );
     assert!(info.effect_persistency);
+	log::debug!("<<< Exiting parses_cluster_info()");
     assert!(!info.multiled_pattern);
 }
 
 #[test]
 fn parses_effect_info() {
+	log::debug!(">>> Entering parses_effect_info()");
     let mut payload = [0; 16];
     payload[0] = 0;
     payload[1] = 1;
@@ -70,11 +75,13 @@ fn parses_effect_info() {
     assert_eq!(info.cluster_effect_index, 1);
     assert_eq!(info.effect_id, 4);
     assert_eq!(info.effect_capabilities, 0x0007);
+	log::debug!("<<< Exiting parses_effect_info()");
     assert_eq!(info.effect_period, 500);
 }
 
 #[test]
 fn parses_power_mode_config() {
+	log::debug!(">>> Entering parses_power_mode_config()");
     let mut payload = [0; 16];
     payload[0] = 0; // getOrSet echo
     payload[1..3].copy_from_slice(&0x0003u16.to_be_bytes());
@@ -84,11 +91,13 @@ fn parses_power_mode_config() {
     let config = RgbPowerModeConfig::from_payload(&payload);
     assert_eq!(config.flags, 0x0003);
     assert_eq!(config.no_activity_timeout_to_power_save, 60);
+	log::debug!("<<< Exiting parses_power_mode_config()");
     assert_eq!(config.no_activity_timeout_to_off, 300);
 }
 
 #[test]
 fn decodes_effect_sync_event() {
+	log::debug!(">>> Entering decodes_effect_sync_event()");
     let mut payload = [0; 16];
     payload[0] = 0xff;
     payload[1..3].copy_from_slice(&2000u16.to_be_bytes());
@@ -99,11 +108,13 @@ fn decodes_effect_sync_event() {
             cluster_index: 0xff,
             effect_counter: 2000,
         })
+	log::debug!("<<< Exiting decodes_effect_sync_event()");
     );
 }
 
 #[test]
 fn decodes_user_activity_event() {
+	log::debug!(">>> Entering decodes_user_activity_event()");
     let mut payload = [0; 16];
     payload[0] = 1;
     assert_eq!(
@@ -111,11 +122,13 @@ fn decodes_user_activity_event() {
         Some(RgbEffectsEvent::UserActivity(
             ActivityEventType::UserActivityDetected
         ))
+	log::debug!("<<< Exiting decodes_user_activity_event()");
     );
 }
 
 #[test]
 fn decodes_cluster_changed_event() {
+	log::debug!(">>> Entering decodes_cluster_changed_event()");
     let mut payload = [0; 16];
     payload[0] = 1;
     payload[1] = 2;
@@ -132,16 +145,20 @@ fn decodes_cluster_changed_event() {
             persistence: RgbPersistence::VOLATILE,
             power_mode: Some(PowerModeTarget::PowerSave),
         })
+	log::debug!("<<< Exiting decodes_cluster_changed_event()");
     );
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(7, &[0; 16]).is_none());
 }
 
 #[test]
 fn maps_stable_enum_wire_values() {
+	log::debug!(">>> Entering maps_stable_enum_wire_values()");
     assert_eq!(RgbPowerMode::try_from(1u8).unwrap(), RgbPowerMode::FullRgb);
     assert_eq!(RgbPowerMode::try_from(3u8).unwrap(), RgbPowerMode::PowerOff);
     RgbPowerMode::try_from(0u8).unwrap_err();
@@ -154,12 +171,14 @@ fn maps_stable_enum_wire_values() {
         SlotInfoType::try_from(6u8).unwrap(),
         SlotInfoType::EffectName21To31
     );
+	log::debug!("<<< Exiting maps_stable_enum_wire_values()");
     SlotInfoType::try_from(7u8).unwrap_err();
 }
 
 /// Totality: the user-activity event must decode for any activity byte.
 #[test]
 fn keeps_user_activity_event_with_unknown_type() {
+	log::debug!(">>> Entering keeps_user_activity_event_with_unknown_type()");
     for byte in 0..=u8::MAX {
         let mut payload = [0; 16];
         payload[0] = byte;
@@ -168,6 +187,7 @@ fn keeps_user_activity_event_with_unknown_type() {
             Some(RgbEffectsEvent::UserActivity(ActivityEventType::from(byte))),
             "dropped user-activity event for byte {byte:#04x}"
         );
+	log::debug!("<<< Exiting keeps_user_activity_event_with_unknown_type()");
     }
 }
 
@@ -176,6 +196,7 @@ fn keeps_user_activity_event_with_unknown_type() {
 /// model; those must surface as `None` without dropping the event.
 #[test]
 fn keeps_cluster_changed_event_with_unknown_power_mode() {
+	log::debug!(">>> Entering keeps_cluster_changed_event_with_unknown_power_mode()");
     for flags in 0..=u8::MAX {
         let mut payload = [0; 16];
         payload[0] = 1; // cluster_index sibling that must survive
@@ -186,5 +207,6 @@ fn keeps_cluster_changed_event_with_unknown_power_mode() {
             panic!("expected ClusterChanged");
         };
         assert_eq!(cluster_index, 1);
+	log::debug!("<<< Exiting keeps_cluster_changed_event_with_unknown_power_mode()");
     }
 }

@@ -171,6 +171,7 @@ mod tests {
 
     #[test]
     fn parses_fn_inversion_info() {
+		log::debug!(">>> Entering parses_fn_inversion_info()");
         let mut payload = [0; 16];
         payload[0] = 1;
         payload[1] = 1;
@@ -181,11 +182,13 @@ mod tests {
 
         assert_eq!(info.host_index, HostIndex::Slot(1));
         assert_eq!(info.state, FnInversionState::On);
+		log::debug!("<<< Exiting parses_fn_inversion_info()");
         assert_eq!(info.default_state, FnInversionState::Off);
     }
 
     #[test]
     fn parses_global_fn_inversion() {
+		log::debug!(">>> Entering parses_global_fn_inversion()");
         let mut payload = [0; 16];
         payload[0] = 1;
         payload[1] = 0;
@@ -193,14 +196,17 @@ mod tests {
         let global = GlobalFnInversion::from_payload(payload).unwrap();
 
         assert_eq!(global.state, FnInversionState::On);
+		log::debug!("<<< Exiting parses_global_fn_inversion()");
         assert_eq!(global.default_state, FnInversionState::Off);
     }
 
     #[test]
     fn encodes_multi_host_set_args_as_host_then_state() {
+		log::debug!(">>> Entering encodes_multi_host_set_args_as_host_then_state()");
         assert_eq!(
             set_multi_host_fn_inversion_args(HostIndex::Slot(2), FnInversionState::On),
             [2, 1, 0]
+		log::debug!("<<< Exiting encodes_multi_host_set_args_as_host_then_state()");
         );
     }
 }

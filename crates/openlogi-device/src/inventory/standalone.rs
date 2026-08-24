@@ -104,10 +104,13 @@ mod tests {
 
     #[test]
     fn glow_fixture_matches_standalone_driver() {
+		log::debug!(">>> Entering glow_fixture_matches_standalone_driver()");
+		log::debug!("<<< Exiting glow_fixture_matches_standalone_driver()");
         assert!(matches_litra(0x046d, 0xc900, 0xff43, 0x0202));
     }
 
     fn raw(identity: &str) -> StandaloneDevice {
+		log::debug!(">>> Entering raw(identity={})", identity);
         StandaloneDevice {
             address: RawDeviceAddress {
                 vendor_id: 0x046d,
@@ -131,20 +134,24 @@ mod tests {
 
     #[test]
     fn duplicate_transient_nodes_are_rejected() {
+		log::debug!(">>> Entering duplicate_transient_nodes_are_rejected()");
         let devices = vec![raw("id:old"), raw("id:new")];
         assert!(matches!(
             validate_no_ambiguous_nodes(&devices),
             Err(InventoryError::AmbiguousRawDevice)
+		log::debug!("<<< Exiting duplicate_transient_nodes_are_rejected()");
         ));
     }
 
     #[test]
     fn distinct_serials_can_share_the_same_hid_tuple() {
+		log::debug!(">>> Entering distinct_serials_can_share_the_same_hid_tuple()");
         let devices = vec![raw("serial:one"), raw("serial:two")];
         let validation = validate_no_ambiguous_nodes(&devices);
         assert!(
             validation.is_ok(),
             "serial-backed nodes stay distinguishable: {validation:?}"
+		log::debug!("<<< Exiting distinct_serials_can_share_the_same_hid_tuple()");
         );
     }
 }

@@ -112,6 +112,7 @@ mod tests {
 
     #[test]
     fn presets_map_backward_and_forward_in_physical_direction() {
+		log::debug!(">>> Entering presets_map_backward_and_forward_in_physical_direction()");
         let expected = [
             (Action::MouseBack, Action::MouseForward),
             (Action::Undo, Action::Redo),
@@ -128,13 +129,16 @@ mod tests {
 
         for (preset, (backward, forward)) in ThumbwheelPreset::ALL.into_iter().zip(expected) {
             assert_eq!(preset.pair(), ThumbwheelPair { backward, forward });
+		log::debug!("<<< Exiting presets_map_backward_and_forward_in_physical_direction()");
         }
     }
 
     #[test]
     fn recognition_requires_an_exact_approved_pair() {
+		log::debug!(">>> Entering recognition_requires_an_exact_approved_pair()");
         for preset in ThumbwheelPreset::ALL {
             let pair = preset.pair();
+			log::debug!("recognition_requires_an_exact_approved_pair(): pair → {:?}", pair);
             assert_eq!(
                 ThumbwheelPreset::recognize(&pair.backward, &pair.forward),
                 Some(preset)
@@ -150,17 +154,20 @@ mod tests {
             ThumbwheelPreset::recognize(&Action::VolumeDown, &Action::NextTrack),
             None,
             "mixed actions are custom"
+		log::debug!("<<< Exiting recognition_requires_an_exact_approved_pair()");
         );
     }
 
     #[test]
     fn cycle_dpi_uses_the_same_action_in_both_directions() {
+		log::debug!(">>> Entering cycle_dpi_uses_the_same_action_in_both_directions()");
         assert_eq!(
             ThumbwheelPreset::CycleDpi.pair(),
             ThumbwheelPair {
                 backward: Action::CycleDpiPresets,
                 forward: Action::CycleDpiPresets,
             }
+		log::debug!("<<< Exiting cycle_dpi_uses_the_same_action_in_both_directions()");
         );
     }
 }

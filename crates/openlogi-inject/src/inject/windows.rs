@@ -46,6 +46,7 @@ const XBUTTON2: i32 = 2;
 /// their Windows equivalents; `CustomShortcut` maps macOS `kVK_*` codes to
 /// Windows virtual-key codes (Cmd → Ctrl).
 pub(super) fn execute(action: &Action) {
+	tracing::debug!(">>> Entering execute()");
     match action.effect() {
         Effect::None => {}
         Effect::Click(button) => post_click(button),
@@ -66,6 +67,7 @@ pub(super) fn execute(action: &Action) {
                 action = action.label(),
                 "device action handled by hook/HID layer"
             );
+		tracing::debug!("<<< Exiting post_custom_shortcut()");
         }
     }
 }
@@ -81,6 +83,7 @@ pub(super) fn execute(action: &Action) {
 /// ordinary modifier+key chords. [`press_shortcut`] posts the `Err` case
 /// directly instead of routing it through [`post_custom_shortcut`].
 fn combo(shortcut: Shortcut) -> Result<KeyCombo, u16> {
+	tracing::debug!(">>> Entering combo()");
     let text = match shortcut {
         Shortcut::BrowserBack => return Err(VK_BROWSER_BACK),
         Shortcut::BrowserForward => return Err(VK_BROWSER_FORWARD),
@@ -101,10 +104,12 @@ fn combo(shortcut: Shortcut) -> Result<KeyCombo, u16> {
         Shortcut::PrevTab => "Ctrl+Shift+Tab",
         Shortcut::ReloadPage => "Ctrl+R",
     };
+	tracing::debug!("<<< Exiting combo()");
     Ok(parse_shortcut(text))
 }
 
 fn parse_shortcut(text: &str) -> KeyCombo {
+	tracing::debug!(">>> Entering parse_shortcut(text={})", text);
     text.parse()
         .unwrap_or_else(|error| unreachable!("hardcoded shortcut table entry {text:?}: {error}"))
 }
@@ -120,6 +125,7 @@ fn press_shortcut(shortcut: Shortcut) {
 /// concepts map to their nearest Windows shortcut; `Sleep` has no clean
 /// synthesis (see the comment below) and is skipped.
 fn dispatch_native(native: NativeAction) {
+	tracing::debug!(">>> Entering dispatch_native()");
     match native {
         NativeAction::MissionControl | NativeAction::AppExpose => post_key(VK_TAB, &[VK_LWIN]),
         NativeAction::PreviousDesktop => post_key(VK_LEFT, &[VK_LWIN, VK_CONTROL]),
@@ -142,6 +148,7 @@ fn dispatch_native(native: NativeAction) {
 }
 
 fn dispatch_media(key: MediaKey) {
+	tracing::debug!(">>> Entering dispatch_media()");
     match key {
         MediaKey::PlayPause => post_key(VK_MEDIA_PLAY_PAUSE, &[]),
         MediaKey::NextTrack => post_key(VK_MEDIA_NEXT_TRACK, &[]),
@@ -343,6 +350,7 @@ mod tests {
     /// representation on Windows at all — see `combo`'s doc.
     #[test]
     fn combo_table_pins_representative_shortcuts() {
+		tracing::debug!(">>> Entering combo_table_pins_representative_shortcuts()");
         assert_eq!(
             combo(Shortcut::Copy)
                 .unwrap_or_else(|vk| panic!("Copy should be a chord, not raw vk {vk:#x}"))
@@ -382,6 +390,7 @@ mod tests {
                 super::super::hid_usage_to_windows(key).is_some(),
                 "{shortcut:?} table entry has no Windows virtual-key mapping"
             );
+		tracing::debug!("<<< Exiting combo_table_pins_representative_shortcuts()");
         }
     }
 }

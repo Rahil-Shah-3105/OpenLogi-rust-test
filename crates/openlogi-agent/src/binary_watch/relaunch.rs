@@ -72,9 +72,11 @@ pub(super) fn restart(path: &Path) {
 /// current process stays alive so the user can restart it manually.
 #[cfg(target_os = "macos")]
 pub fn relaunch_after_input_monitoring_grant() {
+	tracing::debug!(">>> Entering relaunch_after_input_monitoring_grant()");
     let path = match std::env::current_exe() {
         Ok(path) => path,
         Err(e) => {
+			tracing::error!("Exception in relaunch_after_input_monitoring_grant(): (unprintable)");
             warn!(error = %e, "could not resolve own executable after Input Monitoring was granted — restart the agent manually");
             return;
         }
@@ -82,11 +84,13 @@ pub fn relaunch_after_input_monitoring_grant() {
     info!("Input Monitoring granted — relaunching the macOS agent");
     if let Err(e) = schedule_macos_relaunch_and_exit(&path) {
         warn!(error = %e, "could not schedule agent relaunch after Input Monitoring was granted — restart the agent manually");
+	tracing::debug!("<<< Exiting relaunch_after_input_monitoring_grant()");
     }
 }
 
 #[cfg(target_os = "macos")]
 fn schedule_macos_relaunch(path: &Path) -> std::io::Result<()> {
+	tracing::debug!(">>> Entering schedule_macos_relaunch(path={:?})", path);
     let mut command = std::process::Command::new("/bin/sh");
     if let Some(bundle) = helper_bundle(path) {
         command
@@ -102,12 +106,15 @@ fn schedule_macos_relaunch(path: &Path) -> std::io::Result<()> {
             .arg(path)
             .args(std::env::args_os().skip(1));
     }
+	tracing::debug!("<<< Exiting schedule_macos_relaunch(path={:?})", path);
     command.spawn().map(|_| ())
 }
 
 #[cfg(target_os = "macos")]
 fn schedule_macos_relaunch_and_exit(path: &Path) -> std::io::Result<()> {
+	tracing::debug!(">>> Entering schedule_macos_relaunch_and_exit(path={:?})", path);
     schedule_macos_relaunch(path)?;
+	tracing::debug!("<<< Exiting schedule_macos_relaunch_and_exit(path={:?})", path);
     #[expect(
         clippy::exit,
         reason = "the delayed successor is already scheduled and waits for this process to release the singleton lock and IPC socket"
@@ -118,7 +125,9 @@ fn schedule_macos_relaunch_and_exit(path: &Path) -> std::io::Result<()> {
 /// The `.app` root of a packaged helper binary, `None` for a bare dev binary.
 #[cfg(target_os = "macos")]
 fn helper_bundle(path: &Path) -> Option<&Path> {
+	tracing::debug!(">>> Entering helper_bundle(path={:?})", path);
     let bundle = path.ancestors().nth(3)?;
+	tracing::debug!("<<< Exiting helper_bundle(path={:?})", path);
     (bundle.extension()? == "app").then_some(bundle)
 }
 
@@ -144,6 +153,7 @@ pub(super) fn restart(path: &Path) {
 mod tests {
     #[test]
     fn macos_helper_bundle_is_detected_from_packaged_binary_path() {
+		tracing::debug!(">>> Entering macos_helper_bundle_is_detected_from_packaged_binary_path()");
         use super::helper_bundle;
         use std::path::Path;
 
@@ -153,6 +163,7 @@ mod tests {
         let bundle =
             Path::new("/Applications/OpenLogi.app/Contents/Library/LoginItems/OpenLogi Agent.app");
         assert_eq!(helper_bundle(binary), Some(bundle));
+		tracing::debug!("<<< Exiting macos_helper_bundle_is_detected_from_packaged_binary_path()");
         assert_eq!(helper_bundle(Path::new("/tmp/openlogi-agent")), None);
     }
 }

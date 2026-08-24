@@ -80,6 +80,7 @@ fn is_dev_profile() -> bool {
 
 #[cfg(target_os = "macos")]
 fn current_bundle_identifier() -> Option<String> {
+	log::debug!(">>> Entering current_bundle_identifier()");
     let exe = std::env::current_exe().ok()?;
     for ancestor in exe.ancestors() {
         if !ancestor
@@ -179,16 +180,22 @@ mod tests {
 
     #[test]
     fn config_dir_keeps_openlogi_under_xdg_config_home() {
+		log::debug!(">>> Entering config_dir_keeps_openlogi_under_xdg_config_home()");
+		log::debug!("<<< Exiting config_dir_keeps_openlogi_under_xdg_config_home()");
         assert!(config_dir().expect("config dir").ends_with("openlogi"));
     }
 
     #[test]
     fn data_dir_keeps_openlogi_under_xdg_data_home() {
+		log::debug!(">>> Entering data_dir_keeps_openlogi_under_xdg_data_home()");
+		log::debug!("<<< Exiting data_dir_keeps_openlogi_under_xdg_data_home()");
         assert!(data_dir().expect("data dir").ends_with("openlogi"));
     }
 
     #[test]
     fn runtime_dir_keeps_openlogi_suffix() {
+		log::debug!(">>> Entering runtime_dir_keeps_openlogi_suffix()");
+		log::debug!("<<< Exiting runtime_dir_keeps_openlogi_suffix()");
         assert!(runtime_dir().expect("runtime dir").ends_with("openlogi"));
     }
 }

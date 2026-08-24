@@ -39,10 +39,12 @@ impl AppState {
     /// gated the same way to stay dead-code-clean on Linux.
     #[cfg(any(target_os = "macos", target_os = "windows"))]
     pub fn set_show_in_menu_bar(&mut self, enabled: bool) {
+		log::debug!(">>> Entering set_show_in_menu_bar(enabled={})", enabled);
         if self.config.app_settings.show_in_menu_bar == enabled {
             return;
         }
         self.config.app_settings.show_in_menu_bar = enabled;
+		log::debug!("<<< Exiting set_show_in_menu_bar(enabled={})", enabled);
         self.persist_and_reload("show-in-menu-bar setting");
     }
     /// Toggle the opt-in update check and persist it. No immediate side

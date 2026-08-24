@@ -1087,6 +1087,7 @@ mod tests {
 
     #[test]
     fn tap_callback_suppresses_normally_and_passes_through_panics() {
+		tracing::debug!(">>> Entering tap_callback_suppresses_normally_and_passes_through_panics()");
         let source = CGEventSource::new(CGEventSourceStateID::Private)
             .expect("CGEventSourceCreate must succeed");
         let event = CGEvent::new(source).expect("CGEventCreate must succeed");
@@ -1106,6 +1107,7 @@ mod tests {
                 &event
             ),
             CallbackResult::Keep
+		tracing::debug!("<<< Exiting tap_callback_suppresses_normally_and_passes_through_panics()");
         ));
     }
 }

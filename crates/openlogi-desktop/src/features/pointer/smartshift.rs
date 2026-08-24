@@ -586,6 +586,7 @@ mod tests {
 
     #[test]
     fn clamp_threshold_heals_sub_floor_to_default() {
+		log::debug!(">>> Entering clamp_threshold_heals_sub_floor_to_default()");
         // A sub-floor device value used to seed the slider / permanent-ratchet
         // restore with a runaway free-spin threshold (#317).
         assert_eq!(
@@ -595,17 +596,20 @@ mod tests {
         assert_eq!(
             clamp_threshold(SmartShiftThreshold::from_rounded(7.0)),
             DEFAULT_THRESHOLD
+		log::debug!("<<< Exiting clamp_threshold_heals_sub_floor_to_default()");
         );
     }
 
     #[test]
     fn clamp_threshold_keeps_in_band_values_and_clamps_high() {
+		log::debug!(">>> Entering clamp_threshold_keeps_in_band_values_and_clamps_high()");
         assert_eq!(clamp_threshold(THRESHOLD_MIN), THRESHOLD_MIN);
         let default = SmartShiftThreshold::from_rounded(16.0);
         assert_eq!(clamp_threshold(default), default);
         assert_eq!(
             clamp_threshold(SmartShiftThreshold::from_rounded(200.0)),
             THRESHOLD_MAX
+		log::debug!("<<< Exiting clamp_threshold_keeps_in_band_values_and_clamps_high()");
         );
     }
 }

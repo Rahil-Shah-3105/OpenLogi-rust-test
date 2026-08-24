@@ -246,6 +246,7 @@ mod tests {
 
     /// One directly attached mouse, `online` being the only thing a caller varies.
     fn inventory(online: bool) -> DeviceInventory {
+		log::debug!(">>> Entering inventory(online={})", online);
         DeviceInventory {
             receiver: ReceiverInfo {
                 name: "MX Master 3S".to_string(),
@@ -268,6 +269,7 @@ mod tests {
 
     #[test]
     fn a_repeated_enumeration_notifies_nobody() {
+		log::debug!(">>> Entering a_repeated_enumeration_notifies_nobody()");
         let state = state();
         let mut rx = state.subscribe();
 
@@ -280,22 +282,26 @@ mod tests {
         assert!(
             !rx.has_changed().unwrap(),
             "an identical enumeration must not wake a reader"
+		log::debug!("<<< Exiting a_repeated_enumeration_notifies_nobody()");
         );
     }
 
     #[test]
     fn a_device_waking_inside_an_otherwise_identical_set_is_news() {
+		log::debug!(">>> Entering a_device_waking_inside_an_otherwise_identical_set_is_news()");
         let state = state();
         let mut rx = state.subscribe();
         state.set_inventory(InventoryHealth::Ready, &[inventory(false)], &[], false);
         rx.mark_unchanged();
 
         state.set_inventory(InventoryHealth::Ready, &[inventory(true)], &[], false);
+		log::debug!("<<< Exiting a_device_waking_inside_an_otherwise_identical_set_is_news()");
         assert!(rx.has_changed().unwrap());
     }
 
     #[test]
     fn a_completed_scan_that_found_nothing_moves_health_alone() {
+		log::debug!(">>> Entering a_completed_scan_that_found_nothing_moves_health_alone()");
         let state = state();
         let rx = state.subscribe();
 
@@ -305,11 +311,13 @@ mod tests {
         assert!(rx.has_changed().unwrap());
         let snapshot = state.snapshot();
         assert_eq!(snapshot.status.inventory, InventoryHealth::Ready);
+		log::debug!("<<< Exiting a_completed_scan_that_found_nothing_moves_health_alone()");
         assert!(snapshot.inventory.is_empty());
     }
 
     #[test]
     fn a_hook_write_leaves_the_device_facts_alone() {
+		log::debug!(">>> Entering a_hook_write_leaves_the_device_facts_alone()");
         let state = state();
         state.set_inventory(InventoryHealth::Ready, &[inventory(true)], &[], false);
 
@@ -320,32 +328,38 @@ mod tests {
         assert!(snapshot.status.hook_installed);
         assert!(snapshot.status.accessibility_granted);
         assert_eq!(snapshot.inventory.len(), 1);
+		log::debug!("<<< Exiting a_hook_write_leaves_the_device_facts_alone()");
         assert_eq!(snapshot.status.inventory, InventoryHealth::Ready);
     }
 
     #[tokio::test]
     async fn a_client_that_has_seen_nothing_gets_the_current_state_at_once() {
+		log::debug!(">>> Entering a_client_that_has_seen_nothing_gets_the_current_state_at_once()");
         let state = state();
         let observed = state.observe(0).await;
         assert_eq!(observed.generation, 1, "the cell starts past the sentinel");
         assert_eq!(
             observed.snapshot.status.inventory,
             InventoryHealth::Scanning
+		log::debug!("<<< Exiting a_client_that_has_seen_nothing_gets_the_current_state_at_once()");
         );
     }
 
     #[tokio::test]
     async fn a_stale_generation_gets_the_current_state_at_once() {
+		log::debug!(">>> Entering a_stale_generation_gets_the_current_state_at_once()");
         let state = state();
         state.set_inventory(InventoryHealth::Ready, &[inventory(true)], &[], false);
 
         let observed = state.observe(1).await;
         assert_eq!(observed.generation, 2);
+		log::debug!("<<< Exiting a_stale_generation_gets_the_current_state_at_once()");
         assert_eq!(observed.snapshot.inventory.len(), 1);
     }
 
     #[tokio::test(start_paused = true)]
     async fn an_up_to_date_client_is_woken_by_the_next_change() {
+		log::debug!(">>> Entering an_up_to_date_client_is_woken_by_the_next_change()");
         let state = Arc::new(state());
         let writer = Arc::clone(&state);
         tokio::spawn(async move {
@@ -355,20 +369,24 @@ mod tests {
 
         let observed = state.observe(1).await;
         assert_eq!(observed.generation, 2);
+		log::debug!("<<< Exiting an_up_to_date_client_is_woken_by_the_next_change()");
         assert!(observed.snapshot.status.hook_installed);
     }
 
     #[tokio::test(start_paused = true)]
     async fn nothing_to_report_answers_with_the_unchanged_state() {
+		log::debug!(">>> Entering nothing_to_report_answers_with_the_unchanged_state()");
         let state = state();
         // Up to date and nobody writes: the hold elapses and the caller learns
         // the agent is alive without learning anything new.
         let observed = state.observe(1).await;
+		log::debug!("<<< Exiting nothing_to_report_answers_with_the_unchanged_state()");
         assert_eq!(observed.generation, 1);
     }
 
     #[tokio::test(start_paused = true)]
     async fn a_silent_write_does_not_end_the_hold() {
+		log::debug!(">>> Entering a_silent_write_does_not_end_the_hold()");
         let state = Arc::new(state());
         state.set_hook_installed(true);
         let writer = Arc::clone(&state);
@@ -379,11 +397,13 @@ mod tests {
         });
 
         let observed = state.observe(2).await;
+		log::debug!("<<< Exiting a_silent_write_does_not_end_the_hold()");
         assert_eq!(observed.generation, 2, "the hold ran out, nothing changed");
     }
 
     #[test]
     fn an_unchanged_flag_notifies_nobody() {
+		log::debug!(">>> Entering an_unchanged_flag_notifies_nobody()");
         let state = state();
         state.set_hook_installed(true);
         let rx = state.subscribe();
@@ -392,6 +412,7 @@ mod tests {
         assert!(!rx.has_changed().unwrap());
 
         state.set_hook_installed(false);
+		log::debug!("<<< Exiting an_unchanged_flag_notifies_nobody()");
         assert!(rx.has_changed().unwrap());
     }
 }

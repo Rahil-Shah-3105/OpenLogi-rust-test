@@ -17,6 +17,7 @@ mod macos {
     use objc2_io_kit::{IOHIDAccessType, IOHIDCheckAccess, IOHIDRequestAccess, IOHIDRequestType};
 
     pub(super) fn has_access() -> bool {
+		log::debug!(">>> Entering has_access()");
         matches!(
             IOHIDCheckAccess(IOHIDRequestType::ListenEvent),
             IOHIDAccessType::Granted
@@ -24,10 +25,12 @@ mod macos {
     }
 
     pub(super) fn request_access() {
+		log::debug!(">>> Entering request_access()");
         // Unlike `AXIsProcessTrustedWithOptions`, `IOHIDRequestAccess` blocks
         // the calling thread until the user answers the consent dialog (or
         // returns immediately if the status is already determined) — callers
         // must run this off the async runtime.
+		log::debug!("<<< Exiting request_access()");
         let _granted = IOHIDRequestAccess(IOHIDRequestType::ListenEvent);
     }
 }

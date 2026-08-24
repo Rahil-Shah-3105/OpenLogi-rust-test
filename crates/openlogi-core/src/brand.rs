@@ -159,13 +159,16 @@ mod tests {
 
     #[test]
     fn url_round_trips() {
+		log::debug!(">>> Entering url_round_trips()");
         for cmd in ALL {
             assert_eq!(DeeplinkCommand::parse_url(&cmd.to_url()), Some(cmd));
+		log::debug!("<<< Exiting url_round_trips()");
         }
     }
 
     #[test]
     fn parse_url_ignores_trailing_path_and_query() {
+		log::debug!(">>> Entering parse_url_ignores_trailing_path_and_query()");
         assert_eq!(
             DeeplinkCommand::parse_url("openlogi://show/"),
             Some(DeeplinkCommand::Show)
@@ -173,42 +176,53 @@ mod tests {
         assert_eq!(
             DeeplinkCommand::parse_url("openlogi://open-settings?from=tray"),
             Some(DeeplinkCommand::OpenSettings)
+		log::debug!("<<< Exiting parse_url_ignores_trailing_path_and_query()");
         );
     }
 
     #[test]
     fn parse_url_rejects_foreign_scheme_and_unknown_command() {
+		log::debug!(">>> Entering parse_url_rejects_foreign_scheme_and_unknown_command()");
         assert_eq!(DeeplinkCommand::parse_url("https://example.com/show"), None);
         assert_eq!(DeeplinkCommand::parse_url("openlogi://bogus"), None);
+		log::debug!("<<< Exiting parse_url_rejects_foreign_scheme_and_unknown_command()");
         assert_eq!(DeeplinkCommand::parse_url("openlogi://"), None);
     }
 
     #[test]
     fn dev_ids_round_trip() {
+		log::debug!(">>> Entering dev_ids_round_trip()");
         for id in [APP_ID, AGENT_ID, OVERLAY_ID] {
             assert!(is_dev_id(&dev_id(id)), "{id} suffixed must read as dev");
             assert!(!is_dev_id(id), "{id} is production");
+		log::debug!("<<< Exiting dev_ids_round_trip()");
         }
     }
 
     #[test]
     fn the_legacy_dotted_suffix_still_reads_as_dev() {
+		log::debug!(">>> Entering the_legacy_dotted_suffix_still_reads_as_dev()");
         // A stale `target/dev` bundle from before the rename must not fall
         // through to the production config directory and IPC socket.
         assert!(is_dev_id("org.openlogi.agent.dev"));
+		log::debug!("<<< Exiting the_legacy_dotted_suffix_still_reads_as_dev()");
         assert!(is_dev_id("org.openlogi.openlogi.dev"));
     }
 
     #[test]
     fn a_bare_suffix_is_not_a_dev_id() {
+		log::debug!(">>> Entering a_bare_suffix_is_not_a_dev_id()");
         assert!(!is_dev_id("-dev"));
         assert!(!is_dev_id(".dev"));
+		log::debug!("<<< Exiting a_bare_suffix_is_not_a_dev_id()");
         assert!(!is_dev_id(""));
     }
 
     #[test]
     fn matching_ignores_case_but_not_position() {
+		log::debug!(">>> Entering matching_ignores_case_but_not_position()");
         assert!(is_dev_id("org.openlogi.agent-DEV"));
+		log::debug!("<<< Exiting matching_ignores_case_but_not_position()");
         assert!(!is_dev_id("org.openlogi.dev-agent"));
     }
 }

@@ -70,6 +70,7 @@ pub fn reconcile(enabled: bool) {
     {
         remove_legacy();
         if let Err(e) = reconcile_macos(enabled) {
+			tracing::error!("Exception in reconcile(enabled={}): (unprintable)", enabled);
             warn!(error = %e, enabled, "agent LaunchAgent reconcile failed");
         }
     }
@@ -89,13 +90,16 @@ pub fn reconcile(enabled: bool) {
             debug!("launch_at_login set but no autostart backend on this platform");
         }
         let _ = enabled;
+	tracing::debug!("<<< Exiting reconcile(enabled={})", enabled);
     }
 }
 
 #[cfg(target_os = "macos")]
 fn reconcile_macos(enabled: bool) -> io::Result<()> {
+	tracing::debug!(">>> Entering reconcile_macos(enabled={})", enabled);
     let path = plist_path(LABEL)?;
     let exe = std::env::current_exe()?;
+	tracing::debug!("reconcile_macos(enabled={}): path → {:?}", enabled, path);
     let desired = enabled
         .then(|| render_plist(&exe.to_string_lossy()))
         .transpose()?;
@@ -118,6 +122,7 @@ fn reconcile_macos(enabled: bool) -> io::Result<()> {
         }
         (None, None) => debug!("agent LaunchAgent already absent"),
     }
+	tracing::debug!("<<< Exiting reconcile_macos(enabled={})", enabled);
     Ok(())
 }
 
@@ -126,12 +131,16 @@ fn reconcile_macos(enabled: bool) -> io::Result<()> {
 /// alone (logged), and a currently-running old instance survives until logout.
 #[cfg(target_os = "macos")]
 fn remove_legacy() {
+	tracing::debug!(">>> Entering remove_legacy()");
     let Ok(path) = plist_path(LEGACY_LABEL) else {
+		tracing::debug!(">>> Entering plist_path(label={})", label);
+		tracing::debug!("<<< Exiting plist_path(label={})", label);
         return;
     };
     if !path.exists() {
         return;
     }
+	tracing::error!("Exception in remove_legacy(): (unprintable)");
     match std::fs::remove_file(&path) {
         Ok(()) => info!("removed legacy GUI LaunchAgent ({LEGACY_LABEL})"),
         Err(e) => warn!(error = %e, "could not remove legacy LaunchAgent"),
@@ -150,10 +159,13 @@ fn plist_path(label: &str) -> io::Result<PathBuf> {
 
 #[cfg(target_os = "macos")]
 fn render_plist(exe: &str) -> io::Result<String> {
+	tracing::debug!(">>> Entering render_plist(exe={})", exe);
+	let __log_start = std::time::Instant::now();
     let mut keep_alive = plist::Dictionary::new();
     keep_alive.insert("SuccessfulExit".into(), plist::Value::Boolean(false));
 
     let mut root = plist::Dictionary::new();
+	tracing::info!("render_plist(exe)={}: save query executed in {} ms", exe, __log_start.elapsed().as_millis());
     root.insert("Label".into(), plist::Value::String(LABEL.into()));
     root.insert(
         "ProgramArguments".into(),
@@ -164,6 +176,7 @@ fn render_plist(exe: &str) -> io::Result<String> {
 
     let mut bytes = Vec::new();
     plist::to_writer_xml(&mut bytes, &plist::Value::Dictionary(root)).map_err(io::Error::other)?;
+	tracing::debug!("<<< Exiting render_plist(exe={})", exe);
     String::from_utf8(bytes).map_err(io::Error::other)
 }
 
@@ -181,6 +194,7 @@ const RUN_VALUE: &str = "OpenLogiAgent";
 /// semantics; the login-launch path is enough for the headless agent today.
 #[cfg(target_os = "windows")]
 fn reconcile_windows(enabled: bool) -> std::io::Result<()> {
+	tracing::debug!(">>> Entering reconcile_windows(enabled={})", enabled);
     use winreg::RegKey;
     use winreg::enums::HKEY_CURRENT_USER;
 
@@ -200,11 +214,13 @@ fn reconcile_windows(enabled: bool) -> std::io::Result<()> {
         match run.delete_value(RUN_VALUE) {
             Ok(()) => debug!(value = RUN_VALUE, "agent autostart registry value removed"),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+				tracing::error!("Exception in reconcile_windows(enabled={}): (unprintable)", enabled);
                 debug!("agent autostart registry value already absent");
             }
             Err(e) => return Err(e),
         }
     }
+	tracing::debug!("<<< Exiting reconcile_windows(enabled={})", enabled);
     Ok(())
 }
 
@@ -311,6 +327,7 @@ fn run_systemctl(args: &[&str]) {
                 "systemctl --user {label} exited {}: {}",
                 out.status,
                 stderr.trim()
+			tracing::error!("Exception in run_systemctl(args={:?}): (unprintable)", args);
             );
         }
         Err(e) => warn!("systemctl --user {label} failed to spawn: {e}"),
@@ -341,6 +358,7 @@ mod tests {
 
     #[test]
     fn rendered_plist_targets_the_agent_and_keeps_alive() {
+		tracing::debug!(">>> Entering rendered_plist_targets_the_agent_and_keeps_alive()");
         let body = render_plist(
             "/Applications/OpenLogi.app/Contents/Library/LoginItems/OpenLogi Agent.app/Contents/MacOS/openlogi-agent",
         )
@@ -362,21 +380,26 @@ mod tests {
                 .and_then(plist::Value::as_boolean),
             Some(false)
         );
+		tracing::debug!("<<< Exiting rendered_plist_targets_the_agent_and_keeps_alive()");
         assert!(!body.contains("--minimized"));
     }
 
     #[test]
     fn render_plist_serializes_xml_metacharacters_in_the_path() {
+		tracing::debug!(">>> Entering render_plist_serializes_xml_metacharacters_in_the_path()");
         // A home/app path with XML metacharacters (all legal APFS filename chars)
         // must not produce a malformed plist launchd would reject.
         let path = "/Users/R&D/Apps/<OpenLogi>/openlogi-agent";
+		tracing::debug!("render_plist_serializes_xml_metacharacters_in_the_path(): path → {}", path);
         let body = render_plist(path).expect("render plist");
+		tracing::debug!("render_plist_serializes_xml_metacharacters_in_the_path(): body → {}", body);
         let parsed = plist::Value::from_reader_xml(body.as_bytes()).expect("parse plist");
         let args = parsed
             .as_dictionary()
             .and_then(|root| root.get("ProgramArguments"))
             .and_then(plist::Value::as_array)
             .expect("ProgramArguments array");
+		tracing::debug!("<<< Exiting render_plist_serializes_xml_metacharacters_in_the_path()");
         assert_eq!(args.first().and_then(plist::Value::as_string), Some(path));
     }
 }
@@ -388,70 +411,94 @@ mod linux_tests {
 
     #[test]
     fn rendered_unit_targets_agent_and_restarts_on_failure() {
+		tracing::debug!(">>> Entering rendered_unit_targets_agent_and_restarts_on_failure()");
         let body = render_unit("/usr/bin/openlogi-agent");
         assert!(body.contains("ExecStart=/usr/bin/openlogi-agent"));
+		tracing::debug!("rendered_unit_targets_agent_and_restarts_on_failure(): body → {}", body);
         assert!(body.contains("Restart=on-failure"));
         assert!(body.contains("WantedBy=graphical-session.target"));
+		tracing::debug!("<<< Exiting rendered_unit_targets_agent_and_restarts_on_failure()");
         assert!(!body.contains("--minimized"));
     }
 
     #[test]
     fn rendered_unit_is_valid_ini_with_all_three_sections() {
+		tracing::debug!(">>> Entering rendered_unit_is_valid_ini_with_all_three_sections()");
         let body = render_unit("/usr/bin/openlogi-agent");
         assert!(body.contains("[Unit]"));
+		tracing::debug!("rendered_unit_is_valid_ini_with_all_three_sections(): body → {}", body);
         assert!(body.contains("[Service]"));
+		tracing::debug!("<<< Exiting rendered_unit_is_valid_ini_with_all_three_sections()");
         assert!(body.contains("[Install]"));
     }
 
     #[test]
     fn escape_systemd_exec_doubles_percent() {
+		tracing::debug!(">>> Entering escape_systemd_exec_doubles_percent()");
         assert_eq!(
             escape_systemd_exec("/home/user%20/bin/openlogi-agent"),
             "/home/user%%20/bin/openlogi-agent"
+		tracing::debug!("<<< Exiting escape_systemd_exec_doubles_percent()");
         );
     }
 
     #[test]
     fn escape_systemd_exec_quotes_path_with_spaces() {
+		tracing::debug!(">>> Entering escape_systemd_exec_quotes_path_with_spaces()");
         let result = escape_systemd_exec("/home/my user/bin/openlogi-agent");
+		tracing::debug!("escape_systemd_exec_quotes_path_with_spaces(): result → {}", result);
+    tracing::debug!("<<< Exiting escape_systemd_exec_quotes_path_with_spaces()");
         assert_eq!(result, "\"/home/my user/bin/openlogi-agent\"");
     }
 
     #[test]
     fn escape_systemd_exec_quotes_and_doubles_percent_with_spaces() {
+		tracing::debug!(">>> Entering escape_systemd_exec_quotes_and_doubles_percent_with_spaces()");
         let result = escape_systemd_exec("/home/my%20 user/openlogi-agent");
+		tracing::debug!("escape_systemd_exec_quotes_and_doubles_percent_with_spaces(): result → {}", result);
+    tracing::debug!("<<< Exiting escape_systemd_exec_quotes_and_doubles_percent_with_spaces()");
         assert_eq!(result, "\"/home/my%%20 user/openlogi-agent\"");
     }
 
     #[test]
     fn escape_systemd_exec_doubles_dollar() {
+		tracing::debug!(">>> Entering escape_systemd_exec_doubles_dollar()");
         assert_eq!(
             escape_systemd_exec("/opt/release$1/bin/openlogi-agent"),
             "/opt/release$$1/bin/openlogi-agent"
+		tracing::debug!("<<< Exiting escape_systemd_exec_doubles_dollar()");
         );
     }
 
     #[test]
     fn escape_systemd_exec_plain_path_unchanged() {
+		tracing::debug!(">>> Entering escape_systemd_exec_plain_path_unchanged()");
         let path = "/usr/local/bin/openlogi-agent";
+		tracing::debug!("escape_systemd_exec_plain_path_unchanged(): path → {}", path);
+    tracing::debug!("<<< Exiting escape_systemd_exec_plain_path_unchanged()");
         assert_eq!(escape_systemd_exec(path), path);
     }
 
     #[test]
     fn systemctl_arguments_render_as_a_command_suffix() {
+		tracing::debug!(">>> Entering systemctl_arguments_render_as_a_command_suffix()");
         assert_eq!(
             SystemctlArgsDisplay(&["enable", UNIT_NAME]).to_string(),
             "enable openlogi-agent.service"
+		tracing::debug!("<<< Exiting systemctl_arguments_render_as_a_command_suffix()");
         );
     }
 
     #[test]
     fn unit_path_uses_home_fallback() {
+		tracing::debug!(">>> Entering unit_path_uses_home_fallback()");
         // When XDG_CONFIG_HOME is unset (or relative), falls back to $HOME/.config.
         // We can't mutate global env safely in a parallel test suite, so we test
         // the logic indirectly: unit_path() must end in the UNIT_NAME component.
         let path = unit_path().expect("unit_path should resolve with a valid HOME");
+		tracing::debug!("unit_path_uses_home_fallback(): path → {:?}", path);
         assert!(path.ends_with(UNIT_NAME));
+		tracing::debug!("<<< Exiting unit_path_uses_home_fallback()");
         assert!(path.to_string_lossy().contains("systemd/user"));
     }
 }

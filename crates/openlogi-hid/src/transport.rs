@@ -386,6 +386,7 @@ pub(crate) async fn open_hidpp_channel(
             }
             Err(e) => {
                 debug!(name = %info.name, error = ?e, "not a HID++ channel");
+				tracing::debug!(">>> Entering new()");
                 return Ok(None);
             }
         };
@@ -423,6 +424,7 @@ mod sw_id_lease_tests {
 
     #[test]
     fn leases_are_unique_until_freed() {
+		tracing::debug!(">>> Entering leases_are_unique_until_freed()");
         // Leave any ids held by concurrent tests alone: lease two free slots,
         // check they differ, free them, and confirm the first id is reusable.
         let Some(a) = try_lease_sw_id() else {
@@ -440,6 +442,7 @@ mod sw_id_lease_tests {
         };
         assert_eq!(c, a);
         free_sw_id(b);
+		tracing::debug!("<<< Exiting leases_are_unique_until_freed()");
         free_sw_id(c);
     }
 }

@@ -974,6 +974,7 @@ fn key_points(asset: Option<&ResolvedAsset>) -> Vec<KeyPoint> {
 
 #[cfg(test)]
 fn key_x_fractions(asset: Option<&ResolvedAsset>) -> Vec<f32> {
+	log::debug!(">>> Entering key_x_fractions()");
     key_points(asset)
         .into_iter()
         .map(|point| point.x_frac)
@@ -1152,41 +1153,51 @@ mod tests {
 
     #[test]
     fn clicking_the_selected_key_closes_the_panel() {
+		log::debug!(">>> Entering clicking_the_selected_key_closes_the_panel()");
         assert_eq!(next_selection_after_click(None, 3), Some(3));
         assert_eq!(next_selection_after_click(Some(3), 3), None);
+		log::debug!("<<< Exiting clicking_the_selected_key_closes_the_panel()");
         assert_eq!(next_selection_after_click(Some(3), 4), Some(4));
     }
 
     #[test]
     fn hover_or_selection_highlights_a_key() {
+		log::debug!(">>> Entering hover_or_selection_highlights_a_key()");
         assert!(key_is_highlighted(2, Some(2), None));
         assert!(key_is_highlighted(2, None, Some(2)));
         assert!(key_is_highlighted(2, Some(2), Some(7)));
+		log::debug!("<<< Exiting hover_or_selection_highlights_a_key()");
         assert!(!key_is_highlighted(2, Some(1), Some(7)));
     }
 
     #[test]
     fn function_row_covers_esc_through_f19() {
+		log::debug!(">>> Entering function_row_covers_esc_through_f19()");
         let labels: Vec<&str> = FUNCTION_KEYS.iter().map(|(label, _)| *label).collect();
 
         assert_eq!(FUNCTION_KEYS.len(), 20);
         assert_eq!(labels.first(), Some(&"Esc"));
         assert_eq!(labels.last(), Some(&"F19"));
         assert!(labels.contains(&"F13"));
+		log::debug!("<<< Exiting function_row_covers_esc_through_f19()");
         assert!(labels.contains(&"F19"));
     }
 
     #[test]
     fn fallback_key_positions_cover_the_full_top_row() {
+		log::debug!(">>> Entering fallback_key_positions_cover_the_full_top_row()");
         let positions = key_x_fractions(None);
 
+		log::debug!("fallback_key_positions_cover_the_full_top_row(): positions → {:?}", positions);
         assert_eq!(positions.len(), 20);
         assert_eq!(positions.first().copied(), Some(EVEN_SPACING_START));
+		log::debug!("<<< Exiting fallback_key_positions_cover_the_full_top_row()");
         assert_eq!(positions.last().copied(), Some(EVEN_SPACING_END));
     }
 
     #[test]
     fn mx_keys_markers_merge_function_and_easy_switch_groups() {
+		log::debug!(">>> Entering mx_keys_markers_merge_function_and_easy_switch_groups()");
         let key_markers = vec![
             9.0, 13.4, 17.8, 22.3, 26.7, 31.15, 35.55, 40.05, 44.55, 49.1, 53.5, 57.9, 62.35, 81.5,
             85.9, 90.3, 94.7,
@@ -1195,6 +1206,7 @@ mod tests {
         let asset = asset_with_markers(&key_markers, &easy_switch_markers);
 
         let positions = key_x_fractions(Some(&asset));
+		log::debug!("mx_keys_markers_merge_function_and_easy_switch_groups(): positions → {:?}", positions);
 
         assert_eq!(positions.len(), 20);
         assert_approx_eq(positions[0], 0.045);
@@ -1207,11 +1219,13 @@ mod tests {
         assert!(
             positions.windows(2).all(|pair| pair[0] < pair[1]),
             "positions should stay in physical left-to-right order"
+		log::debug!("<<< Exiting mx_keys_markers_merge_function_and_easy_switch_groups()");
         );
     }
 
     #[test]
     fn mx_keys_markers_preserve_key_center_points() {
+		log::debug!(">>> Entering mx_keys_markers_preserve_key_center_points()");
         let key_markers = vec![
             9.0, 13.4, 17.8, 22.3, 26.7, 31.15, 35.55, 40.05, 44.55, 49.1, 53.5, 57.9, 62.35, 81.5,
             85.9, 90.3, 94.7,
@@ -1220,10 +1234,12 @@ mod tests {
         let asset = asset_with_markers(&key_markers, &easy_switch_markers);
 
         let points = key_points(Some(&asset));
+		log::debug!("mx_keys_markers_preserve_key_center_points(): points → {:?}", points);
 
         assert_eq!(points.len(), 20);
         assert_approx_eq(points[19].x_frac, 0.967);
         assert_approx_eq(points[19].y_frac, 0.153);
+		log::debug!("<<< Exiting mx_keys_markers_preserve_key_center_points()");
         assert_approx_eq(key_target_top_px(points[19].y_frac, 220.0, 30.0), 18.66);
     }
 
@@ -1233,12 +1249,14 @@ mod tests {
     /// offset left of F1.
     #[test]
     fn g513_pixel_markers_resolve_esc_plus_f1_to_f12() {
+		log::debug!(">>> Entering g513_pixel_markers_resolve_esc_plus_f1_to_f12()");
         let marker_xs = [
             285., 405., 525., 645., 840., 960., 1080., 1200., 1395., 1515., 1635., 1755.,
         ];
         let asset = legacy_asset(&marker_xs, 290., (2760, 1600), (2760, 1600));
 
         let points = key_points(Some(&asset));
+		log::debug!("g513_pixel_markers_resolve_esc_plus_f1_to_f12(): points → {:?}", points);
 
         assert_eq!(points.len(), 13, "Esc + F1-F12, no phantom F13-F19");
         assert_approx_eq(points[1].x_frac, 285. / 2760.);
@@ -1253,6 +1271,7 @@ mod tests {
                 .windows(2)
                 .all(|pair| pair[0].x_frac < pair[1].x_frac),
             "points stay in physical left-to-right order"
+		log::debug!("<<< Exiting g513_pixel_markers_resolve_esc_plus_f1_to_f12()");
         );
     }
 
@@ -1262,18 +1281,22 @@ mod tests {
     /// rather than misplacing every callout.
     #[test]
     fn pixel_markers_for_a_different_render_fall_back_to_even_spacing() {
+		log::debug!(">>> Entering pixel_markers_for_a_different_render_fall_back_to_even_spacing()");
         let marker_xs = [370., 525., 680., 835., 1090., 1250., 1400., 1555.];
         let asset = legacy_asset(&marker_xs, 300., (3598, 1315), (2760, 1600));
 
         let points = key_points(Some(&asset));
+		log::debug!("pixel_markers_for_a_different_render_fall_back_to_even_spacing(): points → {:?}", points);
 
         assert_eq!(points.len(), FUNCTION_KEYS.len());
         assert_approx_eq(points[0].x_frac, EVEN_SPACING_START);
+		log::debug!("<<< Exiting pixel_markers_for_a_different_render_fall_back_to_even_spacing()");
         assert_approx_eq(points[19].x_frac, EVEN_SPACING_END);
     }
 
     #[test]
     fn render_size_follows_the_png_aspect_up_to_the_width_cap() {
+		log::debug!(">>> Entering render_size_follows_the_png_aspect_up_to_the_width_cap()");
         // MX Keys-class render (1872x728): width-bound at a roomy viewport.
         let mx = legacy_asset(&[], 0., (1872, 728), (1872, 728));
         let (w, h) = keyboard_render_size(Some(&mx), 900.);
@@ -1291,16 +1314,19 @@ mod tests {
         assert_approx_eq(h, KEYBOARD_MIN_IMG_H);
         assert!((w - KEYBOARD_MIN_IMG_H * 2760. / 1600.).abs() < 0.01);
 
+		log::debug!("<<< Exiting render_size_follows_the_png_aspect_up_to_the_width_cap()");
         assert_eq!(keyboard_render_size(None, 900.), FALLBACK_KEYBOARD_SIZE);
     }
 
     #[test]
     fn callouts_spread_evenly_from_margin_to_margin() {
+		log::debug!(">>> Entering callouts_spread_evenly_from_margin_to_margin()");
         let margin = KEY_CALLOUT_W / 2.0 + 4.0;
         assert_approx_eq(callout_center_x(0, 13, 700.0), margin);
         assert_approx_eq(callout_center_x(12, 13, 700.0), 700.0 - margin);
         assert_approx_eq(callout_center_x(0, 1, 700.0), 350.0);
         assert!(callout_left_px(0, 13, 700.0, KEY_CALLOUT_W) >= 0.0);
+		log::debug!("<<< Exiting callouts_spread_evenly_from_margin_to_margin()");
         assert!(callout_left_px(12, 13, 700.0, KEY_CALLOUT_W) <= 700.0 - KEY_CALLOUT_W);
     }
 
@@ -1308,6 +1334,7 @@ mod tests {
     /// neighbours must never overlap for any board size the row can show.
     #[test]
     fn same_lane_callouts_never_overlap() {
+		log::debug!(">>> Entering same_lane_callouts_never_overlap()");
         for count in [13usize, 20] {
             for idx in 0..count.saturating_sub(2) {
                 let gap = callout_center_x(idx + 2, count, KEYBOARD_W)
@@ -1318,13 +1345,16 @@ mod tests {
                     idx + 2
                 );
             }
+		log::debug!("<<< Exiting same_lane_callouts_never_overlap()");
         }
     }
 
     #[test]
     fn function_key_callouts_stagger_even_lower_odd_upper() {
+		log::debug!(">>> Entering function_key_callouts_stagger_even_lower_odd_upper()");
         assert!(callout_top_px(0) > callout_top_px(1));
         assert_eq!(callout_top_px(0), callout_top_px(2));
+		log::debug!("<<< Exiting function_key_callouts_stagger_even_lower_odd_upper()");
         assert_eq!(callout_top_px(1), callout_top_px(3));
     }
 
@@ -1334,6 +1364,7 @@ mod tests {
         reason = "lane counts are bounded by FUNCTION_KEYS"
     )]
     fn staggered_function_key_callout_rows_fit_the_keyboard_width() {
+		log::debug!(">>> Entering staggered_function_key_callout_rows_fit_the_keyboard_width()");
         let lower_count = FUNCTION_KEYS
             .iter()
             .enumerate()
@@ -1347,6 +1378,7 @@ mod tests {
         assert!(
             KEY_CALLOUT_W * upper_count as f32 <= KEYBOARD_W,
             "upper callout lane overlaps before spacing is considered"
+		log::debug!("<<< Exiting staggered_function_key_callout_rows_fit_the_keyboard_width()");
         );
     }
 
@@ -1389,6 +1421,7 @@ mod tests {
     }
 
     fn asset_with_markers(key_markers: &[f32], easy_switch_markers: &[f32]) -> ResolvedAsset {
+		log::debug!(">>> Entering asset_with_markers(key_markers={:?},easy_switch_markers={:?})", key_markers, easy_switch_markers);
         ResolvedAsset {
             depot: "mx_keys_s_for_mac".to_string(),
             display_name: "MX Keys S for Mac".to_string(),
@@ -1422,6 +1455,7 @@ mod tests {
     }
 
     fn assignments_from_markers(markers: &[f32]) -> Vec<Assignment> {
+		log::debug!(">>> Entering assignments_from_markers(markers={:?})", markers);
         markers
             .iter()
             .enumerate()
@@ -1434,9 +1468,11 @@ mod tests {
     }
 
     fn assert_approx_eq(actual: f32, expected: f32) {
+		log::debug!(">>> Entering assert_approx_eq(actual={},expected={})", actual, expected);
         assert!(
             (actual - expected).abs() < 0.0001,
             "expected {expected}, got {actual}"
+		log::debug!("<<< Exiting assert_approx_eq(actual={},expected={})", actual, expected);
         );
     }
 }

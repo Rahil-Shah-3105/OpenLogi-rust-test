@@ -12,6 +12,7 @@ use crate::protocol::v20::{ErrorType, Hidpp20Error};
 
 #[test]
 fn parses_info() {
+	log::debug!(">>> Entering parses_info()");
     let mut payload = [0; 16];
     payload[0] = 3;
     payload[1..3].copy_from_slice(&0x0005u16.to_be_bytes()); // bootUp + userDemo
@@ -31,11 +32,13 @@ fn parses_info() {
     assert!(
         info.ext_capabilities
             .contains(ExtCapabilities::GET_ZONE_EFFECT)
+	log::debug!("<<< Exiting parses_info()");
     );
 }
 
 #[test]
 fn parses_zone_info() {
+	log::debug!(">>> Entering parses_zone_info()");
     let mut payload = [0; 16];
     payload[0] = 1;
     payload[1..3].copy_from_slice(&2u16.to_be_bytes()); // Logo
@@ -58,22 +61,26 @@ fn parses_zone_info() {
         !zone
             .persistency
             .contains(PersistencyCapabilities::ALWAYS_OFF)
+	log::debug!("<<< Exiting parses_zone_info()");
     );
 }
 
 #[test]
 fn rejects_unknown_zone_location() {
+	log::debug!(">>> Entering rejects_unknown_zone_location()");
     let mut payload = [0; 16];
     payload[1..3].copy_from_slice(&99u16.to_be_bytes());
 
     assert_matches!(
         ZoneInfo::from_payload(&payload),
         Err(Hidpp20Error::UnsupportedResponse)
+	log::debug!("<<< Exiting rejects_unknown_zone_location()");
     );
 }
 
 #[test]
 fn parses_zone_effect_info() {
+	log::debug!(">>> Entering parses_zone_effect_info()");
     let mut payload = [0; 16];
     payload[0] = 0;
     payload[1] = 2;
@@ -85,11 +92,13 @@ fn parses_zone_effect_info() {
     assert_eq!(info.zone_effect_index, 2);
     assert_eq!(info.effect_id, EffectId::ColorWave);
     assert_eq!(info.effect_capabilities, 0x0003);
+	log::debug!("<<< Exiting parses_zone_effect_info()");
     assert_eq!(info.effect_period, 1000);
 }
 
 #[test]
 fn parses_effect_settings() {
+	log::debug!(">>> Entering parses_effect_settings()");
     let mut payload = [0; 16];
     payload[0] = 1;
     payload[1..4].copy_from_slice(&[0x11, 0x22, 0x33]);
@@ -104,11 +113,13 @@ fn parses_effect_settings() {
     assert_eq!(settings.color.blue, 0x33);
     assert_eq!(settings.period, 2000);
     assert_eq!(settings.brightness, 80);
+	log::debug!("<<< Exiting parses_effect_settings()");
     assert_eq!(settings.param, 1);
 }
 
 #[test]
 fn parses_zone_effect_params() {
+	log::debug!(">>> Entering parses_zone_effect_params()");
     let mut payload = [0; 16];
     payload[0] = 2;
     payload[1] = 1;
@@ -117,11 +128,13 @@ fn parses_zone_effect_params() {
     let effect = ZoneEffect::from_payload(&payload);
     assert_eq!(effect.zone_index, 2);
     assert_eq!(effect.zone_effect_index, 1);
+	log::debug!("<<< Exiting parses_zone_effect_params()");
     assert_eq!(effect.params, [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
 }
 
 #[test]
 fn parses_led_bin_info() {
+	log::debug!(">>> Entering parses_led_bin_info()");
     let mut payload = [0; 16];
     payload[0] = 0;
     payload[1] = 2; // CalibrationFactors
@@ -135,11 +148,13 @@ fn parses_led_bin_info() {
     assert_eq!(bin.red, 100);
     assert_eq!(bin.green, 200);
     assert_eq!(bin.blue, 300);
+	log::debug!("<<< Exiting parses_led_bin_info()");
     assert_eq!(bin.white, 400);
 }
 
 #[test]
 fn decodes_sync_effect_event() {
+	log::debug!(">>> Entering decodes_sync_effect_event()");
     let mut payload = [0; 16];
     payload[0] = 0xff; // all zones
     payload[1..3].copy_from_slice(&1234u16.to_be_bytes());
@@ -150,25 +165,31 @@ fn decodes_sync_effect_event() {
             zone_index: 0xff,
             effect_counter: 1234,
         })
+	log::debug!("<<< Exiting decodes_sync_effect_event()");
     );
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(5, &[0; 16]).is_none());
 }
 
 #[test]
 fn maps_effect_id_wire_values() {
+	log::debug!(">>> Entering maps_effect_id_wire_values()");
     assert_eq!(EffectId::try_from(0u16).unwrap(), EffectId::Disabled);
     assert_eq!(EffectId::try_from(1u16).unwrap(), EffectId::FixedColor);
     assert_eq!(EffectId::try_from(11u16).unwrap(), EffectId::Ripple);
     EffectId::try_from(12u16).unwrap_err();
+	log::debug!("<<< Exiting maps_effect_id_wire_values()");
     assert_eq!(u16::from(EffectId::FixedColor), 1);
 }
 
 #[test]
 fn validates_single_nv_capability() {
+	log::debug!(">>> Entering validates_single_nv_capability()");
     validate_single_nv_capability(NvCapabilities::BOOT_UP_EFFECT).unwrap();
     assert_matches!(
         validate_single_nv_capability(NvCapabilities::empty()),
@@ -177,5 +198,6 @@ fn validates_single_nv_capability() {
     assert_matches!(
         validate_single_nv_capability(NvCapabilities::BOOT_UP_EFFECT | NvCapabilities::DEMO),
         Err(Hidpp20Error::Feature(ErrorType::InvalidArgument))
+	log::debug!("<<< Exiting validates_single_nv_capability()");
     );
 }

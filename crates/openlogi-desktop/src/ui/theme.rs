@@ -103,6 +103,7 @@ pub struct Palette {
 
 fn contrast_ratio(foreground: Hsla, background: Hsla) -> f32 {
     fn luminance(color: Rgba) -> f32 {
+		tracing::debug!(">>> Entering luminance()");
         let linear = |channel: f32| {
             if channel <= 0.04045 {
                 channel / 12.92
@@ -393,6 +394,7 @@ mod tests {
 
     #[test]
     fn openlogi_theme_text_pairs_meet_normal_text_contrast() {
+		tracing::debug!(">>> Entering openlogi_theme_text_pairs_meet_normal_text_contrast()");
         let Ok(theme_set) = serde_json::from_str::<serde_json::Value>(OPENLOGI_THEME_JSON) else {
             panic!("OpenLogi theme JSON should parse");
         };
@@ -417,11 +419,13 @@ mod tests {
                     "{name}: {foreground:?} on {background:?} is below {MIN_TEXT_CONTRAST}:1"
                 );
             }
+		tracing::debug!("<<< Exiting openlogi_theme_text_pairs_meet_normal_text_contrast()");
         }
     }
 
     #[test]
     fn muted_text_is_adjusted_for_page_and_content_surfaces() {
+		tracing::debug!(">>> Entering muted_text_is_adjusted_for_page_and_content_surfaces()");
         let background: Hsla = rgb(0xff_ffff).into();
         let surface: Hsla = rgb(0xf5_f5f5).into();
         let muted: Hsla = rgb(0x73_7373).into();
@@ -434,11 +438,13 @@ mod tests {
         assert_ne!(
             adjusted, foreground,
             "muted hierarchy should remain visible"
+		tracing::debug!("<<< Exiting muted_text_is_adjusted_for_page_and_content_surfaces()");
         );
     }
 
     #[test]
     fn compliant_muted_text_is_preserved() {
+		tracing::debug!(">>> Entering compliant_muted_text_is_preserved()");
         let background: Hsla = rgb(0xf4_f4f6).into();
         let surface: Hsla = rgb(0xff_ffff).into();
         let muted: Hsla = rgb(0x6b_6b73).into();
@@ -447,16 +453,19 @@ mod tests {
         assert_eq!(
             accessible_muted_text(muted, foreground, background, surface),
             muted
+		tracing::debug!("<<< Exiting compliant_muted_text_is_preserved()");
         );
     }
 
     fn theme_color(colors: &serde_json::Value, key: &str) -> Hsla {
+		tracing::debug!(">>> Entering theme_color(key={})", key);
         let Some(value) = colors[key].as_str() else {
             panic!("{key} should be a color string");
         };
         let Ok(color) = Rgba::try_from(value) else {
             panic!("{key} should be a six-digit hex color");
         };
+		tracing::debug!("<<< Exiting theme_color(key={})", key);
         color.into()
     }
 
@@ -466,10 +475,12 @@ mod tests {
     /// they sit beside.
     #[test]
     fn accent_tint_matches_accent() {
+		tracing::debug!(">>> Entering accent_tint_matches_accent()");
         let a = accent();
         let t = accent_tint();
         assert!((a.h - t.h).abs() < 0.02, "hue {} vs {}", a.h, t.h);
         assert!((a.s - t.s).abs() < 0.05, "sat {} vs {}", a.s, t.s);
+		tracing::debug!("<<< Exiting accent_tint_matches_accent()");
         assert!((a.l - t.l).abs() < 0.05, "light {} vs {}", a.l, t.l);
     }
 
@@ -477,6 +488,7 @@ mod tests {
     /// derived from `ACCENT_BLUE` and sits deeper than the resting `accent_tint`.
     #[test]
     fn accent_tint_hover_matches_accent() {
+		tracing::debug!(">>> Entering accent_tint_hover_matches_accent()");
         let a = accent();
         let th = accent_tint_hover();
         assert!((a.h - th.h).abs() < 0.02, "hue {} vs {}", a.h, th.h);
@@ -485,6 +497,7 @@ mod tests {
         assert!(
             th.a > accent_tint().a,
             "hover tint should sit deeper than the resting tint"
+		tracing::debug!("<<< Exiting accent_tint_hover_matches_accent()");
         );
     }
 }

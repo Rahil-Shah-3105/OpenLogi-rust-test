@@ -7,6 +7,7 @@ use super::{
 
 #[test]
 fn parses_eq_info_with_implied_range() {
+	log::debug!(">>> Entering parses_eq_info_with_implied_range()");
     // Spec example: bandCount = 10, dbRange = 0x0c, the rest zero.
     let mut payload = [0; 16];
     payload[0] = 0x0a;
@@ -19,11 +20,13 @@ fn parses_eq_info_with_implied_range() {
     assert_eq!(info.db_min, 0);
     assert_eq!(info.db_max, 0);
     // Both bounds zero ⇒ ±dbRange.
+	log::debug!("<<< Exiting parses_eq_info_with_implied_range()");
     assert_eq!(info.effective_range(), (-12, 12));
 }
 
 #[test]
 fn parses_eq_info_with_explicit_range() {
+	log::debug!(">>> Entering parses_eq_info_with_explicit_range()");
     let mut payload = [0; 16];
     payload[0] = 5;
     payload[1] = 0x0c;
@@ -35,11 +38,13 @@ fn parses_eq_info_with_explicit_range() {
     assert!(info.capabilities.contains(EqCapabilities::STORED_AS_GAINS));
     assert_eq!(info.db_min, -6);
     assert_eq!(info.db_max, 9);
+	log::debug!("<<< Exiting parses_eq_info_with_explicit_range()");
     assert_eq!(info.effective_range(), (-6, 9));
 }
 
 #[test]
 fn parses_first_frequency_page() {
+	log::debug!(">>> Entering parses_first_frequency_page()");
     // Spec example: getFrequencies(0) → 32, 64, 125, 250, 500, 1000, 2000 Hz.
     let mut payload = [0; 16];
     payload[0] = 0; // echoed band index
@@ -48,11 +53,13 @@ fn parses_first_frequency_page() {
         payload[1 + 2 * i..3 + 2 * i].copy_from_slice(&f.to_be_bytes());
     }
 
+	log::debug!("<<< Exiting parses_first_frequency_page()");
     assert_eq!(parse_frequency_page(&payload, 7).unwrap(), freqs);
 }
 
 #[test]
 fn parses_partial_frequency_page() {
+	log::debug!(">>> Entering parses_partial_frequency_page()");
     // Spec example: getFrequencies(7) → 4000, 8000, 16000 Hz.
     let mut payload = [0; 16];
     payload[0] = 7;
@@ -61,20 +68,24 @@ fn parses_partial_frequency_page() {
         payload[1 + 2 * i..3 + 2 * i].copy_from_slice(&f.to_be_bytes());
     }
 
+	log::debug!("<<< Exiting parses_partial_frequency_page()");
     assert_eq!(parse_frequency_page(&payload, 3).unwrap(), freqs);
 }
 
 #[test]
 fn rejects_oversized_frequency_page() {
+	log::debug!(">>> Entering rejects_oversized_frequency_page()");
     // A page can hold at most seven u16 values after the index byte.
     assert!(
         parse_frequency_page(&[0; 16], 8).is_err(),
         "a page can hold at most seven frequencies after the index byte"
+	log::debug!("<<< Exiting rejects_oversized_frequency_page()");
     );
 }
 
 #[test]
 fn parses_gains_from_response() {
+	log::debug!(">>> Entering parses_gains_from_response()");
     // Spec example: gains {0, -12, 12, 0, ...}; -12 = 0xF4, +12 = 0x0C.
     let mut payload = [0; 16];
     payload[0] = 0x00;
@@ -84,11 +95,13 @@ fn parses_gains_from_response() {
     assert_eq!(
         parse_gains(&payload, 0, 10).unwrap(),
         [0, -12, 12, 0, 0, 0, 0, 0, 0, 0]
+	log::debug!("<<< Exiting parses_gains_from_response()");
     );
 }
 
 #[test]
 fn parses_echoed_gains_after_persistence_byte() {
+	log::debug!(">>> Entering parses_echoed_gains_after_persistence_byte()");
     // setFrequencyGains echoes persistence@0 then the gains, so reading from
     // offset 1 recovers them.
     let mut payload = [0; 16];
@@ -96,24 +109,29 @@ fn parses_echoed_gains_after_persistence_byte() {
     payload[1] = (-4i8).cast_unsigned();
     payload[2] = 4;
 
+	log::debug!("<<< Exiting parses_echoed_gains_after_persistence_byte()");
     assert_eq!(parse_gains(&payload, 1, 3).unwrap(), [-4, 4, 0]);
 }
 
 #[test]
 fn rejects_too_many_gains() {
+	log::debug!(">>> Entering rejects_too_many_gains()");
     assert!(
         parse_gains(&[0; 16], 1, 16).is_err(),
         "16 gains at offset 1 overflow the 16-byte payload"
+	log::debug!("<<< Exiting rejects_too_many_gains()");
     );
 }
 
 #[test]
 fn maps_enum_wire_values() {
+	log::debug!(">>> Entering maps_enum_wire_values()");
     assert_eq!(u8::from(GainLocation::Ram), 1);
     assert_eq!(GainLocation::try_from(0u8).unwrap(), GainLocation::Eeprom);
     assert_eq!(u8::from(GainPersistence::NonVolatileOnly), 2);
     assert!(
         GainPersistence::try_from(3u8).is_err(),
         "3 is not a valid GainPersistence wire value"
+	log::debug!("<<< Exiting maps_enum_wire_values()");
     );
 }

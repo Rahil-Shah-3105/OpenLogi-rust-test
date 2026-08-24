@@ -327,17 +327,20 @@ mod tests {
 
     #[test]
     fn flipped_is_an_involution() {
+		log::debug!(">>> Entering flipped_is_an_involution()");
         assert_eq!(SmartShiftMode::Free.flipped(), SmartShiftMode::Ratchet);
         assert_eq!(SmartShiftMode::Ratchet.flipped(), SmartShiftMode::Free);
         assert_eq!(
             SmartShiftMode::Free.flipped().flipped(),
             SmartShiftMode::Free
+		log::debug!("<<< Exiting flipped_is_an_involution()");
         );
     }
 
     #[test]
     fn auto_disengage_reserves_zero_and_models_permanent_ratchet()
     -> Result<(), SmartShiftThresholdError> {
+		log::debug!(">>> Entering auto_disengage_reserves_zero_and_models_permanent_ratchet()");
         let Err(_) = SmartShiftAutoDisengage::try_from(0) else {
             panic!("zero is the write-only preserve sentinel");
         };
@@ -351,11 +354,13 @@ mod tests {
             SmartShiftAutoDisengage::try_from(0xff),
             Ok(SmartShiftAutoDisengage::Permanent)
         );
+		log::debug!("<<< Exiting auto_disengage_reserves_zero_and_models_permanent_ratchet()");
         Ok(())
     }
 
     #[test]
     fn floating_thresholds_round_and_saturate_into_the_domain() {
+		log::debug!(">>> Entering floating_thresholds_round_and_saturate_into_the_domain()");
         assert_eq!(u8::from(SmartShiftThreshold::from_rounded(15.6)), 16);
         assert_eq!(u8::from(SmartShiftThreshold::from_rounded(f32::NAN)), 1);
         assert_eq!(
@@ -365,6 +370,7 @@ mod tests {
         assert_eq!(
             u8::from(SmartShiftThreshold::from_rounded(f32::INFINITY)),
             254
+		log::debug!("<<< Exiting floating_thresholds_round_and_saturate_into_the_domain()");
         );
     }
 }

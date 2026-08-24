@@ -230,6 +230,7 @@ mod tests {
 
     #[test]
     fn selection_requires_disambiguation_and_supports_name_queries() {
+		log::debug!(">>> Entering selection_requires_disambiguation_and_supports_name_queries()");
         let devices = vec![device("Litra Glow"), device("Litra Beam")];
         select(&devices, None).expect_err("two lights and no --device must be ambiguous");
         assert_eq!(
@@ -245,6 +246,7 @@ mod tests {
                 .expect("single device")
                 .display_name,
             "Litra Glow"
+		log::debug!("<<< Exiting selection_requires_disambiguation_and_supports_name_queries()");
         );
     }
 }

@@ -22,17 +22,20 @@ fn bundle() -> tempfile::TempDir {
 /// `macos bundle` the moment the flag is omitted.
 #[test]
 fn each_channel_renders_as_the_flag_value_it_parses_from() {
+	log::debug!(">>> Entering each_channel_renders_as_the_flag_value_it_parses_from()");
     for channel in [Channel::Production, Channel::Dev] {
         assert_eq!(
             Channel::from_str(&channel.to_string(), false).ok(),
             Some(channel),
             "{channel} does not round-trip through the value parser"
         );
+	log::debug!("<<< Exiting each_channel_renders_as_the_flag_value_it_parses_from()");
     }
 }
 
 #[test]
 fn a_dev_bundle_can_never_collide_with_a_shipped_one() {
+	log::debug!(">>> Entering a_dev_bundle_can_never_collide_with_a_shipped_one()");
     let shipped: Vec<Identity> = Component::VARIANTS
         .iter()
         .map(|&component| Channel::Production.identity(component))
@@ -50,11 +53,13 @@ fn a_dev_bundle_can_never_collide_with_a_shipped_one() {
             "dev {component} name {} collides with a shipped identity",
             dev.name
         );
+	log::debug!("<<< Exiting a_dev_bundle_can_never_collide_with_a_shipped_one()");
     }
 }
 
 #[test]
 fn shipped_identities_are_distinct_per_component() {
+	log::debug!(">>> Entering shipped_identities_are_distinct_per_component()");
     let ids: Vec<String> = Component::VARIANTS
         .iter()
         .map(|&component| Channel::Production.identity(component).bundle_id)
@@ -64,6 +69,7 @@ fn shipped_identities_are_distinct_per_component() {
             !ids[index + 1..].contains(id),
             "{id} is claimed by two components"
         );
+	log::debug!("<<< Exiting shipped_identities_are_distinct_per_component()");
     }
 }
 
@@ -73,6 +79,7 @@ fn shipped_identities_are_distinct_per_component() {
 /// bundle metadata is stale.
 #[test]
 fn the_channels_never_share_a_helper_directory() {
+	log::debug!(">>> Entering the_channels_never_share_a_helper_directory()");
     for &component in Component::VARIANTS {
         match (
             component.nested_bundle(Channel::Production),
@@ -89,22 +96,26 @@ fn the_channels_never_share_a_helper_directory() {
                 panic!("{component} is nested on one channel only: {shipped:?} vs {dev:?}")
             }
         }
+	log::debug!("<<< Exiting the_channels_never_share_a_helper_directory()");
     }
 }
 
 #[test]
 fn stamping_a_channel_makes_it_verify() {
+	log::debug!(">>> Entering stamping_a_channel_makes_it_verify()");
     for channel in [Channel::Production, Channel::Dev] {
         let app = bundle();
 
         stamp(app.path(), channel, Component::VARIANTS).unwrap();
 
         verify(app.path(), channel, Component::VARIANTS).unwrap();
+	log::debug!("<<< Exiting stamping_a_channel_makes_it_verify()");
     }
 }
 
 #[test]
 fn a_dev_bundle_fails_production_verification() {
+	log::debug!(">>> Entering a_dev_bundle_fails_production_verification()");
     let app = bundle();
     stamp(app.path(), Channel::Dev, Component::VARIANTS).unwrap();
 
@@ -115,11 +126,13 @@ fn a_dev_bundle_fails_production_verification() {
     assert!(
         error.contains("org.openlogi.openlogi-dev") && error.contains("production"),
         "the error must name the dev identity it found and the channel it wanted, got: {error}"
+	log::debug!("<<< Exiting a_dev_bundle_fails_production_verification()");
     );
 }
 
 #[test]
 fn a_shipped_bundle_fails_dev_verification() {
+	log::debug!(">>> Entering a_shipped_bundle_fails_dev_verification()");
     let app = bundle();
     stamp(app.path(), Channel::Production, Component::VARIANTS).unwrap();
 
@@ -127,18 +140,22 @@ fn a_shipped_bundle_fails_dev_verification() {
         .unwrap_err()
         .to_string();
 
+	log::debug!("<<< Exiting a_shipped_bundle_fails_dev_verification()");
     assert!(error.contains("dev"), "got: {error}");
 }
 
 #[test]
 fn verify_rejects_a_bundle_with_no_identity_at_all() {
+	log::debug!(">>> Entering verify_rejects_a_bundle_with_no_identity_at_all()");
     let app = bundle();
 
+	log::debug!("<<< Exiting verify_rejects_a_bundle_with_no_identity_at_all()");
     assert!(verify(app.path(), Channel::Production, Component::VARIANTS).is_err());
 }
 
 #[test]
 fn missing_icons_are_reported_per_component() {
+	log::debug!(">>> Entering missing_icons_are_reported_per_component()");
     let app = bundle();
     stamp(app.path(), Channel::Production, Component::VARIANTS).unwrap();
 
@@ -149,5 +166,6 @@ fn missing_icons_are_reported_per_component() {
     assert!(
         error.contains("missing the shared app icon"),
         "got: {error}"
+	log::debug!("<<< Exiting missing_icons_are_reported_per_component()");
     );
 }

@@ -22,6 +22,7 @@ use tracing::{info, warn};
 
 /// Start the overlay supervisor on a dedicated thread.
 pub fn spawn() {
+	tracing::debug!(">>> Entering spawn()");
     let Some(binary) = overlay_binary_path() else {
         warn!("Actions Ring overlay binary not found — overlay disabled");
         return;
@@ -77,6 +78,7 @@ pub fn spawn() {
 /// there is.
 #[cfg(any(target_os = "macos", target_os = "windows"))]
 pub fn evict_on_quit() {
+	tracing::debug!(">>> Entering evict_on_quit()");
     use std::time::Duration;
 
     use succession::Occupancy;
@@ -95,6 +97,7 @@ pub fn evict_on_quit() {
             ..Policy::default()
         },
     );
+	tracing::debug!("<<< Exiting evict_on_quit()");
     info!(?outcome, "asked the overlay to leave before exiting");
 }
 
@@ -200,14 +203,17 @@ mod tests {
 
     #[test]
     fn path_search_returns_none_for_an_impossible_name() {
+		tracing::debug!(">>> Entering path_search_returns_none_for_an_impossible_name()");
         assert_eq!(
             find_on_path("openlogi-overlay-this-file-does-not-exist"),
             None
+		tracing::debug!("<<< Exiting path_search_returns_none_for_an_impossible_name()");
         );
     }
 
     #[test]
     fn nested_overlay_path_has_expected_layout() {
+		tracing::debug!(">>> Entering nested_overlay_path_has_expected_layout()");
         let outer = Path::new("/Applications/OpenLogi.app");
         assert_eq!(
             outer.join(
@@ -216,6 +222,7 @@ mod tests {
             Path::new(
                 "/Applications/OpenLogi.app/Contents/Library/LoginItems/OpenLogi Overlay.app/Contents/MacOS/openlogi-overlay"
             )
+		tracing::debug!("<<< Exiting nested_overlay_path_has_expected_layout()");
         );
     }
 }

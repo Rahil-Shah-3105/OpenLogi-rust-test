@@ -453,17 +453,21 @@ mod tests {
 
     #[test]
     fn real_usb_serial_is_extracted() {
+		log::debug!(">>> Entering real_usb_serial_is_extracted()");
         let path = r"\\?\usb#vid_046d&pid_0893&mi_00#6B123456#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global";
         assert_eq!(
             usb_serial_from_device_path(path).as_deref(),
             Some("6B123456")
+		log::debug!("<<< Exiting real_usb_serial_is_extracted()");
         );
     }
 
     #[test]
     fn parent_generated_instance_is_rejected() {
+		log::debug!(">>> Entering parent_generated_instance_is_rejected()");
         // StreamCam without a firmware serial: Windows fabricates `9&56d9c30&0&0000`.
         let path = r"\\?\usb#vid_046d&pid_0893&mi_00#9&56d9c30&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global";
+		log::debug!("<<< Exiting parent_generated_instance_is_rejected()");
         assert_eq!(usb_serial_from_device_path(path), None);
     }
 }

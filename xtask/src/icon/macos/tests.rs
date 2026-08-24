@@ -27,13 +27,16 @@ fn with_previews(app: &Path) {
 
 #[test]
 fn a_bundle_without_the_asset_catalog_is_rejected() {
+	log::debug!(">>> Entering a_bundle_without_the_asset_catalog_is_rejected()");
     let app = bundle();
 
     let error = AppBundle.verify(app.path()).unwrap_err().to_string();
+	log::debug!("a_bundle_without_the_asset_catalog_is_rejected(): error → {}", error);
 
     assert!(
         error.contains("missing the icon asset catalog"),
         "got: {error}"
+	log::debug!("<<< Exiting a_bundle_without_the_asset_catalog_is_rejected()");
     );
 }
 
@@ -41,27 +44,34 @@ fn a_bundle_without_the_asset_catalog_is_rejected() {
 /// the icon it would apply.
 #[test]
 fn a_bundle_missing_an_icon_preview_is_rejected() {
+	log::debug!(">>> Entering a_bundle_missing_an_icon_preview_is_rejected()");
     let app = bundle();
     with_catalog(app.path());
 
     let error = AppBundle.verify(app.path()).unwrap_err().to_string();
+	log::debug!("a_bundle_missing_an_icon_preview_is_rejected(): error → {}", error);
 
+	log::debug!("<<< Exiting a_bundle_missing_an_icon_preview_is_rejected()");
     assert!(error.contains("icon preview"), "got: {error}");
 }
 
 #[test]
 fn a_bundle_missing_an_alternate_icon_is_rejected() {
+	log::debug!(">>> Entering a_bundle_missing_an_alternate_icon_is_rejected()");
     let app = bundle();
     with_catalog(app.path());
     with_previews(app.path());
 
     let error = AppBundle.verify(app.path()).unwrap_err().to_string();
+	log::debug!("a_bundle_missing_an_alternate_icon_is_rejected(): error → {}", error);
 
+	log::debug!("<<< Exiting a_bundle_missing_an_alternate_icon_is_rejected()");
     assert!(error.contains("missing the prism icon"), "got: {error}");
 }
 
 #[test]
 fn a_bundle_that_does_not_name_the_catalog_entry_is_rejected() {
+	log::debug!(">>> Entering a_bundle_that_does_not_name_the_catalog_entry_is_rejected()");
     let app = bundle();
     with_catalog(app.path());
     with_previews(app.path());
@@ -73,7 +83,9 @@ fn a_bundle_that_does_not_name_the_catalog_entry_is_rejected() {
     }
 
     let error = AppBundle.verify(app.path()).unwrap_err().to_string();
+	log::debug!("a_bundle_that_does_not_name_the_catalog_entry_is_rejected(): error → {}", error);
 
+	log::debug!("<<< Exiting a_bundle_that_does_not_name_the_catalog_entry_is_rejected()");
     assert!(error.contains("CFBundleIconName"), "got: {error}");
 }
 
@@ -81,6 +93,7 @@ fn a_bundle_that_does_not_name_the_catalog_entry_is_rejected() {
 /// under `Icons/`: the app clears the override to go back to it.
 #[test]
 fn only_the_alternates_ship_a_second_copy() {
+	log::debug!(">>> Entering only_the_alternates_ship_a_second_copy()");
     let app = bundle();
 
     assert_eq!(alternate(app.path(), AppIcon::default()), None);
@@ -89,5 +102,6 @@ fn only_the_alternates_ship_a_second_copy() {
             .iter()
             .any(|&icon| alternate(app.path(), icon).is_some()),
         "a set with no alternate would make the whole pipeline pointless"
+	log::debug!("<<< Exiting only_the_alternates_ship_a_second_copy()");
     );
 }

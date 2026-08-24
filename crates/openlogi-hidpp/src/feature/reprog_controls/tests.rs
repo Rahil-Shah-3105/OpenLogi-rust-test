@@ -3,6 +3,7 @@ use crate::nibble::U4;
 
 #[test]
 fn parses_cid_info_flags_and_metadata() {
+	log::debug!(">>> Entering parses_cid_info_flags_and_metadata()");
     let mut payload = [0; 16];
     payload[0..=1].copy_from_slice(&0x00c3u16.to_be_bytes());
     payload[2..=3].copy_from_slice(&0x009cu16.to_be_bytes());
@@ -28,22 +29,26 @@ fn parses_cid_info_flags_and_metadata() {
     assert!(info.flags.supports_force_raw_xy());
     assert!(info.flags.supports_analytics_key_events());
     assert!(info.flags.supports_raw_wheel());
+	log::debug!("<<< Exiting parses_cid_info_flags_and_metadata()");
     assert_eq!(info.flags.raw(), 0x0ff1);
 }
 
 #[test]
 fn builds_temporary_diversion_payload() {
+	log::debug!(">>> Entering builds_temporary_diversion_payload()");
     let payload = CidReportingChange::temporary_diversion(true, true).to_payload(ControlId(0x00c3));
 
     assert_eq!(&payload[0..=1], &0x00c3u16.to_be_bytes());
     assert_eq!(payload[2], 0x33);
     assert_eq!(payload[3], 0);
     assert_eq!(payload[4], 0);
+	log::debug!("<<< Exiting builds_temporary_diversion_payload()");
     assert_eq!(payload[5], 0);
 }
 
 #[test]
 fn parses_reporting_state() {
+	log::debug!(">>> Entering parses_reporting_state()");
     let mut payload = [0; 16];
     payload[0..=1].copy_from_slice(&0x00c3u16.to_be_bytes());
     payload[2] = (1 << 0) | (1 << 2) | (1 << 4) | (1 << 6);
@@ -58,11 +63,13 @@ fn parses_reporting_state() {
     assert!(reporting.force_raw_xy);
     assert_eq!(reporting.remap, Some(ControlId(0x00c4)));
     assert!(reporting.analytics_key_events);
+	log::debug!("<<< Exiting parses_reporting_state()");
     assert!(reporting.raw_wheel);
 }
 
 #[test]
 fn decodes_events() {
+	log::debug!(">>> Entering decodes_events()");
     let mut payload = [0; 16];
     payload[0..=1].copy_from_slice(&0x00c3u16.to_be_bytes());
     payload[2..=3].copy_from_slice(&0x00c4u16.to_be_bytes());
@@ -94,5 +101,6 @@ fn decodes_events() {
             periods: U4::from_lo(3),
             delta_vertical: 123,
         })
+	log::debug!("<<< Exiting decodes_events()");
     );
 }

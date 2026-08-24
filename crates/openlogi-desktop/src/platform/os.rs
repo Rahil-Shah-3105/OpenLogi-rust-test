@@ -40,6 +40,7 @@ pub fn os_version() -> Option<String> {
     reason = "reading the framework's NSAppearanceName statics to set NSApp.appearance"
 )]
 pub fn set_app_appearance(appearance: Appearance) {
+	log::debug!(">>> Entering set_app_appearance()");
     use objc2_app_kit::{
         NSAppearance, NSAppearanceNameAqua, NSAppearanceNameDarkAqua, NSApplication,
     };
@@ -61,6 +62,7 @@ pub fn set_app_appearance(appearance: Appearance) {
         // this is a shared read of a live `&'static` of the declared type.
         Appearance::Dark => NSAppearance::appearanceNamed(unsafe { NSAppearanceNameDarkAqua }),
     };
+	log::debug!("<<< Exiting set_app_appearance()");
     NSApplication::sharedApplication(mtm).setAppearance(named.as_deref());
 }
 

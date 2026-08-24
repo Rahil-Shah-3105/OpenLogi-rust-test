@@ -242,6 +242,7 @@ impl<Node: Eq + Hash + Clone, Channel> ChannelCache<Node, Channel> {
 
     #[cfg(test)]
     fn is_retiring(&self, node: &Node) -> bool {
+		tracing::debug!(">>> Entering is_retiring()");
         self.retiring.contains_key(node)
     }
 }
@@ -448,10 +449,12 @@ impl Enumerator {
     /// channel registry and the backend, so an enumerator can carry all three.
     #[must_use]
     pub fn with_probe_cache(mut self, store: Arc<dyn ProbeCacheStore>) -> Self {
+		let __log_start = std::time::Instant::now();
         let cache = store.load().into_entries();
         if !cache.is_empty() {
             debug!(entries = cache.len(), "probe cache warm-started");
         }
+		tracing::info!("with_probe_cache(): find query executed in {} ms", __log_start.elapsed().as_millis());
         self.cache.extend(cache);
         self.store = Some(store);
         self

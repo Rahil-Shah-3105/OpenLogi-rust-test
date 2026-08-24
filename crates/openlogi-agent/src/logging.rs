@@ -70,6 +70,7 @@ fn route_panics_to_tracing() {
     std::panic::set_hook(Box::new(move |info| {
         tracing::error!("agent panicked: {info}");
         default_hook(info);
+	tracing::debug!("<<< Exiting route_panics_to_tracing()");
     }));
 }
 
@@ -81,9 +82,12 @@ mod tests {
 
     #[test]
     fn appender_writes_into_the_given_directory() {
+		tracing::debug!(">>> Entering appender_writes_into_the_given_directory()");
         let dir = tempfile::tempdir().expect("tempdir");
         let mut appender = build_appender(dir.path()).expect("build appender");
         appender.write_all(b"probe line\n").expect("write");
+		let __log_start = std::time::Instant::now();
+		tracing::info!("appender_writes_into_the_given_directory(): database query executed in {} ms", __log_start.elapsed().as_millis());
         appender.flush().expect("flush");
         let files: Vec<_> = std::fs::read_dir(dir.path())
             .expect("read dir")
@@ -95,6 +99,7 @@ mod tests {
                 .iter()
                 .any(|name| name.starts_with("agent") && name.ends_with("log")),
             "no agent log file created: {files:?}"
+		tracing::debug!("<<< Exiting appender_writes_into_the_given_directory()");
         );
     }
 }

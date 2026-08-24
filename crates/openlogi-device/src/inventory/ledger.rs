@@ -139,6 +139,7 @@ mod tests {
     use super::{CHANNEL_EVICT_AFTER, NODE_MISS_GRACE, NodeLedger};
 
     fn inventory(name: &str) -> DeviceInventory {
+		tracing::debug!(">>> Entering inventory(name={})", name);
         DeviceInventory {
             receiver: ReceiverInfo {
                 name: name.to_string(),
@@ -151,21 +152,25 @@ mod tests {
     }
 
     fn receiver_name(inv: Option<&DeviceInventory>) -> Option<&str> {
+		tracing::debug!(">>> Entering receiver_name()");
         inv.map(|i| i.receiver.name.as_str())
     }
 
     #[test]
     fn failed_probe_replays_the_last_good_inventory_within_grace() {
+		tracing::debug!(">>> Entering failed_probe_replays_the_last_good_inventory_within_grace()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("bolt")));
         for _ in 0..NODE_MISS_GRACE {
             let settled = ledger.settle(&1, false, None);
             assert_eq!(receiver_name(settled.inventory.as_ref()), Some("bolt"));
+		tracing::debug!("<<< Exiting failed_probe_replays_the_last_good_inventory_within_grace()");
         }
     }
 
     #[test]
     fn replay_grace_expires_to_the_live_result() {
+		tracing::debug!(">>> Entering replay_grace_expires_to_the_live_result()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("bolt")));
         for _ in 0..NODE_MISS_GRACE {
@@ -176,11 +181,13 @@ mod tests {
         let expired = ledger.settle(&1, false, Some(inventory("partial")));
         assert_eq!(receiver_name(expired.inventory.as_ref()), Some("partial"));
         let after = ledger.settle(&1, false, None);
+		tracing::debug!("<<< Exiting replay_grace_expires_to_the_live_result()");
         assert!(after.inventory.is_none());
     }
 
     #[test]
     fn a_healthy_tick_resets_the_failure_count() {
+		tracing::debug!(">>> Entering a_healthy_tick_resets_the_failure_count()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("bolt")));
         for _ in 0..NODE_MISS_GRACE {
@@ -192,11 +199,13 @@ mod tests {
             receiver_name(settled.inventory.as_ref()),
             Some("bolt"),
             "the recovery should re-arm the full replay grace"
+		tracing::debug!("<<< Exiting a_healthy_tick_resets_the_failure_count()");
         );
     }
 
     #[test]
     fn persistent_failure_keeps_requesting_channel_eviction() {
+		tracing::debug!(">>> Entering persistent_failure_keeps_requesting_channel_eviction()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("bolt")));
         for i in 1..=NODE_MISS_GRACE + 2 {
@@ -208,6 +217,7 @@ mod tests {
             );
         }
         let recovered = ledger.settle(&1, true, Some(inventory("bolt")));
+		tracing::debug!("<<< Exiting persistent_failure_keeps_requesting_channel_eviction()");
         assert!(!recovered.evict_channel);
     }
 
@@ -219,6 +229,7 @@ mod tests {
     /// while a channel that really is dead trips the threshold next tick.
     #[test]
     fn one_failed_probe_never_evicts_but_keeps_the_devices_visible() {
+		tracing::debug!(">>> Entering one_failed_probe_never_evicts_but_keeps_the_devices_visible()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("bolt")));
 
@@ -229,22 +240,26 @@ mod tests {
         assert!(
             ledger.settle(&1, false, None).evict_channel,
             "a node that keeps failing is still replaced on the next tick"
+		tracing::debug!("<<< Exiting one_failed_probe_never_evicts_but_keeps_the_devices_visible()");
         );
     }
 
     #[test]
     fn a_healthy_empty_result_clears_the_replay_state() {
+		tracing::debug!(">>> Entering a_healthy_empty_result_clears_the_replay_state()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("bolt")));
         // The node answered and is genuinely not ours any more (e.g. a probe
         // that now rejects it): nothing must be replayed on a later failure.
         ledger.settle(&1, true, None);
         let settled = ledger.settle(&1, false, None);
+		tracing::debug!("<<< Exiting a_healthy_empty_result_clears_the_replay_state()");
         assert!(settled.inventory.is_none());
     }
 
     #[test]
     fn vanished_nodes_are_dropped_from_the_ledger() {
+		tracing::debug!(">>> Entering vanished_nodes_are_dropped_from_the_ledger()");
         let mut ledger = NodeLedger::default();
         ledger.settle(&1, true, Some(inventory("kept")));
         ledger.settle(&2, true, Some(inventory("gone")));
@@ -255,6 +270,7 @@ mod tests {
         assert!(
             dropped.inventory.is_none(),
             "a reappeared node starts clean"
+		tracing::debug!("<<< Exiting vanished_nodes_are_dropped_from_the_ledger()");
         );
     }
 }

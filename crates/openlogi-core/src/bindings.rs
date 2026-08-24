@@ -133,6 +133,7 @@ mod tests {
 
     #[test]
     fn click_less_gesture_keeps_default_click_in_projection() {
+		log::debug!(">>> Entering click_less_gesture_keeps_default_click_in_projection()");
         // A gesture binding with no explicit `Click` (a migrated sparse v1 map or
         // a hand-edited config) must not project to `Action::None` and silently
         // disable the button — the button's default click survives.
@@ -146,11 +147,13 @@ mod tests {
             projected.get(&ButtonId::GestureButton),
             Some(&default_binding(ButtonId::GestureButton)),
             "a Click-less gesture must keep the default click, not None"
+		log::debug!("<<< Exiting click_less_gesture_keeps_default_click_in_projection()");
         );
     }
 
     #[test]
     fn a_rotation_rebind_leaves_the_wheels_tap_inert() {
+		log::debug!(">>> Entering a_rotation_rebind_leaves_the_wheels_tap_inert()");
         // Rebinding rotation (or moving the sensitivity slider) diverts the
         // wheel over 0x2150, which is what starts delivering its capacitive
         // taps. Those taps must stay inert until the user binds the tap
@@ -163,11 +166,13 @@ mod tests {
         );
 
         let projected = bindings_for(&cfg, Some("2b034"), None);
+		log::debug!("<<< Exiting a_rotation_rebind_leaves_the_wheels_tap_inert()");
         assert_eq!(projected.get(&ButtonId::Thumbwheel), Some(&Action::None));
     }
 
     #[test]
     fn an_explicitly_bound_tap_survives_the_inert_default() {
+		log::debug!(">>> Entering an_explicitly_bound_tap_survives_the_inert_default()");
         let mut cfg = Config::default();
         cfg.set_binding("2b034", ButtonId::Thumbwheel, Action::AppExpose.into());
 
@@ -175,11 +180,13 @@ mod tests {
         assert_eq!(
             projected.get(&ButtonId::Thumbwheel),
             Some(&Action::AppExpose)
+		log::debug!("<<< Exiting an_explicitly_bound_tap_survives_the_inert_default()");
         );
     }
 
     #[test]
     fn explicit_gesture_click_overrides_default_in_projection() {
+		log::debug!(">>> Entering explicit_gesture_click_overrides_default_in_projection()");
         // A gesture binding that DOES define `Click` projects that action.
         let mut cfg = Config::default();
         let mut map = BTreeMap::new();
@@ -190,11 +197,13 @@ mod tests {
         assert_eq!(
             projected.get(&ButtonId::GestureButton),
             Some(&Action::Paste)
+		log::debug!("<<< Exiting explicit_gesture_click_overrides_default_in_projection()");
         );
     }
 
     #[test]
     fn oshook_gestures_collects_only_os_hook_gesture_buttons() {
+		log::debug!(">>> Entering oshook_gestures_collects_only_os_hook_gesture_buttons()");
         let mut cfg = Config::default();
         // A gesture-mode Back (an OS-hook button) — included, raw map preserved.
         cfg.set_binding(
@@ -222,11 +231,13 @@ mod tests {
             Some(&BTreeMap::from([(GestureDirection::Up, Action::Copy)]))
         );
         assert!(!oshook.contains_key(&ButtonId::MiddleClick));
+		log::debug!("<<< Exiting oshook_gestures_collects_only_os_hook_gesture_buttons()");
         assert!(!oshook.contains_key(&ButtonId::GestureButton));
     }
 
     #[test]
     fn oshook_gestures_includes_every_gesture_mode_button() {
+		log::debug!(">>> Entering oshook_gestures_includes_every_gesture_mode_button()");
         // The owner lock is gone: every OS-hook button in gesture mode
         // dispatches, each through its own direction map.
         let mut cfg = Config::default();
@@ -238,11 +249,13 @@ mod tests {
         assert!(
             oshook.contains_key(&ButtonId::MiddleClick),
             "got: {oshook:?}"
+		log::debug!("<<< Exiting oshook_gestures_includes_every_gesture_mode_button()");
         );
     }
 
     #[test]
     fn hidpp_gesture_maps_includes_every_gesture_mode_source() {
+		log::debug!(">>> Entering hidpp_gesture_maps_includes_every_gesture_mode_source()");
         // Both HID++ sources in gesture mode dispatch simultaneously, each
         // through its own seeded direction map.
         let mut cfg = Config::default();
@@ -263,11 +276,13 @@ mod tests {
             .expect("a gesture-mode panel must dispatch");
         for dir in GestureDirection::ALL {
             assert!(panel.contains_key(&dir), "unseeded panel arm {dir:?}");
+		log::debug!("<<< Exiting hidpp_gesture_maps_includes_every_gesture_mode_source()");
         }
     }
 
     #[test]
     fn per_app_override_drops_the_owner_from_the_oshook_gesture_set() {
+		log::debug!(">>> Entering per_app_override_drops_the_owner_from_the_oshook_gesture_set()");
         // Back is the gesture owner globally...
         let mut cfg = Config::default();
         cfg.set_gesture_mode("2b042", ButtonId::Back, true);
@@ -293,11 +308,13 @@ mod tests {
         assert!(
             oshook_gestures_for(&cfg, Some("2b042"), Some("com.other.App"))
                 .contains_key(&ButtonId::Back)
+		log::debug!("<<< Exiting per_app_override_drops_the_owner_from_the_oshook_gesture_set()");
         );
     }
 
     #[test]
     fn hidpp_maps_silent_for_a_demoted_dedicated_button() {
+		log::debug!(">>> Entering hidpp_maps_silent_for_a_demoted_dedicated_button()");
         // Default device: the dedicated HID++ gesture button gestures, with its
         // defaults seeded.
         let mut cfg = Config::default();
@@ -316,6 +333,7 @@ mod tests {
         assert!(
             hidpp_gesture_maps_for(&cfg, Some("2b042")).is_empty(),
             "a demoted dedicated button must dispatch nothing over HID++"
+		log::debug!("<<< Exiting hidpp_maps_silent_for_a_demoted_dedicated_button()");
         );
     }
 }

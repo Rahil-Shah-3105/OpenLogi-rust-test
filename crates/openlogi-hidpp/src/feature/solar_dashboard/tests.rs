@@ -6,6 +6,7 @@ use super::event::{SolarEvent, SolarStatus, decode_event};
 
 #[test]
 fn decodes_battery_event() {
+	log::debug!(">>> Entering decodes_battery_event()");
     // Spec example: 11 03 06 00 60 00 00 ... → battery 96%, light 0.
     let mut payload = [0; 16];
     payload[0] = 0x60;
@@ -16,11 +17,13 @@ fn decodes_battery_event() {
             battery_level: 96,
             light_level: 0,
         }))
+	log::debug!("<<< Exiting decodes_battery_event()");
     );
 }
 
 #[test]
 fn decodes_light_measure_event() {
+	log::debug!(">>> Entering decodes_light_measure_event()");
     // Spec example: 11 03 06 10 60 01 3F ... → battery 96%, light 0x013F = 319.
     let mut payload = [0; 16];
     payload[0] = 0x60;
@@ -33,11 +36,13 @@ fn decodes_light_measure_event() {
             battery_level: 96,
             light_level: 319,
         }))
+	log::debug!("<<< Exiting decodes_light_measure_event()");
     );
 }
 
 #[test]
 fn decodes_check_light_button_event() {
+	log::debug!(">>> Entering decodes_check_light_button_event()");
     // Spec example: 11 03 06 20 60 00 00 ... → battery 96%, light 0.
     let mut payload = [0; 16];
     payload[0] = 0x60;
@@ -48,17 +53,22 @@ fn decodes_check_light_button_event() {
             battery_level: 96,
             light_level: 0,
         }))
+	log::debug!("<<< Exiting decodes_check_light_button_event()");
     );
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(3, &[0; 16]).is_none());
 }
 
 #[test]
 fn maps_led_wire_values() {
+	log::debug!(">>> Entering maps_led_wire_values()");
     assert_eq!(u8::from(LedId::Off), 0);
     assert_eq!(LedId::try_from(3u8).unwrap(), LedId::Green);
+	log::debug!("<<< Exiting maps_led_wire_values()");
     LedId::try_from(4u8).unwrap_err();
 }

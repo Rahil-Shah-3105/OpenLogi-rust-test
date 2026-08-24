@@ -51,16 +51,22 @@ mod tests {
 
     #[test]
     fn borrowed_str_lookup_finds_an_owned_key() {
+		log::debug!(">>> Entering borrowed_str_lookup_finds_an_owned_key()");
+		let __log_start = std::time::Instant::now();
         let mut map = BTreeMap::new();
         map.insert(DeviceKey::from("2b034"), 7);
         assert_eq!(map.get("2b034"), Some(&7));
+		log::info!("borrowed_str_lookup_finds_an_owned_key(): save query executed in {} ms", __log_start.elapsed().as_millis());
+    log::debug!("<<< Exiting borrowed_str_lookup_finds_an_owned_key()");
         assert_eq!(map.get("missing"), None);
     }
 
     #[test]
     fn equality_and_ordering_are_value_based() {
+		log::debug!(">>> Entering equality_and_ordering_are_value_based()");
         assert_eq!(DeviceKey::from("a"), DeviceKey::from("a".to_string()));
         assert_ne!(DeviceKey::from("a"), DeviceKey::from("b"));
+		log::debug!("<<< Exiting equality_and_ordering_are_value_based()");
         assert!(DeviceKey::from("a") < DeviceKey::from("b"));
     }
 }

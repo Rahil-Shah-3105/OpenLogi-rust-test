@@ -9,6 +9,7 @@ use super::{CrownMode, RatchetMode, ReportingMode};
 
 #[test]
 fn parses_mode() {
+	log::debug!(">>> Entering parses_mode()");
     let mut payload = [0; 16];
     payload[0] = 2; // Diverted
     payload[1] = 2; // Ratchet
@@ -21,22 +22,26 @@ fn parses_mode() {
     assert_eq!(mode.ratchet_mode, RatchetMode::Ratchet);
     assert_eq!(mode.rotation_timeout, 0x10);
     assert_eq!(mode.short_long_timeout, 0x20);
+	log::debug!("<<< Exiting parses_mode()");
     assert_eq!(mode.double_tap_speed, 0x05);
 }
 
 #[test]
 fn rejects_unknown_mode_value() {
+	log::debug!(">>> Entering rejects_unknown_mode_value()");
     let mut payload = [0; 16];
     payload[0] = 9;
 
     assert_matches!(
         CrownMode::from_payload(&payload),
         Err(crate::protocol::v20::Hidpp20Error::UnsupportedResponse)
+	log::debug!("<<< Exiting rejects_unknown_mode_value()");
     );
 }
 
 #[test]
 fn decodes_crown_event_with_signed_fields() {
+	log::debug!(">>> Entering decodes_crown_event_with_signed_fields()");
     let mut payload = [0; 16];
     payload[0] = 1; // Start
     payload[1] = 0xfb; // -5 slots
@@ -55,21 +60,26 @@ fn decodes_crown_event_with_signed_fields() {
     assert_eq!(update.touch, ActivityState::Start);
     assert_eq!(update.gesture, CrownGesture::Tap);
     assert_eq!(update.button, ButtonState::LongPress);
+	log::debug!("<<< Exiting decodes_crown_event_with_signed_fields()");
     assert_eq!(update.speed, -200);
 }
 
 #[test]
 fn ignores_unknown_event_sub_id() {
+	log::debug!(">>> Entering ignores_unknown_event_sub_id()");
+	log::debug!("<<< Exiting ignores_unknown_event_sub_id()");
     assert!(decode_event(1, &[0; 16]).is_none());
 }
 
 #[test]
 fn keeps_event_with_unknown_enum_field() {
+	log::debug!(">>> Entering keeps_event_with_unknown_enum_field()");
     let mut payload = [0; 16];
     payload[1] = 0xfb; // -5 slots — a valid sibling field that must survive
     payload[6] = 0x09; // out-of-range button state
     let CrownEvent::Update(update) = decode_event(0, &payload).expect("event kept");
     assert_eq!(update.button, ButtonState::Other(0x09));
+	log::debug!("<<< Exiting keeps_event_with_unknown_enum_field()");
     assert_eq!(update.relative_slot_rotation, -5);
 }
 
@@ -77,6 +87,7 @@ fn keeps_event_with_unknown_enum_field() {
 /// event. Sweeps every value of each enum-typed field position.
 #[test]
 fn known_sub_id_survives_any_field_byte() {
+	log::debug!(">>> Entering known_sub_id_survives_any_field_byte()");
     for byte in 0..=u8::MAX {
         for pos in [0usize, 3, 4, 5, 6] {
             let mut payload = [0; 16];
@@ -89,13 +100,16 @@ fn known_sub_id_survives_any_field_byte() {
                 "sibling lost for payload[{pos}]={byte:#04x}"
             );
         }
+	log::debug!("<<< Exiting known_sub_id_survives_any_field_byte()");
     }
 }
 
 #[test]
 fn maps_mode_enum_wire_values() {
+	log::debug!(">>> Entering maps_mode_enum_wire_values()");
     assert_eq!(u8::from(ReportingMode::Diverted), 2);
     assert_eq!(ReportingMode::try_from(1u8).unwrap(), ReportingMode::Hid);
     assert_eq!(u8::from(RatchetMode::Free), 1);
+	log::debug!("<<< Exiting maps_mode_enum_wire_values()");
     RatchetMode::try_from(3u8).unwrap_err();
 }

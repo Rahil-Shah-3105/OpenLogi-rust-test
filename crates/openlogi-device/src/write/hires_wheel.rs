@@ -298,6 +298,7 @@ mod tests {
 
     #[test]
     fn mode_value_conversions_preserve_known_wire_values() -> Result<(), WriteError> {
+		tracing::debug!(">>> Entering mode_value_conversions_preserve_known_wire_values()");
         assert_eq!(
             resolution_from_hidpp(HidppWheelResolution::Low)?,
             ScrollResolution::Low
@@ -314,11 +315,13 @@ mod tests {
             target_from_hidpp(WheelEventTarget::Diverted)?,
             ScrollReportingTarget::Diverted
         );
+		tracing::debug!("<<< Exiting mode_value_conversions_preserve_known_wire_values()");
         Ok(())
     }
 
     #[test]
     fn resolution_only_preserves_inversion_and_targets_native() {
+		tracing::debug!(">>> Entering resolution_only_preserves_inversion_and_targets_native()");
         let current = ScrollWheelMode {
             resolution: ScrollResolution::High,
             inverted: true,
@@ -327,11 +330,13 @@ mod tests {
         assert_eq!(
             desired_mode(current, Some(ScrollResolution::Low), None),
             ScrollWheelMode::native(ScrollResolution::Low, true)
+		tracing::debug!("<<< Exiting resolution_only_preserves_inversion_and_targets_native()");
         );
     }
 
     #[test]
     fn inversion_only_preserves_resolution_and_targets_native() {
+		tracing::debug!(">>> Entering inversion_only_preserves_resolution_and_targets_native()");
         let current = ScrollWheelMode {
             resolution: ScrollResolution::Low,
             inverted: false,
@@ -340,11 +345,13 @@ mod tests {
         assert_eq!(
             desired_mode(current, None, Some(true)),
             ScrollWheelMode::native(ScrollResolution::Low, true)
+		tracing::debug!("<<< Exiting inversion_only_preserves_resolution_and_targets_native()");
         );
     }
 
     #[test]
     fn mismatched_set_or_read_back_is_rejected() {
+		tracing::debug!(">>> Entering mismatched_set_or_read_back_is_rejected()");
         let desired = ScrollWheelMode::native(ScrollResolution::Low, false);
         let actual = ScrollWheelMode::native(ScrollResolution::High, false);
         assert!(matches!(
@@ -353,6 +360,7 @@ mod tests {
                 operation: HidppOperation::WriteWheelMode,
                 feature_hex: 0x2121,
             })
+		tracing::debug!("<<< Exiting mismatched_set_or_read_back_is_rejected()");
         ));
     }
 }

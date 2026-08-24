@@ -201,6 +201,7 @@ mod tests {
 
     #[test]
     fn default_labels_include_capability_gated_thumbwheel() {
+		log::debug!(">>> Entering default_labels_include_capability_gated_thumbwheel()");
         assert!(
             !default_labels(false)
                 .iter()
@@ -212,19 +213,23 @@ mod tests {
                 .filter(|label| label.id == MouseControlId::ThumbwheelRotation)
                 .count(),
             1
+		log::debug!("<<< Exiting default_labels_include_capability_gated_thumbwheel()");
         );
     }
 
     #[test]
     fn thumbwheel_metadata_maps_to_one_rotation_control() {
+		log::debug!(">>> Entering thumbwheel_metadata_maps_to_one_rotation_control()");
         assert_eq!(
             map_slot_name("SLOT_NAME_THUMBWHEEL"),
             Some(MouseControlId::ThumbwheelRotation)
+		log::debug!("<<< Exiting thumbwheel_metadata_maps_to_one_rotation_control()");
         );
     }
 
     #[test]
     fn labels_track_hotspots_and_avoid_crossing() {
+		log::debug!(">>> Entering labels_track_hotspots_and_avoid_crossing()");
         let hotspots = default_hotspots(true);
         let labels = labels_from_hotspots(&hotspots, MOUSE_MODEL_SIZE.1);
         assert_eq!(labels.len(), hotspots.len());
@@ -232,6 +237,7 @@ mod tests {
         let mut ys: Vec<f32> = labels.iter().map(|l| l.y).collect();
         ys.sort_by(f32::total_cmp);
         ys.dedup();
+		log::debug!("<<< Exiting labels_track_hotspots_and_avoid_crossing()");
         assert_eq!(ys.len(), labels.len(), "each label gets a distinct slot");
     }
 }

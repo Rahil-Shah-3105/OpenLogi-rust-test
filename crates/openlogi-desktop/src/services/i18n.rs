@@ -39,6 +39,7 @@ mod tests {
     /// separate `#[test]`s would race under the parallel harness.
     #[test]
     fn locale_file_resolves_keys() {
+		log::debug!(">>> Entering locale_file_resolves_keys()");
         use openlogi_core::binding::{Action, ButtonId, GestureDirection};
 
         // The accessibility blurb is the longest, most typo-prone key.
@@ -139,6 +140,7 @@ mod tests {
         // English is the Crowdin source locale.
         rust_i18n::set_locale("en");
         assert_eq!(rust_i18n::t!("Settings"), "Settings");
+		log::debug!("<<< Exiting locale_file_resolves_keys()");
         assert_eq!(rust_i18n::t!(BLURB), BLURB);
     }
 }

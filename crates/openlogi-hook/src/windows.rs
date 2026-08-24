@@ -65,6 +65,7 @@ impl HookBackend for Backend {
     fn start(
         cb: impl Fn(HookEvent) -> EventDisposition + Send + Sync + 'static,
     ) -> Result<HookInner, HookError> {
+		tracing::debug!(">>> Entering start()");
         let callback: HookCallback = Arc::new(cb);
         let (ready_tx, ready_rx) = mpsc::channel();
         let join = thread::Builder::new()
@@ -81,6 +82,7 @@ impl HookBackend for Backend {
                 join: Some(join),
             }),
             Err(e) => {
+				tracing::error!("Exception in start(): (unprintable)");
                 let _ = join.join();
                 Err(e)
             }
@@ -566,6 +568,7 @@ mod tests {
     /// initial sample and a short swipe fell back to a click.
     #[test]
     fn button_down_seeds_the_baseline_for_the_first_move() {
+		tracing::debug!(">>> Entering button_down_seeds_the_baseline_for_the_first_move()");
         let at = |x, y| MSLLHOOKSTRUCT {
             pt: POINT { x, y },
             ..MSLLHOOKSTRUCT::default()
@@ -585,17 +588,20 @@ mod tests {
         assert!(
             translate_event(WM_MOUSEMOVE as WPARAM, at(560, 395)).is_none(),
             "a repeated point is not motion"
+		tracing::debug!("<<< Exiting button_down_seeds_the_baseline_for_the_first_move()");
         );
     }
 
     #[test]
     fn translate_event_ignores_injected_mouse_input() {
+		tracing::debug!(">>> Entering translate_event_ignores_injected_mouse_input()");
         let data = MSLLHOOKSTRUCT {
             flags: LLMHF_INJECTED,
             ..MSLLHOOKSTRUCT::default()
         };
 
         assert!(translate_event(WM_LBUTTONDOWN as WPARAM, data).is_none());
+		tracing::debug!("<<< Exiting translate_event_ignores_injected_mouse_input()");
         assert!(translate_event(WM_MOUSEMOVE as WPARAM, data).is_none());
     }
 
@@ -610,6 +616,7 @@ mod tests {
     /// parse table in openlogi-core would make every saved binding miss.
     #[test]
     fn emitted_keycodes_match_the_key_trigger_vocabulary() {
+		tracing::debug!(">>> Entering emitted_keycodes_match_the_key_trigger_vocabulary()");
         use openlogi_core::config::KeyTrigger;
 
         let esc: KeyTrigger = "esc".parse().expect("parse key trigger");
@@ -621,11 +628,13 @@ mod tests {
                 Some(trigger.keycode),
                 "f{n}"
             );
+		tracing::debug!("<<< Exiting emitted_keycodes_match_the_key_trigger_vocabulary()");
         }
     }
 
     #[test]
     fn translate_key_maps_press_and_release() {
+		tracing::debug!(">>> Entering translate_key_maps_press_and_release()");
         let mods = KeyModifiers::default();
         // VK_F18 = VK_F1 + 17.
         let down = translate_key(WM_KEYDOWN as WPARAM, key(VK_F1 + 17), mods);
@@ -638,6 +647,7 @@ mod tests {
             })
         ));
         let up = translate_key(WM_KEYUP as WPARAM, key(VK_F1 + 17), mods);
+		tracing::debug!("<<< Exiting translate_key_maps_press_and_release()");
         assert!(matches!(up, Some(KeyEvent { pressed: false, .. })));
     }
 
@@ -645,6 +655,7 @@ mod tests {
     /// still see them.
     #[test]
     fn translate_key_handles_syskey_messages() {
+		tracing::debug!(">>> Entering translate_key_handles_syskey_messages()");
         let mods = KeyModifiers {
             option: true,
             ..KeyModifiers::default()
@@ -659,17 +670,20 @@ mod tests {
             })
         ));
         let up = translate_key(WM_SYSKEYUP as WPARAM, key(VK_F1), mods);
+		tracing::debug!("<<< Exiting translate_key_handles_syskey_messages()");
         assert!(matches!(up, Some(KeyEvent { pressed: false, .. })));
     }
 
     #[test]
     fn translate_key_ignores_injected_keyboard_input() {
+		tracing::debug!(">>> Entering translate_key_ignores_injected_keyboard_input()");
         let data = KBDLLHOOKSTRUCT {
             vkCode: u32::from(VK_F1),
             flags: LLKHF_INJECTED,
             ..KBDLLHOOKSTRUCT::default()
         };
 
+		tracing::debug!("<<< Exiting translate_key_ignores_injected_keyboard_input()");
         assert!(translate_key(WM_KEYDOWN as WPARAM, data, KeyModifiers::default()).is_none());
     }
 
@@ -678,10 +692,12 @@ mod tests {
     /// with the macOS keycode space (e.g. VK 0x41 'A' vs kVK 0x41 keypad-.).
     #[test]
     fn translate_key_passes_unmapped_keys_through() {
+		tracing::debug!(">>> Entering translate_key_passes_unmapped_keys_through()");
         let mods = KeyModifiers::default();
         // 'A'
         assert!(translate_key(WM_KEYDOWN as WPARAM, key(0x41), mods).is_none());
         // VK_F20, one past the modeled range.
+		tracing::debug!("<<< Exiting translate_key_passes_unmapped_keys_through()");
         assert!(translate_key(WM_KEYDOWN as WPARAM, key(VK_F1 + 19), mods).is_none());
     }
 
@@ -691,6 +707,7 @@ mod tests {
     /// sign inversion that previously flipped scroll direction on Windows.
     #[test]
     fn wheel_forward_scrolls_up_like_other_platforms() {
+		tracing::debug!(">>> Entering wheel_forward_scrolls_up_like_other_platforms()");
         // The wheel delta lives in the high word of `mouseData`; `+WHEEL_DELTA`
         // (120) is one notch forward.
         let forward = MSLLHOOKSTRUCT {
@@ -707,6 +724,7 @@ mod tests {
         assert!(
             delta_y > 0.0,
             "wheel-forward should scroll up, got {delta_y}"
+		tracing::debug!("<<< Exiting wheel_forward_scrolls_up_like_other_platforms()");
         );
     }
 }

@@ -102,6 +102,7 @@ fn current_taps(cx: &App) -> Vec<openlogi_hook::EventTapInfo> {
     #[cfg(not(debug_assertions))]
     {
         let _ = cx;
+		log::debug!("<<< Exiting current_taps()");
         Hook::list_event_taps()
     }
 }

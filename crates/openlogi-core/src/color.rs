@@ -92,22 +92,28 @@ mod tests {
 
     #[test]
     fn parses_and_round_trips_hex() {
+		log::debug!(">>> Entering parses_and_round_trips_hex()");
         let color: Rgb = "8000ff".parse().unwrap();
         assert_eq!(color, Rgb::new(0x80, 0x00, 0xff));
         assert_eq!(color.packed(), 0x0080_00ff);
+		log::debug!("<<< Exiting parses_and_round_trips_hex()");
         assert_eq!(color.to_string(), "8000ff");
     }
 
     #[test]
     fn accepts_uppercase_but_prints_lowercase() {
+		log::debug!(">>> Entering accepts_uppercase_but_prints_lowercase()");
         let color: Rgb = "FF3B30".parse().unwrap();
+		log::debug!("<<< Exiting accepts_uppercase_but_prints_lowercase()");
         assert_eq!(color.to_string(), "ff3b30");
     }
 
     #[test]
     fn rejects_wrong_length_prefix_and_non_hex() {
+		log::debug!(">>> Entering rejects_wrong_length_prefix_and_non_hex()");
         for bad in ["fff", "ff00aa0", "#ff00aa", "red", ""] {
             assert!(bad.parse::<Rgb>().is_err(), "{bad:?} should not parse");
+		log::debug!("<<< Exiting rejects_wrong_length_prefix_and_non_hex()");
         }
     }
 }

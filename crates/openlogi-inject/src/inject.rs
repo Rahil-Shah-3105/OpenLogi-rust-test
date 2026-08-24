@@ -162,6 +162,7 @@ pub const SYNTHETIC_EVENT_USER_DATA: i64 = 0x4F4C_4749;
     allow(dead_code, reason = "called only by the Windows backend")
 )]
 fn hid_usage_to_windows(usage: u8) -> Option<u16> {
+	tracing::debug!(">>> Entering hid_usage_to_windows(usage={})", usage);
     match usage {
         0x04..=0x1d => Some(u16::from(b'A' + usage - 0x04)),
         0x1e..=0x26 => Some(u16::from(b'1' + usage - 0x1e)),
@@ -201,6 +202,7 @@ fn hid_usage_to_windows(usage: u8) -> Option<u16> {
 mod tests {
     #[test]
     fn hid_usages_map_across_windows_key_categories() {
+		tracing::debug!(">>> Entering hid_usages_map_across_windows_key_categories()");
         use super::hid_usage_to_windows;
 
         assert_eq!(hid_usage_to_windows(0x04), Some(0x41)); // A
@@ -210,6 +212,7 @@ mod tests {
         assert_eq!(hid_usage_to_windows(0x50), Some(0x25)); // Left
         assert_eq!(hid_usage_to_windows(0x2c), Some(0x20)); // Space
         assert_eq!(hid_usage_to_windows(0x33), Some(0xba)); // Semicolon
+		tracing::debug!("<<< Exiting hid_usages_map_across_windows_key_categories()");
         assert_eq!(hid_usage_to_windows(0xff), None);
     }
 }

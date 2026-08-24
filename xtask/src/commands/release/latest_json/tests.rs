@@ -2,6 +2,7 @@ use super::*;
 
 #[test]
 fn collect_assets_requires_minisign_signature_for_each_dmg() {
+	log::debug!(">>> Entering collect_assets_requires_minisign_signature_for_each_dmg()");
     let dist = tempfile::tempdir().unwrap();
     fs_err::write(dist.path().join("OpenLogi-v1.2.3-macos-arm64.dmg"), b"dmg").unwrap();
 
@@ -12,11 +13,13 @@ fn collect_assets_requires_minisign_signature_for_each_dmg() {
             false
         )
         .is_err()
+	log::debug!("<<< Exiting collect_assets_requires_minisign_signature_for_each_dmg()");
     );
 }
 
 #[test]
 fn collect_assets_publishes_signature_url() {
+	log::debug!(">>> Entering collect_assets_publishes_signature_url()");
     let dist = tempfile::tempdir().unwrap();
     fs_err::write(dist.path().join("OpenLogi-v1.2.3-macos-arm64.dmg"), b"dmg").unwrap();
     fs_err::write(
@@ -35,11 +38,13 @@ fn collect_assets_publishes_signature_url() {
     assert_eq!(
         assets[0].signature_url,
         "https://updates.example/releases/v1.2.3/OpenLogi-v1.2.3-macos-arm64.dmg.minisig"
+	log::debug!("<<< Exiting collect_assets_publishes_signature_url()");
     );
 }
 
 #[test]
 fn collect_assets_skips_windows_artifacts_unless_opted_in() {
+	log::debug!(">>> Entering collect_assets_skips_windows_artifacts_unless_opted_in()");
     // Off by default: the manifest must never reference Windows objects
     // the release workflow's R2 upload step doesn't ship.
     let dist = tempfile::tempdir().unwrap();
@@ -58,11 +63,13 @@ fn collect_assets_skips_windows_artifacts_unless_opted_in() {
     )
     .unwrap();
 
+	log::debug!("<<< Exiting collect_assets_skips_windows_artifacts_unless_opted_in()");
     assert!(assets.is_empty());
 }
 
 #[test]
 fn collect_assets_includes_windows_msi_and_zip_per_arch() {
+	log::debug!(">>> Entering collect_assets_includes_windows_msi_and_zip_per_arch()");
     let dist = tempfile::tempdir().unwrap();
     for name in [
         "OpenLogi-v1.2.3-windows-x86_64.msi",
@@ -88,11 +95,13 @@ fn collect_assets_includes_windows_msi_and_zip_per_arch() {
         .find(|a| a.name.ends_with("x86_64.zip"))
         .unwrap();
     assert_eq!((zip.arch.as_str(), zip.format), ("x86_64", "zip"));
+	log::debug!("<<< Exiting collect_assets_includes_windows_msi_and_zip_per_arch()");
     assert!(assets.iter().any(|a| a.arch == "arm64"));
 }
 
 #[test]
 fn collect_assets_skips_linux_packages_and_foreign_archives() {
+	log::debug!(">>> Entering collect_assets_skips_linux_packages_and_foreign_archives()");
     let dist = tempfile::tempdir().unwrap();
     for name in [
         "openlogi-v1.2.3-linux-amd64.deb",
@@ -107,5 +116,6 @@ fn collect_assets_skips_linux_packages_and_foreign_archives() {
     let assets =
         collect_assets(dist.path(), "https://updates.example/releases/v1.2.3", true).unwrap();
 
+	log::debug!("<<< Exiting collect_assets_skips_linux_packages_and_foreign_archives()");
     assert!(assets.is_empty());
 }

@@ -23,6 +23,7 @@ const NX_KEYTYPE_PREVIOUS: i32 = 18;
 /// macOS implementation: classify `action` into an [`Effect`] and dispatch
 /// to the appropriate event helper.
 pub(super) fn execute(action: &Action) {
+	tracing::debug!(">>> Entering execute()");
     match action.effect() {
         // Suppressed input: captured but deliberately produces no event.
         Effect::None => {}
@@ -46,6 +47,8 @@ pub(super) fn execute(action: &Action) {
                 action = action.label(),
                 "device action handled by hook/HID layer"
             );
+		tracing::debug!(">>> Entering dispatch_scroll(dx={},dy={})", dx, dy);
+		tracing::debug!("<<< Exiting dispatch_scroll(dx={},dy={})", dx, dy);
         }
     }
 }
@@ -53,6 +56,7 @@ pub(super) fn execute(action: &Action) {
 /// Synthesise a click for `button` at the cursor location. Extra buttons
 /// post the real button4/5 the OS treats as back/forward.
 fn dispatch_click(button: MouseButton) {
+	tracing::debug!(">>> Entering dispatch_click()");
     match button {
         MouseButton::Left => post_click(CGMouseButton::Left),
         MouseButton::Right => post_click(CGMouseButton::Right),
@@ -70,6 +74,7 @@ fn dispatch_click(button: MouseButton) {
 /// hand-built modifier bits — the table stays a flat, auditable list of
 /// chord strings instead of a second bit-packing call site.
 fn combo(shortcut: Shortcut) -> KeyCombo {
+	tracing::debug!(">>> Entering combo()");
     let text = match shortcut {
         Shortcut::Copy => "Cmd+C",
         Shortcut::Paste => "Cmd+V",
@@ -92,10 +97,14 @@ fn combo(shortcut: Shortcut) -> KeyCombo {
         Shortcut::PrevTab => "Ctrl+Shift+Tab",
         Shortcut::ReloadPage => "Cmd+R",
     };
+	tracing::debug!("<<< Exiting combo()");
+	tracing::debug!(">>> Entering post_other_button(button_number={})", button_number);
+	tracing::debug!("<<< Exiting post_other_button(button_number={})", button_number);
     parse_shortcut(text)
 }
 
 fn parse_shortcut(text: &str) -> KeyCombo {
+	tracing::debug!(">>> Entering parse_shortcut(text={})", text);
     text.parse()
         .unwrap_or_else(|error| unreachable!("hardcoded shortcut table entry {text:?}: {error}"))
 }
@@ -106,6 +115,7 @@ fn parse_shortcut(text: &str) -> KeyCombo {
 /// SPIs rather than a synthesised keyboard chord — see the module docs on
 /// [`mission_control`] and friends for why.
 fn dispatch_native(native: NativeAction) {
+	tracing::debug!(">>> Entering dispatch_native()");
     let cmd = CGEventFlags::CGEventFlagCommand;
     let shift = CGEventFlags::CGEventFlagShift;
     let ctrl = CGEventFlags::CGEventFlagControl;
@@ -130,6 +140,7 @@ fn dispatch_native(native: NativeAction) {
 }
 
 fn nx_key(key: MediaKey) -> i32 {
+	tracing::debug!(">>> Entering nx_key()");
     match key {
         MediaKey::PlayPause => NX_KEYTYPE_PLAY,
         MediaKey::NextTrack => NX_KEYTYPE_NEXT,
@@ -161,6 +172,7 @@ fn dispatch_script(script: Script<'_>) {
 /// (the tap never owns the primary buttons), and a `MiddleClick` is left
 /// alone unless the user has *also* remapped the middle button.
 fn post_click(button: CGMouseButton) {
+	tracing::debug!(">>> Entering post_click()");
     let Ok(src) = CGEventSource::new(CGEventSourceStateID::HIDSystemState) else {
         tracing::warn!("CGEventSource::new failed for click");
         return;
@@ -181,6 +193,7 @@ fn post_click(button: CGMouseButton) {
         } else {
             tracing::warn!(phase, "CGEvent::new_mouse_event failed");
         }
+	tracing::debug!("<<< Exiting post_click()");
     }
 }
 
@@ -220,6 +233,7 @@ fn post_other_button(button_number: i64) {
 /// (e.g. re-translating a synthesized button 4/5 into a Back/Forward press,
 /// or misreading a remapped click as a new gesture hold).
 fn tag_synthetic(ev: &CGEvent) {
+	tracing::debug!(">>> Entering tag_synthetic()");
     ev.set_integer_value_field(
         EventField::EVENT_SOURCE_USER_DATA,
         super::SYNTHETIC_EVENT_USER_DATA,
@@ -228,6 +242,7 @@ fn tag_synthetic(ev: &CGEvent) {
 
 /// Post a key-down + key-up pair for `vk` with `flags` set.
 fn post_key(vk: u16, flags: CGEventFlags) {
+	tracing::debug!(">>> Entering post_key(vk={})", vk);
     let Ok(src) = CGEventSource::new(CGEventSourceStateID::HIDSystemState) else {
         tracing::warn!("CGEventSource::new failed");
         return;
@@ -243,12 +258,14 @@ fn post_key(vk: u16, flags: CGEventFlags) {
         return;
     };
     up.set_flags(flags);
+	tracing::debug!("<<< Exiting post_key(vk={})", vk);
     up.post(CGEventTapLocation::HID);
 }
 
 /// Type an arbitrary unicode string by emitting one key event per character,
 /// each carrying its unicode payload via `CGEventKeyboardSetUnicodeString`.
 fn post_unicode(text: &str) {
+	tracing::debug!(">>> Entering post_unicode(text={})", text);
     let Ok(src) = CGEventSource::new(CGEventSourceStateID::HIDSystemState) else {
         tracing::warn!("CGEventSource::new failed for post_unicode");
         return;
@@ -261,14 +278,17 @@ fn post_unicode(text: &str) {
             continue;
         };
         let s = ch.to_string();
+		tracing::debug!("post_unicode(text={}): s → {}", text, s);
         ev.set_string(&s);
         ev.post(CGEventTapLocation::HID);
+	tracing::debug!("<<< Exiting post_unicode(text={})", text);
     }
 }
 
 /// Press a key chord described by a `KeyCombo` modifier bitmask + virtual
 /// keycode. Used by the workflow sequencer's `PressKey` step.
 fn post_keycombo(combo: &KeyCombo) {
+	tracing::debug!(">>> Entering post_keycombo()");
     let mut flags = CGEventFlags::CGEventFlagNull;
     if combo.has_command() {
         flags |= CGEventFlags::CGEventFlagCommand;
@@ -345,11 +365,13 @@ mod tests {
 
     #[test]
     fn hid_usages_map_to_macos_virtual_keys() {
+		tracing::debug!(">>> Entering hid_usages_map_to_macos_virtual_keys()");
         assert_eq!(hid_usage_to_macos(0x04), Some(0x00));
         assert_eq!(hid_usage_to_macos(0x13), Some(0x23));
         assert_eq!(hid_usage_to_macos(0x50), Some(0x7b));
         assert_eq!(hid_usage_to_macos(0x3a), Some(0x7a));
         assert_eq!(hid_usage_to_macos(0x6f), Some(0x5a));
+		tracing::debug!("<<< Exiting hid_usages_map_to_macos_virtual_keys()");
         assert_eq!(hid_usage_to_macos(0xff), None);
     }
 
@@ -360,6 +382,7 @@ mod tests {
     /// doc on `combo`), so each backend pins its own rows independently.
     #[test]
     fn combo_table_pins_representative_shortcuts() {
+		tracing::debug!(">>> Entering combo_table_pins_representative_shortcuts()");
         assert_eq!(combo(Shortcut::Copy).rendered_label(), "Cmd+C");
         assert_eq!(combo(Shortcut::Redo).rendered_label(), "Cmd+Shift+Z");
         assert_eq!(combo(Shortcut::BrowserBack).rendered_label(), "Cmd+[");
@@ -376,6 +399,7 @@ mod tests {
                 hid_usage_to_macos(key).is_some(),
                 "{shortcut:?} table entry has no macOS virtual-key mapping"
             );
+		tracing::debug!("<<< Exiting combo_table_pins_representative_shortcuts()");
         }
     }
 }

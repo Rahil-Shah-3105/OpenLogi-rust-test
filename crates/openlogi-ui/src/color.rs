@@ -48,6 +48,7 @@ mod tests {
     /// the second accent this module replaced.
     #[test]
     fn accent_shades_keep_the_brand_hue_and_saturation() {
+		log::debug!(">>> Entering accent_shades_keep_the_brand_hue_and_saturation()");
         let brand = accent();
         for lightness in [0.48, 0.78] {
             let shade = accent_at_lightness(lightness);
@@ -68,6 +69,7 @@ mod tests {
                 "lightness not applied: {}",
                 shade.l
             );
+		log::debug!("<<< Exiting accent_shades_keep_the_brand_hue_and_saturation()");
         }
     }
 }
