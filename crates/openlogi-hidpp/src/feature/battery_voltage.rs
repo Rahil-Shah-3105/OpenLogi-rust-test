@@ -121,54 +121,68 @@ mod tests {
 
     /// Builds a 16-byte payload from the 3 meaningful bytes.
     fn payload(voltage_mv: u16, flags: u8) -> [u8; 16] {
+		log::debug!(">>> Entering payload(voltage_mv={},flags={})", voltage_mv, flags);
         let mut payload = [0; 16];
         payload[..2].copy_from_slice(&voltage_mv.to_be_bytes());
         payload[2] = flags;
+		log::debug!("<<< Exiting payload(voltage_mv={},flags={})", voltage_mv, flags);
         payload
     }
 
     #[test]
     fn discharging_reading_decodes_voltage_and_status() {
+		log::debug!(">>> Entering discharging_reading_decodes_voltage_and_status()");
         let info = VoltageBatteryInfo::from_wire(&payload(3781, 0x00));
         assert_eq!(info.voltage_mv, 3781);
         assert_eq!(info.status, VoltageChargingStatus::Discharging);
+		log::debug!("<<< Exiting discharging_reading_decodes_voltage_and_status()");
         assert!(!info.critical);
     }
 
     #[test]
     fn external_power_flag_alone_means_standard_charging() {
+		log::debug!(">>> Entering external_power_flag_alone_means_standard_charging()");
         let info = VoltageBatteryInfo::from_wire(&payload(4100, 0x80));
+		log::debug!("<<< Exiting external_power_flag_alone_means_standard_charging()");
         assert_eq!(info.status, VoltageChargingStatus::Charging);
     }
 
     #[test]
     fn charge_status_bits_take_precedence_over_rate_bits() {
+		log::debug!(">>> Entering charge_status_bits_take_precedence_over_rate_bits()");
         // Charge complete wins over a stale fast-charge bit.
         let info = VoltageBatteryInfo::from_wire(&payload(4186, 0x80 | 0x08 | 0x01));
         assert_eq!(info.status, VoltageChargingStatus::Full);
         let info = VoltageBatteryInfo::from_wire(&payload(4000, 0x80 | 0x02));
+		log::debug!("<<< Exiting charge_status_bits_take_precedence_over_rate_bits()");
         assert_eq!(info.status, VoltageChargingStatus::NotCharging);
     }
 
     #[test]
     fn rate_bits_split_fast_and_slow_charging() {
+		log::debug!(">>> Entering rate_bits_split_fast_and_slow_charging()");
         let fast = VoltageBatteryInfo::from_wire(&payload(3900, 0x80 | 0x08));
         assert_eq!(fast.status, VoltageChargingStatus::ChargingFast);
         let slow = VoltageBatteryInfo::from_wire(&payload(3900, 0x80 | 0x10));
+		log::debug!("<<< Exiting rate_bits_split_fast_and_slow_charging()");
         assert_eq!(slow.status, VoltageChargingStatus::ChargingSlow);
     }
 
     #[test]
     fn critical_bit_is_surfaced_independently_of_status() {
+		log::debug!(">>> Entering critical_bit_is_surfaced_independently_of_status()");
         let info = VoltageBatteryInfo::from_wire(&payload(3520, 0x20));
         assert_eq!(info.status, VoltageChargingStatus::Discharging);
+		log::debug!("<<< Exiting critical_bit_is_surfaced_independently_of_status()");
         assert!(info.critical);
     }
 
     #[test]
     fn without_external_power_the_rate_bits_are_meaningless() {
+		log::debug!(">>> Entering without_external_power_the_rate_bits_are_meaningless()");
         // Bit 7 clear: whatever the low bits claim, the device runs on battery.
         let info = VoltageBatteryInfo::from_wire(&payload(3700, 0x1b));
+		log::debug!("<<< Exiting without_external_power_the_rate_bits_are_meaningless()");
         assert_eq!(info.status, VoltageChargingStatus::Discharging);
     }
 }

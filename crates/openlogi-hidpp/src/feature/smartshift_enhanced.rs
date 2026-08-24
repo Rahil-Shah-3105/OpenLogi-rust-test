@@ -129,6 +129,7 @@ mod tests {
 
     #[test]
     fn parses_status() {
+		log::debug!(">>> Entering parses_status()");
         let mut payload = [0; 16];
         payload[0] = 2;
         payload[1] = 0xff;
@@ -138,16 +139,19 @@ mod tests {
 
         assert_eq!(status.wheel_mode, WheelMode::Ratchet);
         assert_eq!(status.auto_disengage, 0xff);
+		log::debug!("<<< Exiting parses_status()");
         assert_eq!(status.current_tunable_torque, 33);
     }
 
     #[test]
     fn unknown_wheel_mode_is_an_unsupported_response() {
+		log::debug!(">>> Entering unknown_wheel_mode_is_an_unsupported_response()");
         let mut payload = [0; 16];
         payload[0] = 9;
 
         let err = SmartShiftEnhancedStatus::from_payload(payload).unwrap_err();
 
+		log::debug!("<<< Exiting unknown_wheel_mode_is_an_unsupported_response()");
         assert!(matches!(err, Hidpp20Error::UnsupportedResponse));
     }
 }

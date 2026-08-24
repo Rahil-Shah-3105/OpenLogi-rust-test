@@ -351,6 +351,8 @@ fn launch_agent(path: &std::path::Path) -> std::io::Result<()> {
             Err(e) => warn!(error = %e, "could not reap the `open` helper"),
             Ok(_) => {}
         });
+	tracing::error!("Exception in launch_agent(path={:?}): (unprintable)", path);
+    tracing::debug!("<<< Exiting launch_agent(path={:?})", path);
         return Ok(());
     }
     // Any other layout (bare dev binary, Windows, Linux): exec the binary
@@ -361,7 +363,9 @@ fn launch_agent(path: &std::path::Path) -> std::io::Result<()> {
 /// The `.app` root of a packaged helper binary, `None` for a bare dev binary.
 #[cfg(target_os = "macos")]
 fn helper_bundle(path: &std::path::Path) -> Option<&std::path::Path> {
+	tracing::debug!(">>> Entering helper_bundle(path={:?})", path);
     let bundle = path.ancestors().nth(3)?;
+	tracing::debug!("<<< Exiting helper_bundle(path={:?})", path);
     (bundle.extension()? == "app").then_some(bundle)
 }
 
@@ -662,6 +666,7 @@ mod tests {
 
     #[test]
     fn a_reload_that_never_reached_the_agent_is_reported() {
+		tracing::debug!(">>> Entering a_reload_that_never_reached_the_agent_is_reported()");
         // The config file is already written by the time the reload is
         // dispatched, so dropping this result silently would leave the window
         // showing settings the agent is not running.
@@ -672,12 +677,14 @@ mod tests {
         let Ok(GuiUpdate::ConfigReloadResult(Err(error))) = update_rx.try_recv() else {
             panic!("a reload that never reached the agent must be reported as failed");
         };
+		tracing::debug!("<<< Exiting a_reload_that_never_reached_the_agent_is_reported()");
         assert!(!error.message.is_empty(), "the notice needs a reason");
     }
 
     #[cfg(target_os = "macos")]
     #[test]
     fn helper_bundle_resolves_only_the_packaged_layout() {
+		tracing::debug!(">>> Entering helper_bundle_resolves_only_the_packaged_layout()");
         let packaged = Path::new(
             "/Applications/OpenLogi.app/Contents/Library/LoginItems/OpenLogi Agent.app/Contents/MacOS/openlogi-agent",
         );
@@ -699,6 +706,7 @@ mod tests {
         assert_eq!(
             helper_bundle(Path::new("target/debug/openlogi-agent")),
             None
+		tracing::debug!("<<< Exiting helper_bundle_resolves_only_the_packaged_layout()");
         );
     }
 }

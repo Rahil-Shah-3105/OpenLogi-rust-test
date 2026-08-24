@@ -124,13 +124,16 @@ mod tests {
 
     #[test]
     fn parses_report_rate_mask() {
+		log::debug!(">>> Entering parses_report_rate_mask()");
         let mut payload = [0; 16];
         payload[1] = 0b0100_1001;
 
         let rates = report_rate_list_from_payload(payload);
+		log::debug!("parses_report_rate_mask(): rates → {:?}", rates);
 
         assert!(rates.contains(ExtendedReportRateList::HZ_125));
         assert!(rates.contains(ExtendedReportRateList::HZ_1000));
+		log::debug!("<<< Exiting parses_report_rate_mask()");
         assert!(rates.contains(ExtendedReportRateList::HZ_8000));
     }
 }

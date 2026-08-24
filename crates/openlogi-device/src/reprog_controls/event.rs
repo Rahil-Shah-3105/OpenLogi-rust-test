@@ -67,6 +67,7 @@ mod tests {
     use crate::reprog_controls::GESTURE_BUTTON_CID;
 
     fn event(function_id: u8, software_id: u8, payload: [u8; 16]) -> v20::Message {
+		log::debug!(">>> Entering event(function_id={},software_id={},payload={:?})", function_id, software_id, payload);
         v20::Message::Long(
             v20::MessageHeader {
                 device_index: 2,
@@ -80,9 +81,11 @@ mod tests {
 
     #[test]
     fn decodes_diverted_buttons() {
+		log::debug!(">>> Entering decodes_diverted_buttons()");
         let mut p = [0u8; 16];
         p[0..2].copy_from_slice(&GESTURE_BUTTON_CID.to_be_bytes());
         let decoded = decode_event(&event(0, 0, p), 2, 7);
+		log::debug!("decodes_diverted_buttons(): decoded → {:?}", decoded);
         assert_eq!(
             decoded,
             Some(RawControlEvent::DivertedButtons([
@@ -92,28 +95,33 @@ mod tests {
                 0,
             ]))
         );
+		log::debug!("<<< Exiting decodes_diverted_buttons()");
         assert!(decoded.is_some_and(|e| e.is_pressed(GESTURE_BUTTON_CID)));
     }
 
     #[test]
     fn decodes_signed_raw_xy() {
+		log::debug!(">>> Entering decodes_signed_raw_xy()");
         let mut p = [0u8; 16];
         p[0..2].copy_from_slice(&(-5i16).to_be_bytes());
         p[2..4].copy_from_slice(&12i16.to_be_bytes());
         assert_eq!(
             decode_event(&event(1, 0, p), 2, 7),
             Some(RawControlEvent::RawXy { dx: -5, dy: 12 })
+		log::debug!("<<< Exiting decodes_signed_raw_xy()");
         );
     }
 
     #[test]
     fn ignores_responses_and_foreign_messages() {
+		log::debug!(">>> Entering ignores_responses_and_foreign_messages()");
         let p = [0u8; 16];
         // software_id != 0 marks a request response, not an event.
         assert_eq!(decode_event(&event(0, 5, p), 2, 7), None);
         // Right device + feature, but an event outside the gesture-control path.
         assert_eq!(decode_event(&event(2, 0, p), 2, 7), None);
         // Wrong feature index.
+		log::debug!("<<< Exiting ignores_responses_and_foreign_messages()");
         assert_eq!(decode_event(&event(0, 0, p), 2, 9), None);
     }
 }

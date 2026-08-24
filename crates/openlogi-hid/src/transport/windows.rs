@@ -50,6 +50,7 @@ struct HidEndpoint {
 #[cfg(target_os = "windows")]
 impl HidEndpoint {
     fn new(reader: DeviceReader, writer: DeviceWriter, info: &DeviceInfo) -> Self {
+		tracing::debug!(">>> Entering new()");
         Self {
             reader: Mutex::new(reader),
             writer: Mutex::new(writer),
@@ -58,6 +59,7 @@ impl HidEndpoint {
     }
 
     async fn write_report(&self, src: &[u8]) -> Result<usize, Box<dyn Error + Send + Sync>> {
+		tracing::debug!(">>> Entering write_report(src={:?})", src);
         let mut writer = self.writer.lock().await;
         if let Err(e) = writer.write_output_report(src).await {
             // The native fallback works around async-hid write quirks on a
@@ -79,6 +81,8 @@ impl HidEndpoint {
                 return Ok(src.len());
             }
 
+		tracing::error!("Exception in write_report(src={:?}): (unprintable)", src);
+        tracing::debug!("<<< Exiting write_report(src={:?})", src);
             return Err(Box::new(e));
         }
         Ok(src.len())
@@ -103,6 +107,7 @@ impl WindowsHidppChannel {
         long_dev: &async_hid::Device,
         long_info: DeviceInfo,
     ) -> Result<Self, async_hid::HidError> {
+		tracing::debug!(">>> Entering open()");
         let short_dev = find_windows_short_collection(&long_info).await?;
         let (long_reader, long_writer) = long_dev.open().await?;
         let long = Some(HidEndpoint::new(long_reader, long_writer, &long_info));
@@ -120,6 +125,7 @@ impl WindowsHidppChannel {
                         Some(HidEndpoint::new(reader, writer, &short_info))
                     }
                     Err(e) => {
+						tracing::error!("Exception in open(): (unprintable)");
                         debug!(
                             name = %short_info.name,
                             pid = format_args!("{:04x}", short_info.product_id),
@@ -141,6 +147,7 @@ impl WindowsHidppChannel {
             "opened Windows HID++ composite channel"
         );
 
+		tracing::debug!("<<< Exiting open()");
         Ok(Self {
             info: long_info,
             short,
@@ -150,8 +157,10 @@ impl WindowsHidppChannel {
     }
 
     fn mark_disconnected(&self) {
+		tracing::debug!(">>> Entering mark_disconnected()");
         if self.connected.swap(false, Ordering::AcqRel) {
             debug!(name = %self.info.name, "HID channel disconnected");
+		tracing::debug!("<<< Exiting mark_disconnected()");
         }
     }
 
@@ -162,7 +171,9 @@ impl WindowsHidppChannel {
     /// the read loop always races this future against the channel's close
     /// signal in a `select!`.
     async fn park_disconnected<T>(&self) -> T {
+		tracing::debug!(">>> Entering park_disconnected()");
         self.mark_disconnected();
+		tracing::debug!("<<< Exiting park_disconnected()");
         std::future::pending().await
     }
 }
@@ -181,6 +192,7 @@ fn is_permanent_disconnect(error: &(dyn Error + Send + Sync + 'static)) -> bool 
 async fn find_windows_short_collection(
     long_info: &DeviceInfo,
 ) -> Result<Option<async_hid::Device>, async_hid::HidError> {
+	tracing::debug!(">>> Entering find_windows_short_collection()");
     // Pair the short collection to *this* long collection by physical interface,
     // not by vendor/product/name. Two identical Logitech devices share all three,
     // so an attribute match could splice one device's short handle onto another's
@@ -188,6 +200,7 @@ async fn find_windows_short_collection(
     // physical interface, so it always pairs the correct siblings. A node whose
     // path has an unexpected shape yields `None` and stays long-only.
     let Some(long_key) = grouping_key(long_info) else {
+		tracing::debug!(">>> Entering grouping_key()");
         return Ok(None);
     };
     let all: Vec<async_hid::Device> = HID_BACKEND.enumerate().await?.collect().await;
@@ -239,10 +252,12 @@ pub(super) fn normalize_collection_path(path: &str) -> String {
 #[async_trait]
 impl RawHidChannel for WindowsHidppChannel {
     fn vendor_id(&self) -> u16 {
+		tracing::debug!(">>> Entering vendor_id()");
         self.info.vendor_id
     }
 
     fn product_id(&self) -> u16 {
+		tracing::debug!(">>> Entering product_id()");
         self.info.product_id
     }
 
@@ -272,6 +287,7 @@ impl RawHidChannel for WindowsHidppChannel {
     }
 
     async fn read_report(&self, buf: &mut [u8]) -> Result<usize, Box<dyn Error + Send + Sync>> {
+		tracing::debug!(">>> Entering read_report(buf={:?})", buf);
         match (&self.short, &self.long) {
             (Some(short), Some(long)) => {
                 let mut short_buf = [0u8; SHORT_REPORT_LENGTH];
@@ -285,6 +301,8 @@ impl RawHidChannel for WindowsHidppChannel {
                 // resumes it and retrieves the report. This relies on reusing the
                 // per-endpoint reader across calls; do not reopen readers per read.
                 tokio::select! {
+					tracing::error!("Exception in read_report(buf={:?}): (unprintable)", buf);
+                    tracing::error!("Exception in read_report(buf={:?}): (unprintable)", buf);
                     res = short_reader.read_input_report(&mut short_buf) => match res {
                         Ok(len) => copy_report(&short_buf, len, buf),
                         Err(async_hid::HidError::Disconnected) => self.park_disconnected().await,
@@ -299,6 +317,7 @@ impl RawHidChannel for WindowsHidppChannel {
             }
             (Some(endpoint), None) | (None, Some(endpoint)) => {
                 let mut reader = endpoint.reader.lock().await;
+				tracing::error!("Exception in read_report(buf={:?}): (unprintable)", buf);
                 match reader.read_input_report(buf).await {
                     Ok(len) => Ok(len),
                     Err(async_hid::HidError::Disconnected) => self.park_disconnected().await,
@@ -313,10 +332,12 @@ impl RawHidChannel for WindowsHidppChannel {
     }
 
     fn is_connected(&self) -> bool {
+		tracing::debug!(">>> Entering is_connected()");
         self.connected.load(Ordering::Acquire)
     }
 
     fn supports_short_long_hidpp(&self) -> Option<(bool, bool)> {
+		tracing::debug!(">>> Entering supports_short_long_hidpp()");
         Some((self.short.is_some(), self.long.is_some()))
     }
 
@@ -324,6 +345,7 @@ impl RawHidChannel for WindowsHidppChannel {
         &self,
         _buf: &mut [u8],
     ) -> Result<usize, Box<dyn Error + Send + Sync>> {
+		tracing::debug!(">>> Entering get_report_descriptor(_buf={:?})", _buf);
         Err("get_report_descriptor is not implemented; pre-filter to HID++ usage pages".into())
     }
 }
@@ -334,6 +356,7 @@ fn copy_report(
     len: usize,
     dst: &mut [u8],
 ) -> Result<usize, Box<dyn Error + Send + Sync>> {
+	tracing::debug!(">>> Entering copy_report(src={:?},len={},dst={:?})", src, len, dst);
     if len > src.len() || len > dst.len() {
         return Err(Box::new(io::Error::new(
             io::ErrorKind::InvalidData,
@@ -350,6 +373,7 @@ mod tests {
 
     #[test]
     fn report_ids_select_their_windows_endpoint() {
+		tracing::debug!(">>> Entering report_ids_select_their_windows_endpoint()");
         assert_eq!(
             endpoint_for_report_id(SHORT_REPORT_ID),
             Some(ReportEndpoint::Short)
@@ -362,6 +386,7 @@ mod tests {
             endpoint_for_report_id(VERY_LONG_REPORT_ID),
             Some(ReportEndpoint::Long)
         );
+		tracing::debug!("<<< Exiting report_ids_select_their_windows_endpoint()");
         assert_eq!(endpoint_for_report_id(0x13), None);
     }
 
@@ -371,6 +396,7 @@ mod tests {
     #[cfg(target_os = "windows")]
     #[test]
     fn a_boxed_disconnect_is_recognised_as_permanent() {
+		tracing::debug!(">>> Entering a_boxed_disconnect_is_recognised_as_permanent()");
         let disconnected: Box<dyn Error + Send + Sync> =
             Box::new(async_hid::HidError::Disconnected);
         assert!(is_permanent_disconnect(disconnected.as_ref()));
@@ -383,6 +409,7 @@ mod tests {
 
         let unrelated: Box<dyn Error + Send + Sync> =
             Box::new(io::Error::other("write failed for some other reason"));
+		tracing::debug!("<<< Exiting a_boxed_disconnect_is_recognised_as_permanent()");
         assert!(!is_permanent_disconnect(unrelated.as_ref()));
     }
 }

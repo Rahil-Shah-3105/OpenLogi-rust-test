@@ -142,6 +142,7 @@ mod tests {
 
     #[test]
     fn maps_locale_variants() {
+		log::debug!(">>> Entering maps_locale_variants()");
         assert_eq!(match_supported("zh-Hans-CN"), Some("zh-CN"));
         assert_eq!(match_supported("zh-CN"), Some("zh-CN"));
         assert_eq!(match_supported("zh-Hans-HK"), Some("zh-CN"));
@@ -168,17 +169,20 @@ mod tests {
         assert_eq!(match_supported("nb-NO"), Some("nb"));
         assert_eq!(match_supported("no"), Some("nb"));
         assert_eq!(match_supported("nn"), Some("nb"));
+		log::debug!("<<< Exiting maps_locale_variants()");
         assert_eq!(match_supported("klingon"), None);
     }
 
     #[test]
     fn explicit_setting_wins_over_system() {
+		log::debug!(">>> Entering explicit_setting_wins_over_system()");
         assert_eq!(resolve(Some("zh-CN")), "zh-CN");
         // An unknown stored code falls through to system/`en`, never panics.
         assert!(
             SUPPORTED
                 .iter()
                 .any(|(c, _)| *c == resolve(Some("klingon")))
+		log::debug!("<<< Exiting explicit_setting_wins_over_system()");
         );
     }
 
@@ -187,6 +191,7 @@ mod tests {
     /// non-English values (never English fill-in).
     #[test]
     fn locale_files_have_the_same_keys() {
+		log::debug!(">>> Entering locale_files_have_the_same_keys()");
         use std::collections::BTreeSet;
 
         let source: BTreeSet<&str> = locale_keys(include_str!("../locales/en.yml"))
@@ -242,10 +247,12 @@ mod tests {
                 missing.is_empty() && extras.is_empty(),
                 "{locale}.yml key mismatch vs en.yml — missing: {missing:?}, extras: {extras:?}"
             );
+		log::debug!("<<< Exiting locale_files_have_the_same_keys()");
         }
     }
 
     fn locale_keys(file: &str) -> Vec<&str> {
+		log::debug!(">>> Entering locale_keys(file={})", file);
         file.lines()
             .filter_map(|line| line.strip_prefix('"'))
             .filter_map(|line| line.split_once("\": ").map(|(key, _)| key))

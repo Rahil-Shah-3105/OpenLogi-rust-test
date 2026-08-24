@@ -254,6 +254,7 @@ impl HidppChannel {
     /// This method should be called separately for every message to send as it
     /// may rotate (as indicated by [`Self::set_rotating_sw_id`]).
     pub fn get_sw_id(&self) -> U4 {
+		let __log_start = std::time::Instant::now();
         if self.rotate_software_id.load(Ordering::SeqCst) {
             // The closure always returns `Some`, so `fetch_update` never
             // reports `Err`; both arms carry the same pre-update value.
@@ -273,6 +274,7 @@ impl HidppChannel {
         } else {
             U4::from_lo(self.software_id.load(Ordering::SeqCst))
         }
+	tracing::info!("get_sw_id(): find query executed in {} ms", __log_start.elapsed().as_millis());
     }
 
     /// Checks whether the channel supports the given HID++ message.

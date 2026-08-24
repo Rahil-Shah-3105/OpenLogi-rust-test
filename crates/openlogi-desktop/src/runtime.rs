@@ -551,6 +551,8 @@ mod tests {
 
     impl Drop for DropSpy {
         fn drop(&mut self) {
+			tracing::debug!(">>> Entering drop()");
+			tracing::debug!("<<< Exiting drop()");
             self.dropped.borrow_mut().push(self.key.clone());
         }
     }
@@ -574,6 +576,7 @@ mod tests {
 
     #[test]
     fn a_repeated_target_keeps_its_one_subscription() {
+		tracing::debug!(">>> Entering a_repeated_target_keeps_its_one_subscription()");
         // The event loop offers the whole known set on every snapshot, so
         // re-subscribing per snapshot would refetch every model forever.
         let (opened, dropped) = (Rc::default(), Rc::default());
@@ -583,11 +586,13 @@ mod tests {
         reconcile(&mut subs, &["a", "b"], &opened, &dropped);
 
         assert_eq!(opened.borrow().len(), 2, "each model subscribes once");
+		tracing::debug!("<<< Exiting a_repeated_target_keeps_its_one_subscription()");
         assert!(dropped.borrow().is_empty(), "nothing was given up");
     }
 
     #[test]
     fn a_target_that_disappears_drops_its_subscription() {
+		tracing::debug!(">>> Entering a_target_that_disappears_drops_its_subscription()");
         // Dropping the handle is what unsubscribes and lets the entry age out;
         // leaking it would pin every device ever seen for the session.
         let (opened, dropped) = (Rc::default(), Rc::default());
@@ -597,11 +602,13 @@ mod tests {
         reconcile(&mut subs, &["b"], &opened, &dropped);
 
         assert_eq!(*dropped.borrow(), ["a"]);
+		tracing::debug!("<<< Exiting a_target_that_disappears_drops_its_subscription()");
         assert_eq!(opened.borrow().len(), 2, "`b` was not reopened");
     }
 
     #[test]
     fn a_returning_target_subscribes_again() {
+		tracing::debug!(">>> Entering a_returning_target_subscribes_again()");
         let (opened, dropped) = (Rc::default(), Rc::default());
         let mut subs = Subscriptions::new();
 
@@ -610,10 +617,12 @@ mod tests {
         reconcile(&mut subs, &["a"], &opened, &dropped);
 
         assert_eq!(*opened.borrow(), ["a", "a"]);
+		tracing::debug!("<<< Exiting a_returning_target_subscribes_again()");
         assert_eq!(*dropped.borrow(), ["a"]);
     }
 
     fn camera(product_id: u16, unique_id: &str) -> Camera {
+		tracing::debug!(">>> Entering camera(product_id={},unique_id={})", product_id, unique_id);
         Camera {
             name: "MX Brio".into(),
             unique_id: unique_id.into(),
@@ -627,6 +636,7 @@ mod tests {
 
     #[test]
     fn a_source_change_rekeys_every_subscription() {
+		tracing::debug!(">>> Entering a_source_change_rekeys_every_subscription()");
         // A fetcher captures the source it was built with, and reconciliation
         // leaves an already-live key alone — so a subscription kept across a
         // source change would go on fetching from the old mirror, and the
@@ -642,11 +652,13 @@ mod tests {
                 watch_key(AssetSourcePreference::OpenLogi, watch),
                 watch_key(AssetSourcePreference::Cloudflare, watch),
             );
+		tracing::debug!("<<< Exiting a_source_change_rekeys_every_subscription()");
         }
     }
 
     #[test]
     fn a_camera_keeps_one_subscription_across_snapshots() {
+		tracing::debug!(">>> Entering a_camera_keeps_one_subscription_across_snapshots()");
         // A camera's asset key must depend only on model-level identity. Fold
         // anything per-connection into it — the OS capture id changes across a
         // port change — and every snapshot would drop and reopen the
@@ -656,6 +668,7 @@ mod tests {
             .map(|t| model_key(&t))
             .collect();
 
+		tracing::debug!("<<< Exiting a_camera_keeps_one_subscription_across_snapshots()");
         assert_eq!(keys[0], keys[1]);
     }
 }

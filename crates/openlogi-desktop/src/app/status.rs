@@ -163,6 +163,7 @@ pub(super) fn footer(pal: Palette, granted: bool) -> impl IntoElement {
 /// click (the native prompt + System Settings, via [`open_accessibility_settings`]).
 #[cfg(target_os = "macos")]
 fn accessibility_status(pal: Palette, granted: bool) -> AnyElement {
+	log::debug!(">>> Entering accessibility_status(granted={})", granted);
     // Scoped here rather than at module level: these traits' only user is this
     // macOS-gated affordance (`.id()` + `.on_click()`), so an ungated import
     // would be unused — and a hard error under `-D warnings` — on Linux/Windows.
@@ -187,6 +188,7 @@ fn accessibility_status(pal: Palette, granted: bool) -> AnyElement {
     } else {
         // The state that needs attention — full-strength text, an amber dot,
         // and a click target that requests the grant.
+		log::debug!("<<< Exiting accessibility_status(granted={})", granted);
         h_flex()
             .id("footer-accessibility")
             .gap_2()

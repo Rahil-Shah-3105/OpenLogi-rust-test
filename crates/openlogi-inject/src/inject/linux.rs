@@ -34,6 +34,8 @@ pub(super) fn execute(action: &Action) {
             tracing::warn!(
                 chars = text.chars().count(),
                 "TypeText injection is not implemented on Linux yet"
+			tracing::debug!(">>> Entering dispatch_script()");
+			tracing::debug!("<<< Exiting dispatch_script()");
             );
         }
         Effect::AgentSide => {
@@ -346,6 +348,8 @@ fn click(button: KeyCode) {
 
 /// Inject a single relative-axis delta followed by `SYN_REPORT`.
 pub(super) fn scroll(axis: RelativeAxisCode, value: i32) {
+	tracing::debug!(">>> Entering scroll()");
+	tracing::debug!("<<< Exiting scroll()");
     emit(&[rel_ev(axis, value), syn()]);
 }
 
@@ -357,6 +361,7 @@ pub(super) fn scroll(axis: RelativeAxisCode, value: i32) {
 /// be created or if the node hasn't appeared yet (udev typically creates it
 /// within a few milliseconds of the `ioctl`).
 pub(super) fn device_node() -> Option<std::path::PathBuf> {
+	tracing::debug!(">>> Entering device_node()");
     // Touch the LazyLock to force initialisation.
     let _ = &*VIRTUAL_INPUT;
     // Give udev a moment to create the /dev node.
@@ -376,6 +381,7 @@ pub(super) fn device_node() -> Option<std::path::PathBuf> {
 /// the bitwise-OR check deduplicates them so at most one Ctrl is pushed.
 /// Order is canonical: Ctrl → Shift → Alt.
 fn modifiers_to_keycodes(combo: &openlogi_core::binding::KeyCombo) -> Vec<KeyCode> {
+	tracing::debug!(">>> Entering modifiers_to_keycodes()");
     let mut modifiers = Vec::new();
     if combo.has_command() || combo.has_control() {
         modifiers.push(KeyCode::KEY_LEFTCTRL);
@@ -386,6 +392,7 @@ fn modifiers_to_keycodes(combo: &openlogi_core::binding::KeyCombo) -> Vec<KeyCod
     if combo.has_option() {
         modifiers.push(KeyCode::KEY_LEFTALT);
     }
+	tracing::debug!("<<< Exiting modifiers_to_keycodes()");
     modifiers
 }
 
@@ -509,6 +516,7 @@ static SYSTEM_BUS: LazyLock<Option<DbusConn>> = LazyLock::new(|| {
 /// all sessions on the machine. Super+L covers non-systemd systems and the
 /// no-session-id case.
 fn lock_screen() {
+	tracing::debug!(">>> Entering lock_screen()");
     if let (Some(conn), Ok(id)) = (SYSTEM_BUS.as_ref(), std::env::var("XDG_SESSION_ID")) {
         match conn.call_method(
             Some("org.freedesktop.login1"),
@@ -526,6 +534,7 @@ fn lock_screen() {
     }
     // Super+L is the standard lock shortcut on GNOME and KDE.
     tracing::debug!("LockScreen via Super+L key combo");
+	tracing::debug!("<<< Exiting lock_screen()");
     press_key(&[KeyCode::KEY_LEFTMETA], KeyCode::KEY_L);
 }
 
@@ -556,6 +565,7 @@ fn sleep_system() {
 /// is suppressed to avoid double-toggling (the player likely handles the
 /// XF86 key too).
 fn mpris_command(command: &str) {
+	tracing::debug!(">>> Entering mpris_command(command={})", command);
     if try_mpris_command(command).is_none() {
         let fallback = match command {
             "PlayPause" => KeyCode::KEY_PLAYPAUSE,
@@ -563,11 +573,14 @@ fn mpris_command(command: &str) {
             "Previous" => KeyCode::KEY_PREVIOUSSONG,
             _ => return,
         };
+		tracing::debug!(">>> Entering try_mpris_command(command={})", command);
         press_key(&[], fallback);
+	tracing::debug!("<<< Exiting mpris_command(command={})", command);
     }
 }
 
 fn try_mpris_command(command: &str) -> Option<()> {
+	tracing::debug!(">>> Entering try_mpris_command(command={})", command);
     let conn = SESSION_BUS.as_ref()?;
     let reply = conn
         .call_method(
@@ -615,6 +628,7 @@ mod tests {
 
     #[test]
     fn modifiers_map_to_linux_without_duplicate_control() {
+		tracing::debug!(">>> Entering modifiers_map_to_linux_without_duplicate_control()");
         let combo = "Cmd+Ctrl+Shift+Alt+A"
             .parse::<KeyCombo>()
             .expect("a valid shortcut must parse");
@@ -625,15 +639,18 @@ mod tests {
                 KeyCode::KEY_LEFTSHIFT,
                 KeyCode::KEY_LEFTALT
             ]
+		tracing::debug!("<<< Exiting modifiers_map_to_linux_without_duplicate_control()");
         );
     }
 
     #[test]
     fn hid_usages_map_letters_navigation_and_function_keys() {
+		tracing::debug!(">>> Entering hid_usages_map_letters_navigation_and_function_keys()");
         assert_eq!(hid_usage_to_linux(0x04), Some(KeyCode::KEY_A));
         assert_eq!(hid_usage_to_linux(0x50), Some(KeyCode::KEY_LEFT));
         assert_eq!(hid_usage_to_linux(0x3a), Some(KeyCode::KEY_F1));
         assert_eq!(hid_usage_to_linux(0x6f), Some(KeyCode::KEY_F20));
+		tracing::debug!("<<< Exiting hid_usages_map_letters_navigation_and_function_keys()");
         assert_eq!(hid_usage_to_linux(0xff), None);
     }
 
@@ -643,6 +660,7 @@ mod tests {
     /// the module doc on `combo`), so each backend pins its own rows.
     #[test]
     fn combo_table_pins_representative_shortcuts() {
+		tracing::debug!(">>> Entering combo_table_pins_representative_shortcuts()");
         assert_eq!(combo(Shortcut::Copy).rendered_label(), "Ctrl+C");
         assert_eq!(combo(Shortcut::Redo).rendered_label(), "Ctrl+Shift+Z");
         assert_eq!(combo(Shortcut::BrowserBack).rendered_label(), "Alt+Left");
@@ -659,6 +677,7 @@ mod tests {
                 hid_usage_to_linux(key).is_some(),
                 "{shortcut:?} table entry has no Linux keycode mapping"
             );
+		tracing::debug!("<<< Exiting combo_table_pins_representative_shortcuts()");
         }
     }
 }

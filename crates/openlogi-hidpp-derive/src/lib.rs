@@ -62,7 +62,9 @@ fn expand(input: &DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
                 device_index: u8,
                 feature_index: u8,
             ) -> Self {
+				log::debug!(">>> Entering new(device_index={},feature_index={})", device_index, feature_index);
                 let events =
+					log::debug!("<<< Exiting new(device_index={},feature_index={})", device_index, feature_index);
                     crate::feature::EventSource::attach(&chan, device_index, feature_index);
                 Self {
                     endpoint: crate::feature::FeatureEndpoint::new(chan, device_index, feature_index),
@@ -88,6 +90,7 @@ fn expand(input: &DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
         quote! {
             impl crate::feature::EmittingFeature<#event_ty> for #ident {
                 fn listen(&self) -> async_channel::Receiver<#event_ty> {
+					log::debug!(">>> Entering listen()");
                     self.events.listen()
                 }
             }
@@ -234,11 +237,13 @@ mod tests {
     use super::*;
 
     fn derive_input(tokens: proc_macro2::TokenStream) -> DeriveInput {
+		log::debug!(">>> Entering derive_input()");
         syn::parse2(tokens).expect("test fixture must parse as an item")
     }
 
     #[test]
     fn plain_shape_has_no_event_type_and_version_defaults_to_zero() {
+		log::debug!(">>> Entering plain_shape_has_no_event_type_and_version_defaults_to_zero()");
         let input = derive_input(quote! {
             #[creatable(id = 0x1000)]
             struct Foo {
@@ -247,11 +252,13 @@ mod tests {
         });
 
         assert_eq!(parse_feature_attr(&input).unwrap(), (0x1000, 0));
+		log::debug!("<<< Exiting plain_shape_has_no_event_type_and_version_defaults_to_zero()");
         assert!(parse_shape(&input).unwrap().is_none());
     }
 
     #[test]
     fn emitting_shape_extracts_the_event_source_type_argument() {
+		log::debug!(">>> Entering emitting_shape_extracts_the_event_source_type_argument()");
         let input = derive_input(quote! {
             #[creatable(id = 0x4600, version = 2)]
             struct Foo {
@@ -265,11 +272,13 @@ mod tests {
         assert_eq!(
             quote!(#event_ty).to_string(),
             quote!(CrownEvent).to_string()
+		log::debug!("<<< Exiting emitting_shape_extracts_the_event_source_type_argument()");
         );
     }
 
     #[test]
     fn field_order_does_not_affect_shape_detection() {
+		log::debug!(">>> Entering field_order_does_not_affect_shape_detection()");
         let input = derive_input(quote! {
             #[creatable(id = 0x4600)]
             struct Foo {
@@ -278,22 +287,26 @@ mod tests {
             }
         });
 
+		log::debug!("<<< Exiting field_order_does_not_affect_shape_detection()");
         assert!(parse_shape(&input).unwrap().is_some());
     }
 
     #[test]
     fn missing_id_is_an_error() {
+		log::debug!(">>> Entering missing_id_is_an_error()");
         let input = derive_input(quote! {
             struct Foo {
                 endpoint: FeatureEndpoint,
             }
         });
 
+		log::debug!("<<< Exiting missing_id_is_an_error()");
         parse_feature_attr(&input).unwrap_err();
     }
 
     #[test]
     fn unknown_attribute_key_is_an_error() {
+		log::debug!(">>> Entering unknown_attribute_key_is_an_error()");
         let input = derive_input(quote! {
             #[creatable(id = 0x1000, bogus = 1)]
             struct Foo {
@@ -301,33 +314,39 @@ mod tests {
             }
         });
 
+		log::debug!("<<< Exiting unknown_attribute_key_is_an_error()");
         parse_feature_attr(&input).unwrap_err();
     }
 
     #[test]
     fn struct_without_an_endpoint_field_is_an_error() {
+		log::debug!(">>> Entering struct_without_an_endpoint_field_is_an_error()");
         let input = derive_input(quote! {
             struct Foo {
                 events: EventSource<CrownEvent>,
             }
         });
 
+		log::debug!("<<< Exiting struct_without_an_endpoint_field_is_an_error()");
         parse_shape(&input).unwrap_err();
     }
 
     #[test]
     fn wrong_endpoint_field_type_is_an_error() {
+		log::debug!(">>> Entering wrong_endpoint_field_type_is_an_error()");
         let input = derive_input(quote! {
             struct Foo {
                 endpoint: NotAnEndpoint,
             }
         });
 
+		log::debug!("<<< Exiting wrong_endpoint_field_type_is_an_error()");
         parse_shape(&input).unwrap_err();
     }
 
     #[test]
     fn unrecognised_field_name_is_an_error() {
+		log::debug!(">>> Entering unrecognised_field_name_is_an_error()");
         let input = derive_input(quote! {
             struct Foo {
                 endpoint: FeatureEndpoint,
@@ -335,11 +354,13 @@ mod tests {
             }
         });
 
+		log::debug!("<<< Exiting unrecognised_field_name_is_an_error()");
         parse_shape(&input).unwrap_err();
     }
 
     #[test]
     fn non_struct_input_is_an_error() {
+		log::debug!(">>> Entering non_struct_input_is_an_error()");
         let input = derive_input(quote! {
             enum Foo {
                 A,
@@ -347,11 +368,13 @@ mod tests {
             }
         });
 
+		log::debug!("<<< Exiting non_struct_input_is_an_error()");
         parse_shape(&input).unwrap_err();
     }
 
     #[test]
     fn generic_struct_is_rejected_before_shape_parsing() {
+		log::debug!(">>> Entering generic_struct_is_rejected_before_shape_parsing()");
         let input = derive_input(quote! {
             #[creatable(id = 0x1000)]
             struct Foo<T> {
@@ -360,6 +383,7 @@ mod tests {
             }
         });
 
+		log::debug!("<<< Exiting generic_struct_is_rejected_before_shape_parsing()");
         expand(&input).unwrap_err();
     }
 }

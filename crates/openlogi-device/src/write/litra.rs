@@ -273,52 +273,63 @@ mod tests {
 
     #[test]
     fn glow_power_reports_are_fixed_width() {
+		tracing::debug!(">>> Entering glow_power_reports_are_fixed_width()");
         let on = encode_command(LitraModel::Glow, LightCommand::Power(true)).expect("valid");
         let off = encode_command(LitraModel::Glow, LightCommand::Power(false)).expect("valid");
         assert_eq!(&on[..5], &[REPORT_ID, 0xff, 0x04, COMMAND_POWER, 1]);
         assert_eq!(&off[..5], &[REPORT_ID, 0xff, 0x04, COMMAND_POWER, 0]);
         assert_eq!(on.len(), 20);
         assert!(on[5..].iter().all(|byte| *byte == 0));
+		tracing::debug!("<<< Exiting glow_power_reports_are_fixed_width()");
         assert!(off[5..].iter().all(|byte| *byte == 0));
     }
 
     #[test]
     fn glow_brightness_uses_big_endian_native_lumens() {
+		tracing::debug!(">>> Entering glow_brightness_uses_big_endian_native_lumens()");
         let report =
             encode_command(LitraModel::Glow, LightCommand::BrightnessPercent(50)).expect("valid");
+		tracing::debug!("<<< Exiting glow_brightness_uses_big_endian_native_lumens()");
         assert_eq!(&report[3..6], &[COMMAND_BRIGHTNESS, 0, 0x87]);
     }
 
     #[test]
     fn glow_brightness_maps_normalized_boundaries_to_native_range() {
+		tracing::debug!(">>> Entering glow_brightness_maps_normalized_boundaries_to_native_range()");
         let minimum =
             encode_command(LitraModel::Glow, LightCommand::BrightnessPercent(0)).expect("valid");
         let maximum =
             encode_command(LitraModel::Glow, LightCommand::BrightnessPercent(100)).expect("valid");
         assert_eq!(&minimum[3..6], &[COMMAND_BRIGHTNESS, 0, 20]);
+		tracing::debug!("<<< Exiting glow_brightness_maps_normalized_boundaries_to_native_range()");
         assert_eq!(&maximum[3..6], &[COMMAND_BRIGHTNESS, 0, 250]);
     }
 
     #[test]
     fn glow_native_brightness_preserves_the_exact_requested_lumens() {
+		tracing::debug!(">>> Entering glow_native_brightness_preserves_the_exact_requested_lumens()");
         let report =
             encode_command(LitraModel::Glow, LightCommand::BrightnessNative(136)).expect("valid");
         assert_eq!(&report[3..6], &[COMMAND_BRIGHTNESS, 0, 136]);
         assert_matches!(
             encode_command(LitraModel::Glow, LightCommand::BrightnessNative(251)),
             Err(WriteError::InvalidLightValue { .. })
+		tracing::debug!("<<< Exiting glow_native_brightness_preserves_the_exact_requested_lumens()");
         );
     }
 
     #[test]
     fn glow_temperature_uses_big_endian_kelvin() {
+		tracing::debug!(">>> Entering glow_temperature_uses_big_endian_kelvin()");
         let report =
             encode_command(LitraModel::Glow, LightCommand::TemperatureKelvin(4600)).expect("valid");
+		tracing::debug!("<<< Exiting glow_temperature_uses_big_endian_kelvin()");
         assert_eq!(&report[3..6], &[COMMAND_TEMPERATURE, 0x11, 0xf8]);
     }
 
     #[test]
     fn glow_temperature_accepts_only_aligned_inclusive_boundaries() {
+		tracing::debug!(">>> Entering glow_temperature_accepts_only_aligned_inclusive_boundaries()");
         let minimum = encode_command(LitraModel::Glow, LightCommand::TemperatureKelvin(2700))
             .expect("2700 K is the inclusive lower bound");
         let maximum = encode_command(LitraModel::Glow, LightCommand::TemperatureKelvin(6500))
@@ -330,11 +341,13 @@ mod tests {
                 encode_command(LitraModel::Glow, LightCommand::TemperatureKelvin(invalid)),
                 Err(WriteError::InvalidLightValue { .. })
             );
+		tracing::debug!("<<< Exiting glow_temperature_accepts_only_aligned_inclusive_boundaries()");
         }
     }
 
     #[test]
     fn invalid_values_are_rejected() {
+		tracing::debug!(">>> Entering invalid_values_are_rejected()");
         assert_matches!(
             encode_command(LitraModel::Glow, LightCommand::BrightnessPercent(101)),
             Err(WriteError::InvalidLightValue { .. })
@@ -342,39 +355,49 @@ mod tests {
         assert_matches!(
             encode_command(LitraModel::Glow, LightCommand::TemperatureKelvin(2750)),
             Err(WriteError::InvalidLightValue { .. })
+		tracing::debug!("<<< Exiting invalid_values_are_rejected()");
         );
     }
 
     #[test]
     fn matcher_requires_the_full_identity_tuple() {
+		tracing::debug!(">>> Entering matcher_requires_the_full_identity_tuple()");
         assert!(matches_litra(0x046d, 0xc900, 0xff43, 0x0202));
         assert!(!matches_litra(0x046d, 0xc900, 0xff43, 0x0203));
         assert!(!matches_litra(0x046d, 0xc902, 0xff43, 0x0202));
+		tracing::debug!("<<< Exiting matcher_requires_the_full_identity_tuple()");
         assert!(!matches_litra(0x1234, 0xc900, 0xff43, 0x0202));
     }
 
     #[test]
     fn glow_descriptor_exposes_driver_identity() {
+		tracing::debug!(">>> Entering glow_descriptor_exposes_driver_identity()");
+		tracing::debug!("<<< Exiting glow_descriptor_exposes_driver_identity()");
         assert_eq!(LitraModel::Glow.driver_id(), "litra");
     }
 
     #[test]
     fn registry_model_ids_match_the_asset_registry() {
+		tracing::debug!(">>> Entering registry_model_ids_match_the_asset_registry()");
         assert_eq!(LitraModel::Glow.registry_model_id(), Some("8c900"));
+		tracing::debug!("<<< Exiting registry_model_ids_match_the_asset_registry()");
         assert_eq!(LitraModel::Beam.registry_model_id(), Some("8c901"));
     }
 
     #[test]
     fn beam_is_matched_by_its_complete_route_tuple() {
+		tracing::debug!(">>> Entering beam_is_matched_by_its_complete_route_tuple()");
         assert!(matches_litra(0x046d, 0xc901, 0xff43, 0x0202));
         assert_eq!(
             LitraModel::from_product_id(LITRA_BEAM_PRODUCT_ID),
             Some(LitraModel::Beam)
+		tracing::debug!("<<< Exiting beam_is_matched_by_its_complete_route_tuple()");
         );
     }
 
     #[test]
     fn model_resolution_requires_the_complete_raw_route_tuple() {
+		tracing::debug!(">>> Entering model_resolution_requires_the_complete_raw_route_tuple()");
         let valid = DeviceRoute::RawHid {
             vendor_id: 0x046d,
             product_id: 0xc900,
@@ -398,6 +421,7 @@ mod tests {
                 product_id: 0xc900,
             }),
             None
+		tracing::debug!("<<< Exiting model_resolution_requires_the_complete_raw_route_tuple()");
         );
     }
 }

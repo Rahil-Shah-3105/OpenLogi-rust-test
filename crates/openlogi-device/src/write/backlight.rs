@@ -162,6 +162,7 @@ mod tests {
 
     #[test]
     fn firmware_modes_round_trip_through_openlogi_modes() {
+		tracing::debug!(">>> Entering firmware_modes_round_trip_through_openlogi_modes()");
         assert_eq!(
             mode_from_firmware(FirmwareMode::Automatic),
             BacklightMode::Automatic
@@ -170,11 +171,13 @@ mod tests {
             mode_from_firmware(FirmwareMode::PermanentManual),
             BacklightMode::PermanentManual
         );
+		tracing::debug!("<<< Exiting firmware_modes_round_trip_through_openlogi_modes()");
         assert_eq!(mode_from_firmware(FirmwareMode::None), BacklightMode::None);
     }
 
     #[test]
     fn temporary_manual_is_downgraded_because_software_cannot_write_it() {
+		tracing::debug!(">>> Entering temporary_manual_is_downgraded_because_software_cannot_write_it()");
         assert_eq!(
             mode_from_firmware(FirmwareMode::TemporaryManual),
             BacklightMode::TemporaryManual
@@ -182,18 +185,22 @@ mod tests {
         assert_eq!(
             mode_to_firmware(BacklightMode::TemporaryManual),
             FirmwareMode::Automatic
+		tracing::debug!("<<< Exiting temporary_manual_is_downgraded_because_software_cannot_write_it()");
         );
     }
 
     #[test]
     fn writable_modes_survive_the_read_write_round_trip() {
+		tracing::debug!(">>> Entering writable_modes_survive_the_read_write_round_trip()");
         for mode in [FirmwareMode::None, FirmwareMode::PermanentManual] {
             assert_eq!(mode_to_firmware(mode_from_firmware(mode)), mode);
+		tracing::debug!("<<< Exiting writable_modes_survive_the_read_write_round_trip()");
         }
     }
 
     #[test]
     fn software_disable_status_is_mapped() {
+		tracing::debug!(">>> Entering software_disable_status_is_mapped()");
         assert_eq!(
             status_from_firmware(FirmwareStatus::DisabledBySoftware),
             BacklightStatus::DisabledBySoftware
@@ -201,6 +208,7 @@ mod tests {
         assert_eq!(
             status_from_firmware(FirmwareStatus::AlsSaturated),
             BacklightStatus::AlsSaturated
+		tracing::debug!("<<< Exiting software_disable_status_is_mapped()");
         );
     }
 }

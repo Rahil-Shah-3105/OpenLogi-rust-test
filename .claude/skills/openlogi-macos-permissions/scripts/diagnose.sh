@@ -8,6 +8,7 @@ app=${OPENLOGI_APP:-/Applications/OpenLogi.app}
 # The helper is named after its display name; bundles built before that rename
 # spell it without the space. Same identity (org.openlogi.agent) either way.
 helper_bundle() {
+echo ">>> Entering helper_bundle()" >&2
   for name in "OpenLogi Agent.app" "OpenLogiAgent.app"; do
     [ -d "$1/Contents/Library/LoginItems/$name" ] && {
       printf '%s\n' "$1/Contents/Library/LoginItems/$name"
@@ -15,6 +16,7 @@ helper_bundle() {
     }
   done
   printf '%s\n' "$1/Contents/Library/LoginItems/OpenLogi Agent.app"
+echo "<<< Exiting helper_bundle()" >&2
 }
 agent=$(helper_bundle "$app")
 

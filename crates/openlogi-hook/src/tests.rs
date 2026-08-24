@@ -5,6 +5,7 @@ use super::*;
 /// All `HookError` variants produce non-empty display messages.
 #[test]
 fn hook_error_display() {
+	log::debug!(">>> Entering hook_error_display()");
     let errors: &[HookError] = &[
         HookError::Unsupported,
         HookError::AccessibilityDenied,
@@ -16,12 +17,14 @@ fn hook_error_display() {
     ];
     for e in errors {
         assert!(!e.to_string().is_empty(), "empty display for {e:?}");
+	log::debug!("<<< Exiting hook_error_display()");
     }
 }
 
 /// `MouseEvent` is `Clone + Debug` — both variants exercise without panic.
 #[test]
 fn mouse_event_clone_and_debug() {
+	log::debug!(">>> Entering mouse_event_clone_and_debug()");
     let events = [
         MouseEvent::Button {
             id: ButtonId::Back,
@@ -42,21 +45,26 @@ fn mouse_event_clone_and_debug() {
     for e in &events {
         let cloned = e.clone();
         let _ = format!("{e:?}");
+		log::debug!("mouse_event_clone_and_debug(): _ → {}", _);
         let _ = format!("{cloned:?}");
+	log::debug!("<<< Exiting mouse_event_clone_and_debug()");
     }
 }
 
 /// `EventDisposition` implements `PartialEq` correctly.
 #[test]
 fn event_disposition_equality() {
+	log::debug!(">>> Entering event_disposition_equality()");
     assert_eq!(EventDisposition::PassThrough, EventDisposition::PassThrough);
     assert_eq!(EventDisposition::Suppress, EventDisposition::Suppress);
+	log::debug!("<<< Exiting event_disposition_equality()");
     assert_ne!(EventDisposition::PassThrough, EventDisposition::Suppress);
 }
 
 /// Remap policy is fail-closed: only known Logitech non-trackpad sources.
 #[test]
 fn source_is_remappable_policy() {
+	log::debug!(">>> Entering source_is_remappable_policy()");
     assert!(!source_is_remappable(None));
 
     let trackpad = EventDevice {
@@ -85,6 +93,7 @@ fn source_is_remappable_policy() {
         product_id: None,
         product_name: Some("Logitech USB Receiver".into()),
     };
+	log::debug!("<<< Exiting source_is_remappable_policy()");
     assert!(source_is_remappable(Some(&logi_by_name)));
 }
 
@@ -95,10 +104,12 @@ fn source_is_remappable_policy() {
 #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
 #[test]
 fn unsupported_start_returns_unsupported() {
+	log::debug!(">>> Entering unsupported_start_returns_unsupported()");
     use std::assert_matches;
 
     // Asserted via `.err()` because `Hook` itself has no `Debug` impl to print.
     let result = Hook::start(|_| EventDisposition::PassThrough);
+	log::debug!("<<< Exiting unsupported_start_returns_unsupported()");
     assert_matches!(result.err(), Some(HookError::Unsupported));
 }
 
@@ -108,6 +119,7 @@ fn unsupported_start_returns_unsupported() {
 #[cfg(any(target_os = "linux", target_os = "windows"))]
 #[test]
 fn supported_start_does_not_return_unsupported() {
+	log::debug!(">>> Entering supported_start_does_not_return_unsupported()");
     let result = Hook::start(|_| EventDisposition::PassThrough);
     assert!(
         !matches!(result, Err(HookError::Unsupported)),
@@ -116,6 +128,7 @@ fn supported_start_does_not_return_unsupported() {
     // Clean up if a hook was actually installed.
     if let Ok(hook) = result {
         hook.stop();
+	log::debug!("<<< Exiting supported_start_does_not_return_unsupported()");
     }
 }
 
@@ -123,6 +136,8 @@ fn supported_start_does_not_return_unsupported() {
 #[cfg(not(target_os = "macos"))]
 #[test]
 fn non_macos_has_accessibility_is_true() {
+	log::debug!(">>> Entering non_macos_has_accessibility_is_true()");
+	log::debug!("<<< Exiting non_macos_has_accessibility_is_true()");
     assert!(Hook::has_accessibility());
 }
 
@@ -143,10 +158,12 @@ fn tap(owner: Option<&str>, location: TapLocation, active: bool, enabled: bool) 
 /// `gates_input` is true only for an enabled, active, HID-level tap.
 #[test]
 fn gates_input_requires_active_enabled_hid() {
+	log::debug!(">>> Entering gates_input_requires_active_enabled_hid()");
     assert!(tap(None, TapLocation::Hid, true, true).gates_input());
     // listen-only, disabled, or session-level cannot stall the HID stream.
     assert!(!tap(None, TapLocation::Hid, false, true).gates_input());
     assert!(!tap(None, TapLocation::Hid, true, false).gates_input());
+	log::debug!("<<< Exiting gates_input_requires_active_enabled_hid()");
     assert!(!tap(None, TapLocation::Session, true, true).gates_input());
 }
 
@@ -154,6 +171,7 @@ fn gates_input_requires_active_enabled_hid() {
 /// executable name; unrelated owners and missing names return `None`.
 #[test]
 fn known_input_conflict_matches_curated_list() {
+	log::debug!(">>> Entering known_input_conflict_matches_curated_list()");
     let hid = |owner| tap(Some(owner), TapLocation::Hid, true, true);
     assert_eq!(
         hid("logioptionsplus_agent").known_input_conflict(),
@@ -169,5 +187,6 @@ fn known_input_conflict_matches_curated_list() {
     assert_eq!(
         tap(None, TapLocation::Hid, true, true).known_input_conflict(),
         None
+	log::debug!("<<< Exiting known_input_conflict_matches_curated_list()");
     );
 }

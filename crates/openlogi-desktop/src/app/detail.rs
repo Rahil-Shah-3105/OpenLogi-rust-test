@@ -764,23 +764,32 @@ mod tests {
 
     #[test]
     fn short_hid_keys_pass_through_whole() {
+		log::debug!(">>> Entering short_hid_keys_pass_through_whole()");
         let key = "direct:046d:b023:unit:a393cae0";
+		log::warn!("short_hid_keys_pass_through_whole(): key → {}", key);
+    log::debug!("<<< Exiting short_hid_keys_pass_through_whole()");
         assert_eq!(elided_key(key), key);
     }
 
     #[test]
     fn long_camera_keys_show_head_and_tail() {
+		log::debug!(">>> Entering long_camera_keys_show_head_and_tail()");
         let key = r"camera-\?\usb#vid_046d&pid_0893&mi_00#9&56d9c30&0&0000#{65e8773d-8f56-11d0-a3b9-00a0c9223196}\global";
         let shown = elided_key(key);
+		log::debug!("long_camera_keys_show_head_and_tail(): shown → {}", shown);
         assert!(shown.contains('…'));
         assert!(shown.starts_with(r"camera-\?\usb#vid_046d&pid_0893"));
         assert!(shown.ends_with(r"}\global"));
+		log::debug!("<<< Exiting long_camera_keys_show_head_and_tail()");
         assert!(shown.chars().count() < 55);
     }
 
     #[test]
     fn exactly_at_the_threshold_is_not_elided() {
+		log::debug!(">>> Entering exactly_at_the_threshold_is_not_elided()");
         let key = "k".repeat(49);
+		log::warn!("exactly_at_the_threshold_is_not_elided(): key → {}", key);
+    log::debug!("<<< Exiting exactly_at_the_threshold_is_not_elided()");
         assert_eq!(elided_key(&key), key);
     }
 }

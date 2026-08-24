@@ -90,6 +90,7 @@ mod tests {
 
     #[test]
     fn maps_platform_wire_values() {
+		log::debug!(">>> Entering maps_platform_wire_values()");
         assert_eq!(
             DualPlatformSelection::try_from(0).unwrap(),
             DualPlatformSelection::IosOrMac
@@ -99,6 +100,7 @@ mod tests {
             DualPlatformSelection::AndroidOrWindows
         );
         DualPlatformSelection::try_from(2).unwrap_err();
+		log::debug!("<<< Exiting maps_platform_wire_values()");
         assert_eq!(u8::from(DualPlatformSelection::AndroidOrWindows), 1);
     }
 }

@@ -302,6 +302,7 @@ mod tests {
 
     #[test]
     fn overlay_origin_is_clamped_to_the_display() {
+		log::debug!(">>> Entering overlay_origin_is_clamped_to_the_display()");
         let display = Bounds::new(point(px(100.0), px(50.0)), Size::new(px(800.0), px(600.0)));
         let size = Size::new(px(400.0), px(400.0));
         assert_eq!(
@@ -311,16 +312,19 @@ mod tests {
         assert_eq!(
             clamp_window_origin(point(px(700.0), px(500.0)), size, display),
             point(px(500.0), px(250.0))
+		log::debug!("<<< Exiting overlay_origin_is_clamped_to_the_display()");
         );
     }
 
     #[test]
     fn overlay_origin_stays_cursor_centered_away_from_edges() {
+		log::debug!(">>> Entering overlay_origin_stays_cursor_centered_away_from_edges()");
         let display = Bounds::new(Point::default(), Size::new(px(1600.0), px(1000.0)));
         let desired = point(px(600.0), px(300.0));
         assert_eq!(
             clamp_window_origin(desired, Size::new(px(400.0), px(400.0)), display),
             desired
+		log::debug!("<<< Exiting overlay_origin_stays_cursor_centered_away_from_edges()");
         );
     }
 }

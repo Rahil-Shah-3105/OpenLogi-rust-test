@@ -107,6 +107,7 @@ pub const LIGHTSPEED_PIDS: &[u16] = &[0xc539, 0xc53f, 0xc547, 0xc54d];
 /// [`DeviceRoute::Unifying`].
 #[must_use]
 pub fn speaks_unifying_protocol(product_id: u16) -> bool {
+	tracing::debug!(">>> Entering speaks_unifying_protocol(product_id={})", product_id);
     UNIFYING_PIDS.contains(&product_id) || LIGHTSPEED_PIDS.contains(&product_id)
 }
 
@@ -248,6 +249,7 @@ mod tests {
     };
 
     fn inv(product_id: u16, unique_id: Option<&str>) -> DeviceInventory {
+		tracing::debug!(">>> Entering inv(product_id={},unique_id={:?})", product_id, unique_id);
         DeviceInventory {
             receiver: ReceiverInfo {
                 name: "test".into(),
@@ -261,17 +263,20 @@ mod tests {
 
     #[test]
     fn device_route_for_unifying_pids_create_unifying_route() {
+		tracing::debug!(">>> Entering device_route_for_unifying_pids_create_unifying_route()");
         for &pid in UNIFYING_PIDS {
             let route = DeviceRoute::device_route_for(&inv(pid, Some("A1B2")), 2);
             assert!(
                 matches!(route, Some(DeviceRoute::Unifying { ref receiver_uid, slot: 2 }) if receiver_uid == "A1B2"),
                 "pid {pid:#06x} should produce Unifying route"
             );
+		tracing::debug!("<<< Exiting device_route_for_unifying_pids_create_unifying_route()");
         }
     }
 
     #[test]
     fn device_route_for_lightspeed_pids_create_unifying_route() {
+		tracing::debug!(">>> Entering device_route_for_lightspeed_pids_create_unifying_route()");
         // Lightspeed nano receivers (e.g. the G305's) speak the Unifying
         // protocol, so writes must be routed through DeviceRoute::Unifying —
         // not defaulted to Bolt, which would address the pairing slot wrong.
@@ -281,11 +286,13 @@ mod tests {
                 matches!(route, Some(DeviceRoute::Unifying { ref receiver_uid, slot: 2 }) if receiver_uid == "A1B2"),
                 "lightspeed pid {pid:#06x} should produce a Unifying route"
             );
+		tracing::debug!("<<< Exiting device_route_for_lightspeed_pids_create_unifying_route()");
         }
     }
 
     #[test]
     fn lightspeed_receiver_has_its_own_display_name() {
+		tracing::debug!(">>> Entering lightspeed_receiver_has_its_own_display_name()");
         // 0xc539 is the receiver bundled with the G502 LIGHTSPEED and the
         // G Pro Wireless. It routes through the Unifying code path, but it is
         // Lightspeed hardware and says so in its own USB product string, so it
@@ -295,22 +302,26 @@ mod tests {
         assert_eq!(receiver_display_name(0xc547), "Lightspeed Receiver");
         assert_eq!(receiver_display_name(0xc54d), "Lightspeed Receiver");
         assert_eq!(receiver_display_name(0xc52b), "Unifying Receiver");
+		tracing::debug!("<<< Exiting lightspeed_receiver_has_its_own_display_name()");
         assert_eq!(receiver_display_name(0xc532), "Unifying Receiver");
     }
 
     #[test]
     fn device_route_for_bolt_pid_creates_bolt_route() {
+		tracing::debug!(">>> Entering device_route_for_bolt_pid_creates_bolt_route()");
         // 0xC548 is Bolt; anything not in UNIFYING_PIDS defaults to Bolt so
         // future Bolt variants with unknown PIDs still work.
         let route = DeviceRoute::device_route_for(&inv(0xc548, Some("UID")), 1);
         assert_matches!(
             route,
             Some(DeviceRoute::Bolt { ref receiver_uid, slot: 1 }) if receiver_uid == "UID"
+		tracing::debug!("<<< Exiting device_route_for_bolt_pid_creates_bolt_route()");
         );
     }
 
     #[test]
     fn device_route_for_direct_when_no_uid_and_direct_slot() {
+		tracing::debug!(">>> Entering device_route_for_direct_when_no_uid_and_direct_slot()");
         let route = DeviceRoute::device_route_for(&inv(0xb025, None), DIRECT_DEVICE_INDEX);
         assert_matches!(
             route,
@@ -318,30 +329,37 @@ mod tests {
                 vendor_id: 0x046d,
                 product_id: 0xb025
             })
+		tracing::debug!("<<< Exiting device_route_for_direct_when_no_uid_and_direct_slot()");
         );
     }
 
     #[test]
     fn device_route_for_none_when_no_uid_and_non_direct_slot() {
+		tracing::debug!(">>> Entering device_route_for_none_when_no_uid_and_non_direct_slot()");
         let route = DeviceRoute::device_route_for(&inv(0xc52b, None), 1);
+		tracing::debug!("<<< Exiting device_route_for_none_when_no_uid_and_non_direct_slot()");
         assert!(route.is_none());
     }
 
     #[test]
     fn unifying_device_index_is_the_slot() {
+		tracing::debug!(">>> Entering unifying_device_index_is_the_slot()");
         let route = DeviceRoute::Unifying {
             receiver_uid: "X".into(),
             slot: 4,
         };
+		tracing::debug!("<<< Exiting unifying_device_index_is_the_slot()");
         assert_eq!(route.device_index(), 4);
     }
 
     #[test]
     fn unifying_display_matches_bolt_format() {
+		tracing::debug!(">>> Entering unifying_display_matches_bolt_format()");
         let r = DeviceRoute::Unifying {
             receiver_uid: "AABBCC".into(),
             slot: 3,
         };
+		tracing::debug!("<<< Exiting unifying_display_matches_bolt_format()");
         assert_eq!(r.to_string(), "slot 3 on receiver AABBCC");
     }
 }

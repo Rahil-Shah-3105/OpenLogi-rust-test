@@ -24,6 +24,7 @@ use super::{AppState, ConfigPersistence, LightCommandStatus, Load, SmartShiftWri
 
 #[test]
 fn read_only_config_rolls_back_mutations_and_does_not_reload_agent() {
+	log::debug!(">>> Entering read_only_config_rolls_back_mutations_and_does_not_reload_agent()");
     let cache = AssetResolver::new();
     let (commands, mut receiver) = tokio::sync::mpsc::unbounded_channel();
     let mut state = AppState::with_runtime(
@@ -43,11 +44,13 @@ fn read_only_config_rolls_back_mutations_and_does_not_reload_agent() {
         ThumbwheelSensitivity::DEFAULT
     );
     assert_eq!(state.config_issue(), Some("invalid config"));
+	log::debug!("<<< Exiting read_only_config_rolls_back_mutations_and_does_not_reload_agent()");
     assert!(receiver.try_recv().is_err());
 }
 
 #[test]
 fn agent_reload_error_stays_visible_until_a_successful_confirmation() {
+	log::debug!(">>> Entering agent_reload_error_stays_visible_until_a_successful_confirmation()");
     let cache = AssetResolver::new();
     let (commands, _receiver) = tokio::sync::mpsc::unbounded_channel();
     let mut state = AppState::with_runtime(
@@ -66,6 +69,7 @@ fn agent_reload_error_stays_visible_until_a_successful_confirmation() {
     );
     assert_eq!(state.config_issue(), Some("agent rejected config"));
     assert!(state.apply_config_reload_result(Ok(())));
+	log::debug!("<<< Exiting agent_reload_error_stays_visible_until_a_successful_confirmation()");
     assert_eq!(state.config_issue(), None);
 }
 
@@ -138,9 +142,11 @@ fn next_light_command(
 
 #[test]
 fn thumbwheel_pair_updates_both_memory_and_config_entries() {
+	log::debug!(">>> Entering thumbwheel_pair_updates_both_memory_and_config_entries()");
     let mut bindings = std::collections::BTreeMap::new();
     let mut config = Config::ephemeral();
     let key = "2b034";
+	log::warn!("thumbwheel_pair_updates_both_memory_and_config_entries(): key → {}", key);
 
     assert!(apply_thumbwheel_pair(
         &mut bindings,
@@ -164,11 +170,13 @@ fn thumbwheel_pair_updates_both_memory_and_config_entries() {
     assert_eq!(
         persisted.get(&ButtonId::ThumbwheelScrollUp),
         Some(&Binding::Single(Action::VolumeUp))
+	log::debug!("<<< Exiting thumbwheel_pair_updates_both_memory_and_config_entries()");
     );
 }
 
 #[test]
 fn transient_thumbwheel_pair_stays_in_memory_without_persistence() {
+	log::debug!(">>> Entering transient_thumbwheel_pair_stays_in_memory_without_persistence()");
     let mut bindings = std::collections::BTreeMap::new();
     let mut config = Config::ephemeral();
 
@@ -179,11 +187,13 @@ fn transient_thumbwheel_pair_stays_in_memory_without_persistence() {
         ThumbwheelPreset::CycleDpi.pair(),
     ));
     assert_eq!(bindings.len(), 2);
+	log::debug!("<<< Exiting transient_thumbwheel_pair_stays_in_memory_without_persistence()");
     assert!(config.bindings_for("missing").is_empty());
 }
 
 #[test]
 fn transient_identity_is_not_persisted_or_retained_after_resolution() {
+	log::debug!(">>> Entering transient_identity_is_not_persisted_or_retained_after_resolution()");
     let cache = AssetResolver::new();
     let transient_inventory = direct_inventory([0; 4]);
     let (commands, _receiver) = tokio::sync::mpsc::unbounded_channel();
@@ -197,6 +207,7 @@ fn transient_identity_is_not_persisted_or_retained_after_resolution() {
         commands,
     );
     let transient_key = "direct:046d:b023:unit:00000000";
+	log::debug!("transient_identity_is_not_persisted_or_retained_after_resolution(): transient_key → {}", transient_key);
 
     assert_eq!(state.device_list.len(), 1);
     assert!(state.config.device_identity(transient_key).is_none());
@@ -214,11 +225,13 @@ fn transient_identity_is_not_persisted_or_retained_after_resolution() {
 
     assert_eq!(merged.len(), 1);
     assert_eq!(merged[0].config_key, "direct:046d:b023:unit:a393cae0");
+	log::debug!("<<< Exiting transient_identity_is_not_persisted_or_retained_after_resolution()");
     assert!(merged[0].is_persistent());
 }
 
 #[test]
 fn transient_probe_folds_into_its_known_card() {
+	log::debug!(">>> Entering transient_probe_folds_into_its_known_card()");
     // #482: a half-read probe (all-zero unit id) of the only known device
     // with that vid/pid must not evict the known card or appear beside it —
     // the card keeps its identity and takes the live volatile state.
@@ -234,6 +247,7 @@ fn transient_probe_folds_into_its_known_card() {
         commands,
     );
     let stable_key = "direct:046d:b023:unit:a393cae0";
+	log::debug!("transient_probe_folds_into_its_known_card(): stable_key → {}", stable_key);
     assert_eq!(state.device_list[0].config_key, stable_key);
 
     let transient_list =
@@ -244,11 +258,13 @@ fn transient_probe_folds_into_its_known_card() {
     assert_eq!(merged[0].config_key, stable_key);
     assert!(merged[0].is_persistent());
     assert!(merged[0].online, "the live probe supplies volatile state");
+	log::debug!("<<< Exiting transient_probe_folds_into_its_known_card()");
     assert!(merged[0].route.is_some(), "the live route is kept usable");
 }
 
 #[test]
 fn transient_record_beside_its_live_device_is_dropped() {
+	log::debug!(">>> Entering transient_record_beside_its_live_device_is_dropped()");
     // Both a full and a half-read probe of the same wire product in one
     // snapshot: the transient record is probe noise, not a second device.
     let cache = AssetResolver::new();
@@ -278,11 +294,13 @@ fn transient_record_beside_its_live_device_is_dropped() {
 
     assert_eq!(merged.len(), 1);
     assert_eq!(merged[0].config_key, "direct:046d:b023:unit:a393cae0");
+	log::debug!("<<< Exiting transient_record_beside_its_live_device_is_dropped()");
     assert!(merged[0].online);
 }
 
 #[test]
 fn transient_probe_adopts_the_absent_sibling_of_a_live_twin() {
+	log::debug!(">>> Entering transient_probe_adopts_the_absent_sibling_of_a_live_twin()");
     // Two same-model devices; one probes complete, the other half-reads.
     // The live twin must not get the transient discarded as its own noise:
     // the half-read probe can only be the sibling, which keeps its card
@@ -322,11 +340,13 @@ fn transient_probe_adopts_the_absent_sibling_of_a_live_twin() {
         sibling.online,
         "the half-read probe keeps the sibling online"
     );
+	log::debug!("<<< Exiting transient_probe_adopts_the_absent_sibling_of_a_live_twin()");
     assert!(sibling.route.is_some(), "the live route stays usable");
 }
 
 #[test]
 fn ambiguous_transient_probe_is_not_adopted() {
+	log::debug!(">>> Entering ambiguous_transient_probe_is_not_adopted()");
     // Two same-model devices are known; a half-read probe could be either,
     // so neither card may steal it.
     let cache = AssetResolver::new();
@@ -354,15 +374,18 @@ fn ambiguous_transient_probe_is_not_adopted() {
         merged.iter().filter(|r| !r.is_persistent()).count(),
         1,
         "the transient card stays its own record"
+	log::debug!("<<< Exiting ambiguous_transient_probe_is_not_adopted()");
     );
 }
 
 #[test]
 fn historical_transient_lighting_is_not_exposed_without_a_live_record() {
+	log::debug!(">>> Entering historical_transient_lighting_is_not_exposed_without_a_live_record()");
     let transient_key = "direct:046d:b023:unit:00000000";
     let mut config = Config::ephemeral();
     config.set_lighting(transient_key, Lighting::default());
     assert!(config.lighting(transient_key).is_some());
+	log::debug!("historical_transient_lighting_is_not_exposed_without_a_live_record(): transient_key → {}", transient_key);
     let (commands, _receiver) = tokio::sync::mpsc::unbounded_channel();
     let state = AppState::with_runtime(
         config,
@@ -375,11 +398,13 @@ fn historical_transient_lighting_is_not_exposed_without_a_live_record() {
     );
 
     assert!(state.device_list.is_empty());
+	log::debug!("<<< Exiting historical_transient_lighting_is_not_exposed_without_a_live_record()");
     assert!(state.lighting_for(transient_key).is_none());
 }
 
 #[test]
 fn smartshift_write_feedback_requires_the_written_value() {
+	log::debug!(">>> Entering smartshift_write_feedback_requires_the_written_value()");
     let expected = SmartShiftStatus {
         mode: SmartShiftMode::Ratchet,
         auto_disengage: SmartShiftAutoDisengage::Threshold(SmartShiftThreshold::from_rounded(12.0)),
@@ -408,11 +433,13 @@ fn smartshift_write_feedback_requires_the_written_value() {
             Some(&Load::<SmartShiftStatus>::Failed("timeout".to_string(),))
         ),
         Some(SmartShiftWriteStatus::Failed)
+	log::debug!("<<< Exiting smartshift_write_feedback_requires_the_written_value()");
     );
 }
 
 #[test]
 fn stale_smartshift_reads_do_not_resolve_newer_writes() {
+	log::debug!(">>> Entering stale_smartshift_reads_do_not_resolve_newer_writes()");
     let expected = SmartShiftStatus {
         mode: SmartShiftMode::Ratchet,
         auto_disengage: SmartShiftAutoDisengage::Threshold(SmartShiftThreshold::from_rounded(12.0)),
@@ -430,11 +457,13 @@ fn stale_smartshift_reads_do_not_resolve_newer_writes() {
         Some(2),
         Some(&SmartShiftWriteStatus::Confirmed)
     ));
+	log::debug!("<<< Exiting stale_smartshift_reads_do_not_resolve_newer_writes()");
     assert!(smartshift_read_is_current(None, None));
 }
 
 #[test]
 fn known_offline_device_is_an_asset_sync_target() {
+	log::debug!(">>> Entering known_offline_device_is_an_asset_sync_target()");
     let model = DeviceModelInfo {
         entity_count: 0,
         serial_number: None,
@@ -474,11 +503,13 @@ fn known_offline_device_is_an_asset_sync_target() {
             model,
             codename: Some("MX Anywhere 3S".to_string()),
         }]
+	log::debug!("<<< Exiting known_offline_device_is_an_asset_sync_target()");
     );
 }
 
 #[test]
 fn identical_standalone_units_share_one_model_asset_target() {
+	log::debug!(">>> Entering identical_standalone_units_share_one_model_asset_target()");
     let first = superseded_litra_light();
     let mut second = first.clone();
     second.address.identity = "serial:glow-second".into();
@@ -499,11 +530,13 @@ fn identical_standalone_units_share_one_model_asset_target() {
         vec![crate::services::assets::sync::AssetTarget::Standalone {
             registry_model_id: "8c900".into(),
         }]
+	log::debug!("<<< Exiting identical_standalone_units_share_one_model_asset_target()");
     );
 }
 
 #[test]
 fn gui_state_saves_and_clears_supported_wheel_resolution() {
+	log::debug!(">>> Entering gui_state_saves_and_clears_supported_wheel_resolution()");
     let mut config = Config::ephemeral();
     assert!(set_scroll_resolution_if_supported(
         &mut config,
@@ -522,11 +555,13 @@ fn gui_state_saves_and_clears_supported_wheel_resolution() {
         true,
         None,
     ));
+	log::debug!("<<< Exiting gui_state_saves_and_clears_supported_wheel_resolution()");
     assert_eq!(config.scroll_resolution("mouse"), None);
 }
 
 #[test]
 fn gui_state_ignores_unsupported_wheel_resolution() {
+	log::debug!(">>> Entering gui_state_ignores_unsupported_wheel_resolution()");
     let mut config = Config::ephemeral();
     assert!(!set_scroll_resolution_if_supported(
         &mut config,
@@ -534,6 +569,7 @@ fn gui_state_ignores_unsupported_wheel_resolution() {
         false,
         Some(ScrollResolution::High),
     ));
+	log::debug!("<<< Exiting gui_state_ignores_unsupported_wheel_resolution()");
     assert_eq!(config.scroll_resolution("mouse"), None);
 }
 
@@ -559,9 +595,12 @@ fn camera_state(config: Config) -> AppState {
 
 #[test]
 fn migrate_lifts_legacy_port_bound_camera_key() {
+	log::debug!(">>> Entering migrate_lifts_legacy_port_bound_camera_key()");
     let mut config = Config::ephemeral();
     let model = "camera:046d:0893";
+	log::debug!("migrate_lifts_legacy_port_bound_camera_key(): model → {}", model);
     let legacy = "camera-0x1123000046d0893";
+	log::debug!("migrate_lifts_legacy_port_bound_camera_key(): legacy → {}", legacy);
     config.set_camera_controls(legacy, camera_controls(42));
     let mut state = camera_state(config);
 
@@ -574,14 +613,18 @@ fn migrate_lifts_legacy_port_bound_camera_key() {
             .map(|c| c.0["brightness"]),
         Some(42)
     );
+	log::debug!("<<< Exiting migrate_lifts_legacy_port_bound_camera_key()");
     assert!(state.config.camera_controls(legacy).is_none());
 }
 
 #[test]
 fn migrate_does_not_overwrite_existing_model_settings() {
+	log::debug!(">>> Entering migrate_does_not_overwrite_existing_model_settings()");
     let mut config = Config::ephemeral();
     let model = "camera:046d:0893";
+	log::debug!("migrate_does_not_overwrite_existing_model_settings(): model → {}", model);
     let legacy = "camera-0x1123000046d0893";
+	log::debug!("migrate_does_not_overwrite_existing_model_settings(): legacy → {}", legacy);
     config.set_camera_controls(model, camera_controls(1));
     config.set_camera_controls(legacy, camera_controls(99));
     let mut state = camera_state(config);
@@ -601,11 +644,13 @@ fn migrate_does_not_overwrite_existing_model_settings() {
             .camera_controls(legacy)
             .map(|c| c.0["brightness"]),
         Some(99)
+	log::debug!("<<< Exiting migrate_does_not_overwrite_existing_model_settings()");
     );
 }
 
 #[test]
 fn light_write_failure_reaches_the_gui_state() {
+	log::debug!(">>> Entering light_write_failure_reaches_the_gui_state()");
     let light = StandaloneDevice {
         address: RawDeviceAddress {
             vendor_id: 0x046d,
@@ -694,11 +739,13 @@ fn light_write_failure_reaches_the_gui_state() {
         state.light(),
         LightSettings::new(false, LightSettings::default().brightness_percent, None)
     );
+	log::debug!("<<< Exiting light_write_failure_reaches_the_gui_state()");
     assert_eq!(state.config.light(&key), Some(state.light()));
 }
 
 #[test]
 fn superseded_light_write_keeps_prior_successes_for_reconciliation() {
+	log::debug!(">>> Entering superseded_light_write_keeps_prior_successes_for_reconciliation()");
     let light = superseded_litra_light();
     let (commands, mut receiver) = tokio::sync::mpsc::unbounded_channel();
     let mut state = AppState::with_runtime(
@@ -773,11 +820,13 @@ fn superseded_light_write_keeps_prior_successes_for_reconciliation() {
         Some(LightCommandStatus::Failed(message)) if message.contains("multiple raw HID")
     ));
     assert_eq!(state.light(), LightSettings::new(true, 40, None));
+	log::debug!("<<< Exiting superseded_light_write_keeps_prior_successes_for_reconciliation()");
     assert_eq!(state.config.light(&key), Some(state.light()));
 }
 
 #[test]
 fn transient_light_state_is_kept_in_memory_and_only_supported_commands_are_sent() {
+	log::debug!(">>> Entering transient_light_state_is_kept_in_memory_and_only_supported_commands_are_sent()");
     let light = StandaloneDevice {
         address: RawDeviceAddress {
             vendor_id: 0x046d,
@@ -828,12 +877,14 @@ fn transient_light_state_is_kept_in_memory_and_only_supported_commands_are_sent(
             _
         ))
     ));
+	log::debug!("<<< Exiting transient_light_state_is_kept_in_memory_and_only_supported_commands_are_sent()");
     assert!(receiver.try_recv().is_err());
 }
 
 #[cfg(target_os = "macos")]
 #[test]
 fn camera_automation_preserves_manual_power_and_clears_transient_override() {
+	log::debug!(">>> Entering camera_automation_preserves_manual_power_and_clears_transient_override()");
     let light = StandaloneDevice {
         address: RawDeviceAddress {
             vendor_id: 0x046d,
@@ -902,12 +953,14 @@ fn camera_automation_preserves_manual_power_and_clears_transient_override() {
     assert!(state.set_camera_active(false));
     assert!(state.set_camera_active(true));
     assert!(state.light_enabled());
+	log::debug!("<<< Exiting camera_automation_preserves_manual_power_and_clears_transient_override()");
     assert!(!state.light().enabled);
 }
 
 #[cfg(target_os = "macos")]
 #[test]
 fn enabling_camera_automation_queues_effective_camera_power() {
+	log::debug!(">>> Entering enabling_camera_automation_queues_effective_camera_power()");
     let light = StandaloneDevice {
         address: RawDeviceAddress {
             vendor_id: 0x046d,
@@ -957,11 +1010,13 @@ fn enabling_camera_automation_queues_effective_camera_power() {
         ))
     ));
     assert!(!state.light().enabled);
+	log::debug!("<<< Exiting enabling_camera_automation_queues_effective_camera_power()");
     assert!(state.light_enabled());
 }
 
 #[test]
 fn gesture_maps_cover_every_gesture_mode_button() {
+	log::debug!(">>> Entering gesture_maps_cover_every_gesture_mode_button()");
     // With per-button gesture mode, the GUI's display maps carry one entry
     // per gesture-mode button: the dedicated button's seeded default map
     // plus a promoted OS-hook button's stored map — simultaneously.
@@ -1004,6 +1059,7 @@ fn gesture_maps_cover_every_gesture_mode_button() {
     assert!(
         maps.contains_key(&ButtonId::Back),
         "a promoted OS-hook button gets its own menu simultaneously"
+	log::debug!("<<< Exiting gesture_maps_cover_every_gesture_mode_button()");
     );
 }
 
@@ -1015,6 +1071,7 @@ fn gesture_maps_cover_every_gesture_mode_button() {
 /// compared field happened to move.
 #[test]
 fn a_battery_only_change_reaches_the_device_list() {
+	log::debug!(">>> Entering a_battery_only_change_reaches_the_device_list()");
     let cache = AssetResolver::new();
     let (commands, _receiver) = tokio::sync::mpsc::unbounded_channel();
     let unit_id = [1, 2, 3, 4];
@@ -1040,6 +1097,7 @@ fn a_battery_only_change_reaches_the_device_list() {
         state.device_list[0].battery.as_ref().map(|b| b.percentage),
         Some(40),
         "the fresh reading must replace the stale one"
+	log::debug!("<<< Exiting a_battery_only_change_reaches_the_device_list()");
     );
 }
 
@@ -1048,6 +1106,7 @@ fn a_battery_only_change_reaches_the_device_list() {
 /// by simply always returning `true`.
 #[test]
 fn an_identical_snapshot_is_still_a_no_op() {
+	log::debug!(">>> Entering an_identical_snapshot_is_still_a_no_op()");
     let cache = AssetResolver::new();
     let (commands, _receiver) = tokio::sync::mpsc::unbounded_channel();
     let unit_id = [1, 2, 3, 4];
@@ -1061,6 +1120,7 @@ fn an_identical_snapshot_is_still_a_no_op() {
         commands,
     );
 
+	log::debug!("<<< Exiting an_identical_snapshot_is_still_a_no_op()");
     assert!(!state.refresh_inventories(&[inventory_with_battery(unit_id, 50)], &[], &cache, &[]));
 }
 

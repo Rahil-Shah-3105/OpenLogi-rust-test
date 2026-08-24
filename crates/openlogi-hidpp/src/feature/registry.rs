@@ -277,6 +277,7 @@ mod tests {
 
     #[test]
     fn macro_registers_one_version_per_listed_impl() {
+		log::debug!(">>> Entering macro_registers_one_version_per_listed_impl()");
         // The `=> A, B` form keeps the original table's ability to register
         // several versioned implementations under a single feature id. Every
         // row's id must match its impls' real `CreatableFeature::ID`, so the
@@ -292,6 +293,7 @@ mod tests {
 
         assert_eq!(map[&0x0002].versions.len(), 0);
         assert_eq!(map[&0x0000].versions.len(), 1);
+		log::debug!("<<< Exiting macro_registers_one_version_per_listed_impl()");
         assert_eq!(map[&0x0001].versions.len(), 2);
     }
 }

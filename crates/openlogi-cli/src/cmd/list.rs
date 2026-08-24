@@ -303,6 +303,7 @@ mod format_tests {
     use super::{BatteryInfo, DeviceModelInfo};
 
     fn base_device() -> PairedDevice {
+		log::debug!(">>> Entering base_device()");
         PairedDevice {
             slot: 1,
             codename: Some("MX Master 3S".to_string()),
@@ -317,30 +318,40 @@ mod format_tests {
 
     #[test]
     fn online_device_uses_filled_dot_and_reports_fields() {
+		log::debug!(">>> Entering online_device_uses_filled_dot_and_reports_fields()");
         let d = base_device();
         let out = PairedDeviceDisplay(&d).to_string();
+		log::debug!("online_device_uses_filled_dot_and_reports_fields(): out → {}", out);
+		log::debug!("<<< Exiting online_device_uses_filled_dot_and_reports_fields()");
         assert_eq!(out, "slot 1 ● MX Master 3S (mouse, wpid=4082, battery=—)");
     }
 
     #[test]
     fn offline_device_uses_hollow_dot() {
+		log::debug!(">>> Entering offline_device_uses_hollow_dot()");
         let mut d = base_device();
         d.online = false;
         let out = PairedDeviceDisplay(&d).to_string();
+		log::debug!("offline_device_uses_hollow_dot(): out → {}", out);
+		log::debug!("<<< Exiting offline_device_uses_hollow_dot()");
         assert!(out.starts_with("slot 1 ○ "));
     }
 
     #[test]
     fn missing_codename_and_wpid_fall_back_to_placeholders() {
+		log::debug!(">>> Entering missing_codename_and_wpid_fall_back_to_placeholders()");
         let mut d = base_device();
         d.codename = None;
         d.wpid = None;
         let out = PairedDeviceDisplay(&d).to_string();
+		log::debug!("missing_codename_and_wpid_fall_back_to_placeholders(): out → {}", out);
+		log::debug!("<<< Exiting missing_codename_and_wpid_fall_back_to_placeholders()");
         assert_eq!(out, "slot 1 ● Unknown device (mouse, wpid=?, battery=—)");
     }
 
     #[test]
     fn battery_info_is_embedded_when_present() {
+		log::debug!(">>> Entering battery_info_is_embedded_when_present()");
         let mut d = base_device();
         d.battery = Some(BatteryInfo {
             percentage: 42,
@@ -348,11 +359,14 @@ mod format_tests {
             status: BatteryStatus::Discharging,
         });
         let out = PairedDeviceDisplay(&d).to_string();
+		log::debug!("battery_info_is_embedded_when_present(): out → {}", out);
+		log::debug!("<<< Exiting battery_info_is_embedded_when_present()");
         assert!(out.contains("battery=42% low (discharging)"));
     }
 
     #[test]
     fn battery_status_debug_names_are_lowercased_verbatim() {
+		log::debug!(">>> Entering battery_status_debug_names_are_lowercased_verbatim()");
         // `ChargingSlow`'s Debug form has no separator; lowercasing alone
         // yields "chargingslow", not "charging_slow" or "charging slow".
         let b = BatteryInfo {
@@ -363,11 +377,13 @@ mod format_tests {
         assert_eq!(
             BatteryDisplay(&b).to_string(),
             "battery=10% critical (chargingslow)"
+		log::debug!("<<< Exiting battery_status_debug_names_are_lowercased_verbatim()");
         );
     }
 
     #[test]
     fn camera_capabilities_include_resolution_and_optional_fps() {
+		log::debug!(">>> Entering camera_capabilities_include_resolution_and_optional_fps()");
         assert_eq!(
             CameraCapabilitiesDisplay {
                 resolution: Some((1920, 1080)),
@@ -391,10 +407,12 @@ mod format_tests {
             }
             .to_string(),
             ""
+		log::debug!("<<< Exiting camera_capabilities_include_resolution_and_optional_fps()");
         );
     }
 
     fn base_model() -> DeviceModelInfo {
+		log::debug!(">>> Entering base_model()");
         DeviceModelInfo {
             entity_count: 1,
             serial_number: None,
@@ -407,16 +425,20 @@ mod format_tests {
 
     #[test]
     fn model_with_no_transports_shows_placeholder_and_missing_serial() {
+		log::debug!(">>> Entering model_with_no_transports_shows_placeholder_and_missing_serial()");
         let m = base_model();
         let out = DeviceModelDisplay(&m).to_string();
+		log::debug!("model_with_no_transports_shows_placeholder_and_missing_serial(): out → {}", out);
         assert_eq!(
             out,
             "     model_ids=[b042,0000,0000] ext=02 serial=— unit_id=00010203 transports=—"
+		log::debug!("<<< Exiting model_with_no_transports_shows_placeholder_and_missing_serial()");
         );
     }
 
     #[test]
     fn model_transports_join_in_declared_field_order() {
+		log::debug!(">>> Entering model_transports_join_in_declared_field_order()");
         let mut m = base_model();
         m.transports = DeviceTransports {
             usb: true,
@@ -426,7 +448,9 @@ mod format_tests {
         };
         m.serial_number = Some("SN123".to_string());
         let out = DeviceModelDisplay(&m).to_string();
+		log::debug!("model_transports_join_in_declared_field_order(): out → {}", out);
         assert!(out.contains("transports=usb+btle+bt"));
+		log::debug!("<<< Exiting model_transports_join_in_declared_field_order()");
         assert!(out.contains("serial=SN123"));
     }
 }

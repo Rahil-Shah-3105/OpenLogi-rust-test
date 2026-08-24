@@ -308,6 +308,7 @@ mod tests {
     /// Builds a raw long report carrying a HID++2.0 broadcast with the given
     /// header fields and a recognisable payload.
     fn broadcast(device_index: u8, feature_index: u8, function: u8, software: u8) -> HidppMessage {
+		log::debug!(">>> Entering broadcast(device_index={},feature_index={},function={},software={})", device_index, feature_index, function, software);
         Message::Long(
             MessageHeader {
                 device_index,
@@ -322,33 +323,41 @@ mod tests {
 
     #[test]
     fn accepts_matching_broadcast_and_returns_sub_id() {
+		log::debug!(">>> Entering accepts_matching_broadcast_and_returns_sub_id()");
         let (func, payload) =
             event_payload(broadcast(2, 5, 1, 0), false, 2, 5).expect("broadcast should pass");
         assert_eq!(func.to_lo(), 1);
+		log::debug!("<<< Exiting accepts_matching_broadcast_and_returns_sub_id()");
         assert_eq!(payload, [0xab; 16]);
     }
 
     #[test]
     fn rejects_request_matched_report() {
+		log::debug!(">>> Entering rejects_request_matched_report()");
         // A report already matched to an outgoing request is a response, not an
         // event.
+		log::debug!("<<< Exiting rejects_request_matched_report()");
         assert!(event_payload(broadcast(2, 5, 0, 0), true, 2, 5).is_none());
     }
 
     #[test]
     fn rejects_other_device_or_feature() {
+		log::debug!(">>> Entering rejects_other_device_or_feature()");
         assert!(event_payload(broadcast(9, 5, 0, 0), false, 2, 5).is_none());
+		log::debug!("<<< Exiting rejects_other_device_or_feature()");
         assert!(event_payload(broadcast(2, 9, 0, 0), false, 2, 5).is_none());
     }
 
     #[test]
     fn gates_on_software_id_only_not_sub_id() {
+		log::debug!(">>> Entering gates_on_software_id_only_not_sub_id()");
         // Only the software id gates a broadcast: a nonzero one is rejected, but
         // a nonzero function id is a valid event sub-id the caller dispatches on
         // and must still pass. This is the invariant the old per-feature
         // `nibble::combine(software_id, function_id) != 0` guard got right only
         // by accident (those features happened to emit a single sub-id 0 event).
         assert!(event_payload(broadcast(2, 5, 0, 1), false, 2, 5).is_none());
+		log::debug!("<<< Exiting gates_on_software_id_only_not_sub_id()");
         assert!(event_payload(broadcast(2, 5, 7, 0), false, 2, 5).is_some());
     }
 }

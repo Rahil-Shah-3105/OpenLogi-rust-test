@@ -221,6 +221,7 @@ mod tests {
         stop_requested: bool,
         tap_progress_at: Duration,
     ) -> LifecycleObservation {
+		log::debug!(">>> Entering observation(phase={:?},stop_requested={},tap_progress_at={:?})", phase, stop_requested, tap_progress_at);
         LifecycleObservation {
             phase,
             stop_requested,
@@ -230,6 +231,7 @@ mod tests {
 
     #[test]
     fn armed_tap_stall_exits_at_budget_unless_tap_stops() {
+		log::debug!(">>> Entering armed_tap_stall_exits_at_budget_unless_tap_stops()");
         let mut watchdog = LifecycleWatchdog::default();
         assert_eq!(
             watchdog.evaluate(
@@ -267,11 +269,13 @@ mod tests {
                 observation(TapPhase::TapStopped, false, Duration::ZERO)
             ),
             LifecycleDecision::Complete
+		log::debug!("<<< Exiting armed_tap_stall_exits_at_budget_unless_tap_stops()");
         );
     }
 
     #[test]
     fn tap_creation_or_activation_stall_exits_at_budget() {
+		log::debug!(">>> Entering tap_creation_or_activation_stall_exits_at_budget()");
         let mut watchdog = LifecycleWatchdog::default();
         assert_eq!(
             watchdog.evaluate(
@@ -289,11 +293,13 @@ mod tests {
                 reason: LifecycleExitReason::TapThreadStalled,
                 elapsed: TAP_SHUTDOWN_BUDGET,
             }
+		log::debug!("<<< Exiting tap_creation_or_activation_stall_exits_at_budget()");
         );
     }
 
     #[test]
     fn stop_requires_thread_exit_even_after_tap_stops() {
+		log::debug!(">>> Entering stop_requires_thread_exit_even_after_tap_stops()");
         let mut watchdog = LifecycleWatchdog::default();
         let _ = watchdog.evaluate(
             Duration::ZERO,
@@ -328,13 +334,16 @@ mod tests {
                 observation(TapPhase::ThreadExited, true, Duration::ZERO)
             ),
             LifecycleDecision::Complete
+		log::debug!("<<< Exiting stop_requires_thread_exit_even_after_tap_stops()");
         );
     }
 
     #[test]
     fn starting_and_healthy_states_never_time_out() {
+		log::debug!(">>> Entering starting_and_healthy_states_never_time_out()");
         let mut watchdog = LifecycleWatchdog::default();
         let starting = observation(TapPhase::Starting, false, Duration::ZERO);
+		log::debug!("starting_and_healthy_states_never_time_out(): starting → {:?}", starting);
         assert_eq!(
             watchdog.evaluate(Duration::ZERO, starting),
             LifecycleDecision::Continue
@@ -356,11 +365,13 @@ mod tests {
                 observation(TapPhase::ThreadExited, false, Duration::ZERO)
             ),
             LifecycleDecision::Complete
+		log::debug!("<<< Exiting starting_and_healthy_states_never_time_out()");
         );
     }
 
     #[test]
     fn a_burst_of_re_arms_is_allowed_and_then_bounded() {
+		log::debug!(">>> Entering a_burst_of_re_arms_is_allowed_and_then_bounded()");
         let mut budget = RearmBudget::default();
         for i in 0..REARM_LIMIT {
             assert!(
@@ -368,13 +379,16 @@ mod tests {
                 "re-arm {i} is within the budget"
             );
         }
+		log::debug!("<<< Exiting a_burst_of_re_arms_is_allowed_and_then_bounded()");
         assert!(!budget.allow(Duration::from_millis(u64::from(REARM_LIMIT) * 500)));
     }
 
     #[test]
     fn a_new_window_restores_the_budget() {
+		log::debug!(">>> Entering a_new_window_restores_the_budget()");
         let mut budget = RearmBudget::default();
         for _ in 0..=REARM_LIMIT {
+			log::debug!("a_new_window_restores_the_budget(): _ → {}", _);
             let _ = budget.allow(Duration::ZERO);
         }
         assert!(!budget.allow(Duration::ZERO));
@@ -384,14 +398,17 @@ mod tests {
             assert!(budget.allow(REARM_WINDOW));
         }
         let just_inside = REARM_WINDOW + REARM_WINDOW.saturating_sub(Duration::from_millis(1));
+		log::debug!("<<< Exiting a_new_window_restores_the_budget()");
         assert!(!budget.allow(just_inside));
     }
 
     #[test]
     fn callback_timeout_keeps_the_200ms_boundary() {
+		log::debug!(">>> Entering callback_timeout_keeps_the_200ms_boundary()");
         assert_eq!(stuck_callback(200, 1), None);
         assert_eq!(stuck_callback(201, 1), Some(CALLBACK_STUCK_BUDGET));
         // A fresh high-frequency event must not inherit an older entry time.
+		log::debug!("<<< Exiting callback_timeout_keeps_the_200ms_boundary()");
         assert_eq!(stuck_callback(10_000, 9_801), None);
     }
 }

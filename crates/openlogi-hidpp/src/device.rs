@@ -268,6 +268,7 @@ mod tests {
     /// up mid-table, which callers then misread as "not a peripheral".
     #[test]
     fn lost_feature_entry_is_retried_before_giving_up() {
+		tracing::debug!(">>> Entering lost_feature_entry_is_retried_before_giving_up()");
         futures::executor::block_on(async {
             let (raw, handle) = MockRawHidChannel::new();
             let channel = Arc::new(channel_with_reader(raw).await);
@@ -285,6 +286,7 @@ mod tests {
                 usize::from(FEATURE_READ_ATTEMPTS),
                 "every attempt should reach the wire"
             );
+		tracing::debug!("<<< Exiting lost_feature_entry_is_retried_before_giving_up()");
         });
     }
 }

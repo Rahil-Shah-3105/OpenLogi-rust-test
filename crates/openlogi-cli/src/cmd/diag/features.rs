@@ -159,6 +159,7 @@ mod tests {
     use super::{FeatureFlagsDisplay, FirmwareEntityDisplay};
 
     fn entry() -> FirmwareEntity {
+		log::debug!(">>> Entering entry()");
         FirmwareEntity::Readable {
             index: 1,
             info: FirmwareEntityInfo {
@@ -175,6 +176,7 @@ mod tests {
     }
 
     fn info(entry: &mut FirmwareEntity) -> &mut FirmwareEntityInfo {
+		log::debug!(">>> Entering info()");
         match entry {
             FirmwareEntity::Readable { info, .. } => info,
             FirmwareEntity::Unreadable { .. } => panic!("entry() builds a readable entity"),
@@ -183,19 +185,23 @@ mod tests {
 
     #[test]
     fn the_running_entity_is_marked_active() {
+		log::debug!(">>> Entering the_running_entity_is_marked_active()");
         assert_eq!(
             FirmwareEntityDisplay(&entry()).to_string(),
             "fw 1: MainApplication MPM17.00_B0008 pid=c08d [active]"
+		log::debug!("<<< Exiting the_running_entity_is_marked_active()");
         );
     }
 
     #[test]
     fn a_dormant_entity_carries_no_marker() {
+		log::debug!(">>> Entering a_dormant_entity_carries_no_marker()");
         let mut e = entry();
         info(&mut e).active = false;
         assert_eq!(
             FirmwareEntityDisplay(&e).to_string(),
             "fw 1: MainApplication MPM17.00_B0008 pid=c08d"
+		log::debug!("<<< Exiting a_dormant_entity_carries_no_marker()");
         );
     }
 
@@ -203,12 +209,14 @@ mod tests {
     /// answer zero. That is still what the device said, so it is printed.
     #[test]
     fn a_zero_pid_is_reported_rather_than_hidden() {
+		log::debug!(">>> Entering a_zero_pid_is_reported_rather_than_hidden()");
         let mut e = entry();
         info(&mut e).active = false;
         info(&mut e).transport_pid = 0;
         assert_eq!(
             FirmwareEntityDisplay(&e).to_string(),
             "fw 1: MainApplication MPM17.00_B0008 pid=0000"
+		log::debug!("<<< Exiting a_zero_pid_is_reported_rather_than_hidden()");
         );
     }
 
@@ -216,11 +224,13 @@ mod tests {
     /// does fill it in, the bytes are the whole reason the field is carried.
     #[test]
     fn populated_extra_version_bytes_are_shown() {
+		log::debug!(">>> Entering populated_extra_version_bytes_are_shown()");
         let mut e = entry();
         info(&mut e).extra_version = [0x01, 0x02, 0x00, 0xff, 0x10];
         assert_eq!(
             FirmwareEntityDisplay(&e).to_string(),
             "fw 1: MainApplication MPM17.00_B0008 pid=c08d [active] extra=010200ff10"
+		log::debug!("<<< Exiting populated_extra_version_bytes_are_shown()");
         );
     }
 
@@ -229,6 +239,7 @@ mod tests {
     /// device has two firmware images when it says it has three.
     #[test]
     fn an_unreadable_entity_reports_the_reason() {
+		log::debug!(">>> Entering an_unreadable_entity_reports_the_reason()");
         let e = FirmwareEntity::Unreadable {
             index: 2,
             error: WriteError::UnsupportedResponse {
@@ -239,19 +250,24 @@ mod tests {
         assert_eq!(
             FirmwareEntityDisplay(&e).to_string(),
             "fw 2: unreadable (HID++ unsupported response during DumpFeatures for feature 0x0003)"
+		log::debug!("<<< Exiting an_unreadable_entity_reports_the_reason()");
         );
     }
 
     #[test]
     fn a_feature_with_no_flags_renders_empty() {
+		log::debug!(">>> Entering a_feature_with_no_flags_renders_empty()");
+		log::debug!("<<< Exiting a_feature_with_no_flags_renders_empty()");
         assert_eq!(FeatureFlagsDisplay(FeatureType::empty()).to_string(), "");
     }
 
     #[test]
     fn every_known_flag_is_named() {
+		log::debug!(">>> Entering every_known_flag_is_named()");
         assert_eq!(
             FeatureFlagsDisplay(FeatureType::all()).to_string(),
             "obsolete,hidden,engineering,manufacturing-deactivatable,compliance-deactivatable"
+		log::debug!("<<< Exiting every_known_flag_is_named()");
         );
     }
 
@@ -259,10 +275,12 @@ mod tests {
     /// column a partial view of the device's own answer.
     #[test]
     fn the_version_two_flags_are_not_dropped() {
+		log::debug!(">>> Entering the_version_two_flags_are_not_dropped()");
         assert_eq!(
             FeatureFlagsDisplay(FeatureType::HIDDEN | FeatureType::COMPLIANCE_DEACTIVATABLE)
                 .to_string(),
             "hidden,compliance-deactivatable"
+		log::debug!("<<< Exiting the_version_two_flags_are_not_dropped()");
         );
     }
 
@@ -271,17 +289,21 @@ mod tests {
     /// is shown as a raw mask instead of vanishing.
     #[test]
     fn unknown_bits_are_reported_as_a_raw_mask() {
+		log::debug!(">>> Entering unknown_bits_are_reported_as_a_raw_mask()");
         assert_eq!(
             FeatureFlagsDisplay(FeatureType::from_bits_retain(0b0100_0100)).to_string(),
             "hidden,unknown=0x04"
+		log::debug!("<<< Exiting unknown_bits_are_reported_as_a_raw_mask()");
         );
     }
 
     #[test]
     fn unknown_bits_alone_still_render() {
+		log::debug!(">>> Entering unknown_bits_alone_still_render()");
         assert_eq!(
             FeatureFlagsDisplay(FeatureType::from_bits_retain(0b0000_0011)).to_string(),
             "unknown=0x03"
+		log::debug!("<<< Exiting unknown_bits_alone_still_render()");
         );
     }
 }

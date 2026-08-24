@@ -531,6 +531,7 @@ mod tests {
 
     #[test]
     fn current_capture_wins_without_consulting_the_registry_again() {
+		tracing::debug!(">>> Entering current_capture_wins_without_consulting_the_registry_again()");
         let looked_up = Cell::new(false);
         let selected = choose_authoritative(
             Some("capture"),
@@ -542,26 +543,33 @@ mod tests {
         );
 
         assert_eq!(selected, Some("capture"));
+		tracing::debug!("<<< Exiting current_capture_wins_without_consulting_the_registry_again()");
         assert!(!looked_up.get());
     }
 
     #[test]
     fn stale_capture_falls_through_to_the_registry_winner() {
+		tracing::debug!(">>> Entering stale_capture_falls_through_to_the_registry_winner()");
         let selected = choose_authoritative(Some("stale"), |_| false, || Some("registry-current"));
 
+		tracing::debug!("<<< Exiting stale_capture_falls_through_to_the_registry_winner()");
         assert_eq!(selected, Some("registry-current"));
     }
 
     #[test]
     fn registry_miss_has_no_route_open_fallback() {
+		tracing::debug!(">>> Entering registry_miss_has_no_route_open_fallback()");
         let selected = choose_authoritative(Some("stale"), |_| false, || None);
 
+		tracing::debug!("<<< Exiting registry_miss_has_no_route_open_fallback()");
         assert_eq!(selected, None);
     }
 
     fn unresolvable_route() -> DeviceRoute {
+		tracing::debug!(">>> Entering unresolvable_route()");
         // A route no capture/registry in this test ever publishes — every
         // resolve attempt against it takes the registry-miss path.
+		tracing::debug!("<<< Exiting unresolvable_route()");
         DeviceRoute::Direct {
             vendor_id: 0x046d,
             product_id: 0xc52b,
@@ -575,6 +583,7 @@ mod tests {
     /// no-op.
     #[tokio::test]
     async fn run_on_a_registry_miss_returns_device_not_found_without_calling_f() {
+		tracing::debug!(">>> Entering run_on_a_registry_miss_returns_device_not_found_without_calling_f()");
         let capture: CaptureChannel = std::sync::Arc::new(RwLock::new(None));
         let registry = ChannelRegistry::default();
         let receiver_access = ReceiverAccess::default();
@@ -590,9 +599,12 @@ mod tests {
             .await;
 
         assert!(matches!(result, Err(WriteError::DeviceNotFound)));
+		let __log_start = std::time::Instant::now();
         assert!(
             !called.load(Ordering::SeqCst),
             "f must not run when the route can't be resolved"
+		tracing::info!("run_on_a_registry_miss_returns_device_not_found_without_calling_f(): find query executed in {} ms", __log_start.elapsed().as_millis());
+    tracing::debug!("<<< Exiting run_on_a_registry_miss_returns_device_not_found_without_calling_f()");
         );
     }
 
@@ -600,6 +612,7 @@ mod tests {
     /// return synchronously (no thread, no lease wait) and never call `f`.
     #[tokio::test]
     async fn detach_on_a_registry_miss_never_calls_f() {
+		tracing::debug!(">>> Entering detach_on_a_registry_miss_never_calls_f()");
         let capture: CaptureChannel = std::sync::Arc::new(RwLock::new(None));
         let registry = ChannelRegistry::default();
         let receiver_access = ReceiverAccess::default();
@@ -618,6 +631,8 @@ mod tests {
         assert!(
             !called.load(Ordering::SeqCst),
             "f must not run when the route can't be resolved"
+		tracing::info!("detach_on_a_registry_miss_never_calls_f(): find query executed in {} ms", __log_start.elapsed().as_millis());
+    tracing::debug!("<<< Exiting detach_on_a_registry_miss_never_calls_f()");
         );
     }
 
@@ -628,6 +643,7 @@ mod tests {
     /// (5s) of real wall-clock time.
     #[tokio::test(start_paused = true)]
     async fn timed_maps_an_elapsed_deadline_to_request_timed_out() {
+		tracing::debug!(">>> Entering timed_maps_an_elapsed_deadline_to_request_timed_out()");
         let handle = tokio::spawn(timed(
             HidppOperation::WriteDpi,
             std::future::pending::<Result<(), WriteError>>(),
@@ -644,6 +660,7 @@ mod tests {
             Err(WriteError::RequestTimedOut {
                 operation: HidppOperation::WriteDpi
             })
+		tracing::debug!("<<< Exiting timed_maps_an_elapsed_deadline_to_request_timed_out()");
         ));
     }
 }

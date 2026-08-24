@@ -152,6 +152,7 @@ impl Step {
     /// [`Display`] adds — the shape a workflow's `run:` line holds.
     #[cfg(test)]
     pub(crate) fn argv_line(&self) -> String {
+		log::debug!(">>> Entering argv_line()");
         std::iter::once(self.program.to_string_lossy())
             .chain(self.args.iter().map(|arg| arg.to_string_lossy()))
             .collect::<Vec<_>>()

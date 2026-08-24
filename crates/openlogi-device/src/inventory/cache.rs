@@ -258,6 +258,7 @@ mod hold_tests {
 
     #[test]
     fn charging_zero_holds_last_known_percentage() {
+		log::debug!(">>> Entering charging_zero_holds_last_known_percentage()");
         let legacy = BatteryProbe::Legacy(0);
         let held = hold_percentage_while_charging(
             battery(0, BatteryStatus::Charging),
@@ -283,16 +284,19 @@ mod hold_tests {
 
         let cold =
             hold_percentage_while_charging(battery(0, BatteryStatus::Charging), None, legacy);
+		log::debug!("<<< Exiting charging_zero_holds_last_known_percentage()");
         assert_eq!(cold.percentage, 0);
     }
 
     #[test]
     fn unified_charging_zero_is_not_held() {
+		log::debug!(">>> Entering unified_charging_zero_is_not_held()");
         let live = hold_percentage_while_charging(
             battery(0, BatteryStatus::Charging),
             Some(&battery(85, BatteryStatus::Discharging)),
             BatteryProbe::Unified(0),
         );
+		log::debug!("<<< Exiting unified_charging_zero_is_not_held()");
         assert_eq!(live.percentage, 0);
     }
 }

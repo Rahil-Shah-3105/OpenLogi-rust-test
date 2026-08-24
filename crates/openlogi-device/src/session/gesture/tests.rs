@@ -29,9 +29,11 @@ fn reporting(
 /// and no HID++ consumer, dead until the device sleeps.
 #[test]
 fn restore_clears_a_diversion_it_found_already_set() {
+	log::debug!(">>> Entering restore_clears_a_diversion_it_found_already_set()");
     let change = undivert_change(reporting(true, None));
 
     assert_eq!(change.diverted, Some(false));
+	log::debug!("<<< Exiting restore_clears_a_diversion_it_found_already_set()");
     assert_eq!(change.raw_xy, Some(false));
 }
 
@@ -40,6 +42,7 @@ fn restore_clears_a_diversion_it_found_already_set() {
 /// snapshot that may itself be this session's leftovers.
 #[test]
 fn restore_returns_the_remap_target_and_touches_nothing_else() {
+	log::debug!(">>> Entering restore_returns_the_remap_target_and_touches_nothing_else()");
     let remap = reprog_controls::ControlId(0x0053);
 
     let change = undivert_change(reporting(false, Some(remap)));
@@ -48,6 +51,7 @@ fn restore_returns_the_remap_target_and_touches_nothing_else() {
     assert_eq!(change.persistently_diverted, None);
     assert_eq!(change.force_raw_xy, None);
     assert_eq!(change.analytics_key_events, None);
+	log::debug!("<<< Exiting restore_returns_the_remap_target_and_touches_nothing_else()");
     assert_eq!(change.raw_wheel, None);
 }
 
@@ -74,6 +78,7 @@ fn release() -> RawControlEvent {
 
 #[test]
 fn a_still_held_second_source_takes_over_when_the_holder_releases() {
+	log::debug!(">>> Entering a_still_held_second_source_takes_over_when_the_holder_releases()");
     // Both sources diverted: press the gesture button, add the panel, release
     // the gesture button (click — no swipe committed), and the still-held
     // panel must become the new holder so its subsequent swipe dispatches —
@@ -115,11 +120,13 @@ fn a_still_held_second_source_takes_over_when_the_holder_releases() {
     assert!(
         rx.try_recv().is_err(),
         "a committed takeover swipe must not also click on release"
+	log::debug!("<<< Exiting a_still_held_second_source_takes_over_when_the_holder_releases()");
     );
 }
 
 #[test]
 fn raw_xy_during_a_two_source_overlap_is_dropped_not_misattributed() {
+	log::debug!(">>> Entering raw_xy_during_a_two_source_overlap_is_dropped_not_misattributed()");
     // Raw-XY reports carry no source attribution: while BOTH sources are held,
     // motion must not commit through the first holder's map (the reports could
     // as well be the other control's). Motion resumes once the overlap ends.
@@ -160,11 +167,13 @@ fn raw_xy_during_a_two_source_overlap_is_dropped_not_misattributed() {
             GestureDirection::Right
         )),
         "the original hold resumes once the overlap ends"
+	log::debug!("<<< Exiting raw_xy_during_a_two_source_overlap_is_dropped_not_misattributed()");
     );
 }
 
 #[test]
 fn a_same_report_swap_to_the_panel_still_discards_its_contact_jump() {
+	log::debug!(">>> Entering a_same_report_swap_to_the_panel_still_discards_its_contact_jump()");
     // Holder release and panel press arriving in ONE report: the takeover must
     // treat the panel as freshly touched, so its first raw-XY sample (the
     // absolute contact jump) is discarded before the accumulator sees it.
@@ -210,11 +219,13 @@ fn a_same_report_swap_to_the_panel_still_discards_its_contact_jump() {
             ButtonId::HapticPanel,
             GestureDirection::Right
         ))
+	log::debug!("<<< Exiting a_same_report_swap_to_the_panel_still_discards_its_contact_jump()");
     );
 }
 
 #[test]
 fn quick_tap_is_a_click_even_while_the_cursor_moves() {
+	log::debug!(">>> Entering quick_tap_is_a_click_even_while_the_cursor_moves()");
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut acc = CaptureAccum::default();
 
@@ -239,11 +250,13 @@ fn quick_tap_is_a_click_even_while_the_cursor_moves() {
     assert!(
         rx.try_recv().is_err(),
         "a quick tap emits exactly one click"
+	log::debug!("<<< Exiting quick_tap_is_a_click_even_while_the_cursor_moves()");
     );
 }
 
 #[test]
 fn a_held_gesture_commits_a_swipe_and_does_not_also_click() {
+	log::debug!(">>> Entering a_held_gesture_commits_a_swipe_and_does_not_also_click()");
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut acc = CaptureAccum::default();
 
@@ -271,11 +284,13 @@ fn a_held_gesture_commits_a_swipe_and_does_not_also_click() {
     assert!(
         rx.try_recv().is_err(),
         "a committed swipe must not also click on release"
+	log::debug!("<<< Exiting a_held_gesture_commits_a_swipe_and_does_not_also_click()");
     );
 }
 
 #[test]
 fn the_haptic_panel_gestures_when_diverted_for_gestures() {
+	log::debug!(">>> Entering the_haptic_panel_gestures_when_diverted_for_gestures()");
     // On MX Master 4 the panel (CID 0x01a0) can gesture: its press begins a
     // hold, its contact jump is discarded, and the raw-XY that follows
     // commits a swipe.
@@ -315,11 +330,13 @@ fn the_haptic_panel_gestures_when_diverted_for_gestures() {
     assert!(
         rx.try_recv().is_err(),
         "a committed panel swipe must not also click on release"
+	log::debug!("<<< Exiting the_haptic_panel_gestures_when_diverted_for_gestures()");
     );
 }
 
 #[test]
 fn a_quick_panel_tap_is_a_click() {
+	log::debug!(">>> Entering a_quick_panel_tap_is_a_click()");
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut acc = CaptureAccum::default();
 
@@ -336,11 +353,13 @@ fn a_quick_panel_tap_is_a_click() {
     assert!(
         rx.try_recv().is_err(),
         "a panel tap emits exactly one click"
+	log::debug!("<<< Exiting a_quick_panel_tap_is_a_click()");
     );
 }
 
 #[test]
 fn the_panels_first_raw_xy_sample_after_contact_is_discarded() {
+	log::debug!(">>> Entering the_panels_first_raw_xy_sample_after_contact_is_discarded()");
     // Real-hardware probe finding: the panel's first raw-XY sample after
     // contact is a large position jump (up to thousands of units), not a
     // relative delta. Un-discarded it would instantly commit a bogus swipe.
@@ -378,11 +397,13 @@ fn the_panels_first_raw_xy_sample_after_contact_is_discarded() {
             ButtonId::HapticPanel,
             GestureDirection::Right
         ))
+	log::debug!("<<< Exiting the_panels_first_raw_xy_sample_after_contact_is_discarded()");
     );
 }
 
 #[test]
 fn the_dedicated_buttons_first_sample_is_not_discarded() {
+	log::debug!(">>> Entering the_dedicated_buttons_first_sample_is_not_discarded()");
     // The discard is a panel quirk: the dedicated button's raw-XY stream is
     // relative from the first sample, which must keep committing as-is.
     let (tx, mut rx) = mpsc::unbounded_channel();
@@ -406,11 +427,13 @@ fn the_dedicated_buttons_first_sample_is_not_discarded() {
             GestureDirection::Right
         )),
         "the dedicated button's very first sample still counts"
+	log::debug!("<<< Exiting the_dedicated_buttons_first_sample_is_not_discarded()");
     );
 }
 
 #[test]
 fn an_undiverted_gesture_source_does_not_gesture() {
+	log::debug!(">>> Entering an_undiverted_gesture_source_does_not_gesture()");
     // Only the panel is diverted for gestures; a dedicated-button press must
     // not begin a hold, emit a click, or feed the swipe accumulator — the two
     // sources are distinct physical controls.
@@ -432,11 +455,13 @@ fn an_undiverted_gesture_source_does_not_gesture() {
     assert!(
         rx.try_recv().is_err(),
         "a non-owner source must neither gesture nor click"
+	log::debug!("<<< Exiting an_undiverted_gesture_source_does_not_gesture()");
     );
 }
 
 #[test]
 fn a_plain_diverted_gesture_button_presses_without_gesturing() {
+	log::debug!(">>> Entering a_plain_diverted_gesture_button_presses_without_gesturing()");
     // A gesture button diverted as a plain button (not in gesture mode; its
     // single binding needs delivery) must dispatch as a button press only —
     // the swipe accumulator belongs to the raw-XY gesture diverts and must
@@ -455,11 +480,13 @@ fn a_plain_diverted_gesture_button_presses_without_gesturing() {
     assert!(
         rx.try_recv().is_err(),
         "a plain-diverted gesture button must not also emit a gesture click"
+	log::debug!("<<< Exiting a_plain_diverted_gesture_button_presses_without_gesturing()");
     );
 }
 
 #[test]
 fn a_plain_diverted_haptic_panel_presses_as_its_own_button() {
+	log::debug!(">>> Entering a_plain_diverted_haptic_panel_presses_as_its_own_button()");
     // A single action bound to the panel (which is not in gesture mode) is
     // delivered as ButtonId::HapticPanel — its own control, never conflated
     // with the dedicated gesture button.
@@ -477,11 +504,13 @@ fn a_plain_diverted_haptic_panel_presses_as_its_own_button() {
     assert!(
         rx.try_recv().is_err(),
         "a plain-diverted panel must not also emit a gesture click"
+	log::debug!("<<< Exiting a_plain_diverted_haptic_panel_presses_as_its_own_button()");
     );
 }
 
 #[test]
 fn a_held_dpi_button_presses_once_on_the_rising_edge() {
+	log::debug!(">>> Entering a_held_dpi_button_presses_once_on_the_rising_edge()");
     let (tx, mut rx) = mpsc::unbounded_channel();
     let mut acc = CaptureAccum::default();
     let dpi = reprog_controls::DPI_MODE_SHIFT_CIDS[0];
@@ -494,11 +523,13 @@ fn a_held_dpi_button_presses_once_on_the_rising_edge() {
         rx.try_recv(),
         Ok(CapturedInput::ButtonPressed(ButtonId::DpiToggle, None))
     );
+	log::debug!("<<< Exiting a_held_dpi_button_presses_once_on_the_rising_edge()");
     assert!(rx.try_recv().is_err(), "a held DPI button presses once");
 }
 
 #[test]
 fn a_dpi_button_re_presses_after_a_release() {
+	log::debug!(">>> Entering a_dpi_button_re_presses_after_a_release()");
     // Rising-edge detection must re-arm: press → release → press is two
     // distinct presses. The release (a frame without the CID) is what resets
     // the edge; without it a re-press would be swallowed as "still held".
@@ -524,6 +555,7 @@ fn a_dpi_button_re_presses_after_a_release() {
     assert!(
         rx.try_recv().is_err(),
         "press → release → press emits exactly two presses"
+	log::debug!("<<< Exiting a_dpi_button_re_presses_after_a_release()");
     );
 }
 
@@ -553,6 +585,7 @@ fn thumb_event(
 /// bound action in the middle of a scroll.
 #[test]
 fn a_rolling_report_is_a_roll_even_when_it_flags_a_tap() {
+	log::debug!(">>> Entering a_rolling_report_is_a_roll_even_when_it_flags_a_tap()");
     assert_eq!(
         thumbwheel_input(
             thumb_event(-3, thumbwheel::RotationStatus::Active, true),
@@ -562,6 +595,7 @@ fn a_rolling_report_is_a_roll_even_when_it_flags_a_tap() {
             increments: -3,
             resolution: TRACED_RES
         })
+	log::debug!("<<< Exiting a_rolling_report_is_a_roll_even_when_it_flags_a_tap()");
     );
 }
 
@@ -570,23 +604,27 @@ fn a_rolling_report_is_a_roll_even_when_it_flags_a_tap() {
 /// `rotation_status` separates it from a deliberate tap.
 #[test]
 fn the_release_that_ends_a_roll_is_not_a_tap() {
+	log::debug!(">>> Entering the_release_that_ends_a_roll_is_not_a_tap()");
     assert_eq!(
         thumbwheel_input(
             thumb_event(0, thumbwheel::RotationStatus::Stop, true),
             TRACED_RES
         ),
         None
+	log::debug!("<<< Exiting the_release_that_ends_a_roll_is_not_a_tap()");
     );
 }
 
 #[test]
 fn a_tap_on_a_settled_wheel_is_a_tap() {
+	log::debug!(">>> Entering a_tap_on_a_settled_wheel_is_a_tap()");
     assert_eq!(
         thumbwheel_input(
             thumb_event(0, thumbwheel::RotationStatus::Inactive, true),
             TRACED_RES
         ),
         Some(CapturedInput::ButtonPressed(ButtonId::Thumbwheel, None))
+	log::debug!("<<< Exiting a_tap_on_a_settled_wheel_is_a_tap()");
     );
 }
 
@@ -594,6 +632,7 @@ fn a_tap_on_a_settled_wheel_is_a_tap() {
 /// go on, so the roll is recognised without the status field.
 #[test]
 fn rotation_alone_still_marks_a_roll() {
+	log::debug!(">>> Entering rotation_alone_still_marks_a_roll()");
     assert_eq!(
         thumbwheel_input(
             thumb_event(4, thumbwheel::RotationStatus::Inactive, true),
@@ -603,6 +642,7 @@ fn rotation_alone_still_marks_a_roll() {
             increments: 4,
             resolution: TRACED_RES
         })
+	log::debug!("<<< Exiting rotation_alone_still_marks_a_roll()");
     );
 }
 
@@ -610,11 +650,13 @@ fn rotation_alone_still_marks_a_roll() {
 /// thumb rests near it.
 #[test]
 fn contact_without_rotation_or_a_tap_carries_no_input() {
+	log::debug!(">>> Entering contact_without_rotation_or_a_tap_carries_no_input()");
     assert_eq!(
         thumbwheel_input(
             thumb_event(0, thumbwheel::RotationStatus::Inactive, false),
             TRACED_RES
         ),
         None
+	log::debug!("<<< Exiting contact_without_rotation_or_a_tap_carries_no_input()");
     );
 }

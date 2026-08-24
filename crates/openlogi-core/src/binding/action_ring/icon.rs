@@ -311,10 +311,12 @@ macro_rules! derive_action_icon {
             /// Default icon for an executable action.
             #[must_use]
             pub fn for_action(action: &Action) -> Self {
+				log::debug!(">>> Entering for_action()");
                 match action {
                     $( Action::$variant => Self::$icon, )*
                     Action::SetDpiPreset(_) => Self::Gauge,
                     Action::CustomShortcut(_) | Action::TypeText(_) | Action::Workflow(_) => {
+						log::debug!("<<< Exiting for_action()");
                         Self::Keyboard
                     }
                     Action::RunAppleScript(_) | Action::RunShellCommand(_) => Self::Terminal,

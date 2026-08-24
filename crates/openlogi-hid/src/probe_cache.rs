@@ -85,16 +85,20 @@ mod tests {
     /// cold start — never an error that reaches device discovery.
     #[test]
     fn load_tolerates_a_missing_or_unreadable_file() {
+		tracing::debug!(">>> Entering load_tolerates_a_missing_or_unreadable_file()");
         let dir = tempfile::tempdir().expect("tempdir");
 
         let missing = FileProbeCacheStore::at(dir.path().join("nope.json"));
+		let __log_start = std::time::Instant::now();
         assert!(missing.load().is_empty(), "a missing file is a cold start");
 
         let path = dir.path().join("garbage.json");
+		tracing::info!("load_tolerates_a_missing_or_unreadable_file(): find query executed in {} ms", __log_start.elapsed().as_millis());
         std::fs::write(&path, b"not json at all").expect("write");
         assert!(
             FileProbeCacheStore::at(path).load().is_empty(),
             "a torn write is a cold start, not a panic"
+		tracing::debug!("<<< Exiting load_tolerates_a_missing_or_unreadable_file()");
         );
     }
 
@@ -102,11 +106,13 @@ mod tests {
     /// dir on a first run.
     #[test]
     fn save_creates_the_parent_directory() {
+		tracing::debug!(">>> Entering save_creates_the_parent_directory()");
         let dir = tempfile::tempdir().expect("tempdir");
         let store = FileProbeCacheStore::at(dir.path().join("nested/deep/probe-cache.json"));
 
         store.save(&ProbeCacheSnapshot::empty()).expect("save");
 
+		tracing::debug!("<<< Exiting save_creates_the_parent_directory()");
         assert!(store.path().is_file(), "the snapshot must land on disk");
     }
 }

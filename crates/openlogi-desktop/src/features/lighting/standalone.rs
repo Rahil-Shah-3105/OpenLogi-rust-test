@@ -308,6 +308,7 @@ fn light_emblem(enabled: bool, pal: Palette) -> impl IntoElement {
 
 #[cfg(target_os = "macos")]
 fn camera_automation(current: LightSettings, pal: Palette) -> impl IntoElement {
+	log::debug!(">>> Entering camera_automation()");
     h_flex()
         .w_full()
         .justify_between()
@@ -323,6 +324,7 @@ fn camera_automation(current: LightSettings, pal: Palette) -> impl IntoElement {
         .bg(if current.auto_camera {
             hsla(0.105, 0.9, 0.66, 0.08)
         } else {
+			log::debug!("<<< Exiting camera_automation()");
             pal.surface_hover
         })
         .p_3()
@@ -516,17 +518,21 @@ mod tests {
 
     #[test]
     fn sliders_use_the_advertised_range_and_grid() {
+		log::debug!(">>> Entering sliders_use_the_advertised_range_and_grid()");
         let range = LightValueRange::new(3000, 5000, 250, LightValueUnit::Kelvin)
             .expect("valid test range");
         assert_eq!(range.quantize(3120), 3000);
         assert_eq!(range.quantize(3370), 3250);
+		log::debug!("<<< Exiting sliders_use_the_advertised_range_and_grid()");
         assert_eq!(midpoint(range), 4000);
     }
 
     #[test]
     fn range_values_use_capability_units() {
+		log::debug!(">>> Entering range_values_use_capability_units()");
         assert_eq!(format_light_value(20, LightValueUnit::Lumens), "20 lm");
         assert_eq!(format_light_value(2700, LightValueUnit::Kelvin), "2700 K");
+		log::debug!("<<< Exiting range_values_use_capability_units()");
         assert_eq!(format_light_value(100, LightValueUnit::Percent), "100%");
     }
 }

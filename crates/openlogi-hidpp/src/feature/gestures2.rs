@@ -139,6 +139,7 @@ mod tests {
 
     #[test]
     fn descriptor_page_detects_thumbwheel_and_end_marker() {
+		log::debug!(">>> Entering descriptor_page_detects_thumbwheel_and_end_marker()");
         let mut payload = [0u8; 16];
         payload[0] = 0x83; // gesture + enabled + divertable
         payload[1] = THUMBWHEEL_GESTURE_ID;
@@ -151,11 +152,13 @@ mod tests {
 
         let mut end = [0u8; 16];
         end[0] = 0x01;
+		log::debug!("<<< Exiting descriptor_page_detects_thumbwheel_and_end_marker()");
         assert_eq!(scan_descriptor_page(&end, 0), DescriptorScan::End);
     }
 
     #[test]
     fn descriptor_page_ignores_other_gestures() {
+		log::debug!(">>> Entering descriptor_page_ignores_other_gestures()");
         let mut payload = [0u8; 16];
         payload[0] = 0x83;
         payload[1] = 45; // natural scrolling
@@ -164,11 +167,13 @@ mod tests {
             DescriptorScan::Continue {
                 next_diversion_index: 1
             }
+		log::debug!("<<< Exiting descriptor_page_ignores_other_gestures()");
         );
     }
 
     #[test]
     fn descriptor_page_counts_divertable_gestures_before_thumbwheel() {
+		log::debug!(">>> Entering descriptor_page_counts_divertable_gestures_before_thumbwheel()");
         let mut payload = [0u8; 16];
         payload[0] = 0x82; // divertable gesture
         payload[1] = 40;
@@ -182,15 +187,18 @@ mod tests {
             DescriptorScan::Thumbwheel(ThumbwheelGesture {
                 diversion_index: Some(4)
             })
+		log::debug!("<<< Exiting descriptor_page_counts_divertable_gestures_before_thumbwheel()");
         );
     }
 
     #[test]
     fn diversion_write_payload_uses_offset_mask_and_value() {
+		log::debug!(">>> Entering diversion_write_payload_uses_offset_mask_and_value()");
         let enabled = diversion_write_payload(9, true).unwrap();
         assert_eq!(&enabled[..4], &[1, 1, 2, 2]);
 
         let disabled = diversion_write_payload(9, false).unwrap();
+		log::debug!("<<< Exiting diversion_write_payload_uses_offset_mask_and_value()");
         assert_eq!(&disabled[..4], &[1, 1, 2, 0]);
     }
 }

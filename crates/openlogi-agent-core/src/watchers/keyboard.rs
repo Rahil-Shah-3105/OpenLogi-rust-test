@@ -158,6 +158,7 @@ async fn manage(
                     let session_registry = registry.clone();
                     epoch = epoch.wrapping_add(1);
                     let session_epoch = epoch;
+					tracing::debug!("manage(): epoch → {}", epoch);
                     let done = done_tx.clone();
                     tokio::spawn(async move {
                         let _receiver_lease = receiver_lease;

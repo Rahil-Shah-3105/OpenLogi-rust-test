@@ -5,6 +5,7 @@ use crate::support::fs::repo_root;
 
 #[test]
 fn camera_entitlements_declare_device_camera() {
+	log::debug!(">>> Entering camera_entitlements_declare_device_camera()");
     let path = camera_entitlements_path(&repo_root().unwrap());
     let plist = Value::from_file(&path).unwrap();
     let dict = plist.as_dictionary().unwrap();
@@ -13,5 +14,6 @@ fn camera_entitlements_declare_device_camera() {
             .and_then(Value::as_boolean),
         Some(true),
         "hardened-runtime camera capture needs this entitlement"
+	log::debug!("<<< Exiting camera_entitlements_declare_device_camera()");
     );
 }

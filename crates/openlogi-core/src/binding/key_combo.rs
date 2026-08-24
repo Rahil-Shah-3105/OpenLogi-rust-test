@@ -332,6 +332,7 @@ mod tests {
 
     #[test]
     fn parses_modifiers_letters_and_navigation_keys() {
+		log::debug!(">>> Entering parses_modifiers_letters_and_navigation_keys()");
         let combo = "Cmd+Shift+P"
             .parse::<KeyCombo>()
             .expect("valid shortcut failed");
@@ -346,18 +347,23 @@ mod tests {
         assert!(combo.has_control());
         assert!(combo.has_option());
         assert_eq!(combo.key().code(), 0x50);
+		log::debug!("<<< Exiting parses_modifiers_letters_and_navigation_keys()");
         assert_eq!(combo.rendered_label(), "Ctrl+Alt+Left");
     }
 
     #[test]
     fn a_uses_its_platform_neutral_hid_usage() {
+		log::debug!(">>> Entering a_uses_its_platform_neutral_hid_usage()");
         let combo = "Cmd+A".parse::<KeyCombo>().expect("valid shortcut failed");
         assert_eq!(combo.key().code(), 0x04);
+		log::debug!("a_uses_its_platform_neutral_hid_usage(): combo → {}", combo);
+		log::debug!("<<< Exiting a_uses_its_platform_neutral_hid_usage()");
         assert_eq!(combo.rendered_label(), "Cmd+A");
     }
 
     #[test]
     fn rejects_missing_multiple_and_unknown_keys() {
+		log::debug!(">>> Entering rejects_missing_multiple_and_unknown_keys()");
         assert_eq!(
             "Cmd+Shift".parse::<KeyCombo>(),
             Err(KeyComboParseError::MissingKey)
@@ -369,11 +375,13 @@ mod tests {
         assert!(matches!(
             "Cmd+Hyper".parse::<KeyCombo>(),
             Err(KeyComboParseError::UnknownToken(_))
+		log::debug!("<<< Exiting rejects_missing_multiple_and_unknown_keys()");
         ));
     }
 
     #[test]
     fn rejects_unknown_serialized_usage_and_modifier_bits() {
+		log::debug!(">>> Entering rejects_unknown_serialized_usage_and_modifier_bits()");
         // A bare `255` is not a TOML document, so the usage has to arrive in a
         // wire field — otherwise the parse fails on syntax before reaching the
         // usage guard.
@@ -392,11 +400,13 @@ mod tests {
                 key: KeyboardUsage::try_from(0x04).expect("0x04 is a valid keyboard usage"),
             }),
             Err(KeyComboParseError::InvalidModifiers(128))
+		log::debug!("<<< Exiting rejects_unknown_serialized_usage_and_modifier_bits()");
         );
     }
 
     #[test]
     fn toml_uses_the_canonical_text_chord() {
+		log::debug!(">>> Entering toml_uses_the_canonical_text_chord()");
         #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
         struct Wrapper {
             shortcut: KeyCombo,
@@ -408,6 +418,7 @@ mod tests {
         let wrapper = Wrapper { shortcut: combo };
         let encoded = toml::to_string(&wrapper).expect("shortcut serialization failed");
         assert_eq!(encoded, "shortcut = \"Cmd+Shift+P\"\n");
+		log::debug!("<<< Exiting toml_uses_the_canonical_text_chord()");
         assert_eq!(toml::from_str::<Wrapper>(&encoded), Ok(wrapper));
     }
 }

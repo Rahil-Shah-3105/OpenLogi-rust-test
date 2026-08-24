@@ -332,6 +332,7 @@ mod tests {
 
     impl Render for NestedScrollView {
         fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+			log::debug!(">>> Entering render()");
             div()
                 .id("page-scroll")
                 .size_full()
@@ -351,6 +352,7 @@ mod tests {
 
     #[gpui::test]
     fn sidebar_scroll_does_not_move_the_page(cx: &mut TestAppContext) {
+		log::debug!(">>> Entering sidebar_scroll_does_not_move_the_page()");
         cx.update(gpui_component::init);
         let page_scroll = ScrollHandle::new();
         let sidebar_scroll = ScrollHandle::new();
@@ -378,11 +380,13 @@ mod tests {
             .unwrap();
 
         assert_eq!(sidebar_scroll.offset().y, px(-20.0));
+		log::debug!("<<< Exiting sidebar_scroll_does_not_move_the_page()");
         assert_eq!(page_scroll.offset().y, px(0.0));
     }
 
     #[test]
     fn ring_catalog_is_categorized_and_excludes_invalid_actions() {
+		log::debug!(">>> Entering ring_catalog_is_categorized_and_excludes_invalid_actions()");
         let sections = ring_catalog();
         assert!(
             sections
@@ -395,6 +399,7 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(actions.contains(&Action::MissionControl));
         assert!(!actions.contains(&Action::None));
+		log::debug!("<<< Exiting ring_catalog_is_categorized_and_excludes_invalid_actions()");
         assert!(!actions.contains(&Action::ShowActionsRing));
     }
 }

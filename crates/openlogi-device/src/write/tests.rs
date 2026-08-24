@@ -29,6 +29,7 @@ const TEST_TORQUE: TunableTorque = match TunableTorque::try_new(33) {
 
 #[test]
 fn smartshift_and_wheel_mode_byte_encodings_match() {
+	log::debug!(">>> Entering smartshift_and_wheel_mode_byte_encodings_match()");
     // The whole design relies on 0x2110 WheelMode and 0x2111
     // SmartShiftMode sharing one wire encoding (Free/Freespin = 1,
     // Ratchet = 2). If the fork ever renumbers WheelMode this fails loudly.
@@ -39,11 +40,13 @@ fn smartshift_and_wheel_mode_byte_encodings_match() {
     assert_eq!(
         u8::from(SmartShiftMode::Ratchet),
         u8::from(WheelMode::Ratchet)
+	log::debug!("<<< Exiting smartshift_and_wheel_mode_byte_encodings_match()");
     );
 }
 
 #[test]
 fn wheel_mode_maps_to_smartshift_mode() {
+	log::debug!(">>> Entering wheel_mode_maps_to_smartshift_mode()");
     assert_eq!(
         wheel_mode_to_smartshift(WheelMode::Freespin),
         SmartShiftMode::Free
@@ -51,44 +54,54 @@ fn wheel_mode_maps_to_smartshift_mode() {
     assert_eq!(
         wheel_mode_to_smartshift(WheelMode::Ratchet),
         SmartShiftMode::Ratchet
+	log::debug!("<<< Exiting wheel_mode_maps_to_smartshift_mode()");
     );
 }
 
 #[test]
 fn smartshift_to_wheel_round_trips() {
+	log::debug!(">>> Entering smartshift_to_wheel_round_trips()");
     // smartshift_to_wheel is the inverse of wheel_mode_to_smartshift.
     for mode in [SmartShiftMode::Free, SmartShiftMode::Ratchet] {
         assert_eq!(wheel_mode_to_smartshift(smartshift_to_wheel(mode)), mode);
+	log::debug!("<<< Exiting smartshift_to_wheel_round_trips()");
     }
 }
 
 #[test]
 fn missing_enhanced_triggers_fallback() {
+	log::debug!(">>> Entering missing_enhanced_triggers_fallback()");
     assert!(is_missing_enhanced(&WriteError::FeatureUnsupported {
         feature_hex: 0x2111,
+	log::debug!("<<< Exiting missing_enhanced_triggers_fallback()");
     }));
 }
 
 #[test]
 fn missing_legacy_does_not_trigger_fallback() {
+	log::debug!(">>> Entering missing_legacy_does_not_trigger_fallback()");
     // A device missing 0x2110 must NOT loop back — it genuinely has no
     // SmartShift.
     assert!(!is_missing_enhanced(&WriteError::FeatureUnsupported {
         feature_hex: 0x2110,
+	log::debug!("<<< Exiting missing_legacy_does_not_trigger_fallback()");
     }));
 }
 
 #[test]
 fn transport_errors_do_not_trigger_fallback() {
+	log::debug!(">>> Entering transport_errors_do_not_trigger_fallback()");
     // Real failures must propagate, not be masked by a fallback attempt.
     assert!(!is_missing_enhanced(&WriteError::DeviceUnreachable {
         index: 0xff,
     }));
+	log::debug!("<<< Exiting transport_errors_do_not_trigger_fallback()");
     assert!(!is_missing_enhanced(&WriteError::Hidpp("boom".into())));
 }
 
 #[test]
 fn transient_smartshift_errors_are_retryable() {
+	log::debug!(">>> Entering transient_smartshift_errors_are_retryable()");
     assert!(is_transient_smartshift_error(&WriteError::HidppFeature {
         operation: HidppOperation::WriteSmartShift,
         feature_hex: 0x2111,
@@ -104,11 +117,13 @@ fn transient_smartshift_errors_are_retryable() {
             operation: HidppOperation::ReadSmartShift,
             feature_hex: 0x2110,
         }
+	log::debug!("<<< Exiting transient_smartshift_errors_are_retryable()");
     ));
 }
 
 #[test]
 fn permanent_smartshift_errors_are_not_retryable() {
+	log::debug!(">>> Entering permanent_smartshift_errors_are_not_retryable()");
     assert!(!is_transient_smartshift_error(
         &WriteError::FeatureUnsupported {
             feature_hex: 0x2111,
@@ -118,11 +133,13 @@ fn permanent_smartshift_errors_are_not_retryable() {
         operation: HidppOperation::WriteSmartShift,
         feature_hex: 0x2111,
         kind: HidppFeatureErrorKind::InvalidFunctionId,
+	log::debug!("<<< Exiting permanent_smartshift_errors_are_not_retryable()");
     }));
 }
 
 #[test]
 fn status_match_preserves_absent_torque() {
+	log::debug!(">>> Entering status_match_preserves_absent_torque()");
     let current = SmartShiftStatus {
         mode: SmartShiftMode::Ratchet,
         auto_disengage: SmartShiftAutoDisengage::Threshold(TEST_THRESHOLD),
@@ -140,11 +157,13 @@ fn status_match_preserves_absent_torque() {
             mode: SmartShiftMode::Free,
             ..desired
         }
+	log::debug!("<<< Exiting status_match_preserves_absent_torque()");
     ));
 }
 
 #[test]
 fn per_key_lighting_builds_only_very_long_frames_then_one_long_commit() {
+	log::debug!(">>> Entering per_key_lighting_builds_only_very_long_frames_then_one_long_commit()");
     let reports = per_key_reports(0x03, 0x27, 0x11, 0x22, 0x33);
     let (commit, frames) = reports
         .split_last()
@@ -172,6 +191,7 @@ fn per_key_lighting_builds_only_very_long_frames_then_one_long_commit() {
 
     assert_eq!(commit.len(), 20);
     assert_eq!(&commit[..4], &[0x11, 0x03, 0x27, 0x5a]);
+	log::debug!("<<< Exiting per_key_lighting_builds_only_very_long_frames_then_one_long_commit()");
     assert!(commit[4..].iter().all(|byte| *byte == 0));
 }
 
@@ -225,6 +245,7 @@ async fn shared_read_and_lighting_apis_use_the_supplied_channel() -> Result<(), 
 
 #[test]
 fn stepped_dpi_ranges_expand_onto_their_step_grid() {
+	log::debug!(">>> Entering stepped_dpi_ranges_expand_onto_their_step_grid()");
     assert_eq!(
         expand_dpi_ranges(&[DpiRange::Stepped {
             from: 400,
@@ -232,11 +253,13 @@ fn stepped_dpi_ranges_expand_onto_their_step_grid() {
             step: 100,
         }]),
         [400, 500, 600, 700, 800]
+	log::debug!("<<< Exiting stepped_dpi_ranges_expand_onto_their_step_grid()");
     );
 }
 
 #[test]
 fn a_stepped_range_always_offers_its_high_endpoint() {
+	log::debug!(">>> Entering a_stepped_range_always_offers_its_high_endpoint()");
     // 1000 is not an exact multiple of 300 from 100, but the spec makes the
     // high endpoint selectable regardless — dropping it would put a device's
     // maximum DPI out of reach.
@@ -247,11 +270,13 @@ fn a_stepped_range_always_offers_its_high_endpoint() {
             step: 300,
         }]),
         [100, 400, 700, 1000]
+	log::debug!("<<< Exiting a_stepped_range_always_offers_its_high_endpoint()");
     );
 }
 
 #[test]
 fn fixed_and_stepped_ranges_mix_in_one_description() {
+	log::debug!(">>> Entering fixed_and_stepped_ranges_mix_in_one_description()");
     assert_eq!(
         expand_dpi_ranges(&[
             DpiRange::Fixed(200),
@@ -263,11 +288,13 @@ fn fixed_and_stepped_ranges_mix_in_one_description() {
             DpiRange::Fixed(1600),
         ]),
         [200, 400, 500, 600, 1600]
+	log::debug!("<<< Exiting fixed_and_stepped_ranges_mix_in_one_description()");
     );
 }
 
 #[test]
 fn adjacent_ranges_may_share_an_endpoint() {
+	log::debug!(">>> Entering adjacent_ranges_may_share_an_endpoint()");
     // The device reports one range's high value as the next one's low value;
     // `DpiCapabilities::new` is what deduplicates, so the raw expansion is
     // allowed to repeat it.
@@ -293,11 +320,13 @@ fn adjacent_ranges_may_share_an_endpoint() {
             Dpi::new(400),
             Dpi::new(500)
         ]
+	log::debug!("<<< Exiting adjacent_ranges_may_share_an_endpoint()");
     );
 }
 
 #[test]
 fn a_single_value_range_yields_just_that_value() {
+	log::debug!(">>> Entering a_single_value_range_yields_just_that_value()");
     assert_eq!(
         expand_dpi_ranges(&[DpiRange::Stepped {
             from: 800,
@@ -305,6 +334,7 @@ fn a_single_value_range_yields_just_that_value() {
             step: 50,
         }]),
         [800]
+	log::debug!("<<< Exiting a_single_value_range_yields_just_that_value()");
     );
 }
 
@@ -359,6 +389,7 @@ async fn dpi_reads_and_writes_work_on_a_device_with_only_extended_dpi() -> Resul
 
 #[test]
 fn zone_presence_bits_decode_lsb_first_from_the_page_base() {
+	log::debug!(">>> Entering zone_presence_bits_decode_lsb_first_from_the_page_base()");
     let mut bitfield = [0u8; 14];
     bitfield[0] = 0b0000_0110; // zones 1 and 2
     bitfield[1] = 0b1000_0000; // zone 15
@@ -366,22 +397,26 @@ fn zone_presence_bits_decode_lsb_first_from_the_page_base() {
 
     collect_present_zones(0, &bitfield, &mut zones);
 
+	log::debug!("<<< Exiting zone_presence_bits_decode_lsb_first_from_the_page_base()");
     assert_eq!(zones, [1, 2, 15]);
 }
 
 #[test]
 fn zone_presence_pages_are_offset_by_their_base() {
+	log::debug!(">>> Entering zone_presence_pages_are_offset_by_their_base()");
     let mut bitfield = [0u8; 14];
     bitfield[0] = 0b0000_0001;
     let mut zones = Vec::new();
 
     collect_present_zones(112, &bitfield, &mut zones);
 
+	log::debug!("<<< Exiting zone_presence_pages_are_offset_by_their_base()");
     assert_eq!(zones, [112]);
 }
 
 #[test]
 fn zone_presence_skips_sentinels_and_padding_past_255() {
+	log::debug!(">>> Entering zone_presence_skips_sentinels_and_padding_past_255()");
     // The last page covers only 224..=255, so the rest of its 112 bits are
     // padding — decoding them would wrap back onto low zone ids. Ids 0 and
     // 0xff are the feature's own end-of-list sentinels.
@@ -394,6 +429,7 @@ fn zone_presence_skips_sentinels_and_padding_past_255() {
     last_page[5] = 0b0000_0001; // id 264 — past the addressable range
     let mut zones = Vec::new();
     collect_present_zones(224, &last_page, &mut zones);
+	log::debug!("<<< Exiting zone_presence_skips_sentinels_and_padding_past_255()");
     assert!(zones.is_empty(), "got {zones:?}");
 }
 

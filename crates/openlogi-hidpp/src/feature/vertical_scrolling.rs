@@ -92,6 +92,7 @@ mod tests {
 
     #[test]
     fn parses_roller_info() {
+		log::debug!(">>> Entering parses_roller_info()");
         let mut payload = [0; 16];
         payload[0] = 0x04;
         payload[1] = 24;
@@ -101,6 +102,7 @@ mod tests {
 
         assert_eq!(info.roller_type, RollerType::MicroRatchet);
         assert_eq!(info.ratchets_per_turn, 24);
+		log::debug!("<<< Exiting parses_roller_info()");
         assert_eq!(info.scroll_lines, ScrollLines::Page);
     }
 }
